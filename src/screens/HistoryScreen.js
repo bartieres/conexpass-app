@@ -1,11 +1,38 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, SafeAreaView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../theme/theme';
-import { HISTORY } from '../data/mock';
+import { checkinService } from '../services/checkinService';
+import { dateTimeToDateMasked } from '../utils/date';
 
 export default function HistoryScreen() {
   const [tab, setTab] = useState('checkins');
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const response = await checkinService.findAllByCondition({
+          ignoreSize: true,
+        });
+
+        const formatted = response.content.map((u) => ({
+          id: u.id,
+          name: u.nome,
+          date: dateTimeToDateMasked(u.data),
+          status: u.situacao.codigo === 'CONFIRMADO' ? 'success' : 'error',
+          location: u.endereco.cidade.nome + ' - ' + u.endereco.cidade.estado.uf,
+        }));
+
+        setHistory(formatted);
+      } catch (error) {
+        console.error('Erro ao carregar histórico:', error);
+      }
+    };
+
+    loadHistory();
+  }, []);
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -18,14 +45,14 @@ export default function HistoryScreen() {
           <Text style={[styles.tabText, tab === 'checkins' && styles.tabTextActive]}>Check-ins</Text>
           {tab === 'checkins' && <View style={styles.tabIndicator} />}
         </TouchableOpacity>
-        <TouchableOpacity style={styles.tabButton} onPress={() => setTab('visitas')}>
+        {/*<TouchableOpacity style={styles.tabButton} onPress={() => setTab('visitas')}>
           <Text style={[styles.tabText, tab === 'visitas' && styles.tabTextActive]}>Visitas</Text>
           {tab === 'visitas' && <View style={styles.tabIndicator} />}
-        </TouchableOpacity>
+        </TouchableOpacity>*/}
       </View>
 
       <FlatList
-        data={tab === 'checkins' ? HISTORY : []}
+        data={tab === 'checkins' ? history : []}
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20, gap: 10 }}
         ListEmptyComponent={

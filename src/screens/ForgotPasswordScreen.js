@@ -4,10 +4,15 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../theme/theme';
 import { useAuth } from '../context/AuthContext';
 
+function isValidEmail(value) {
+  // Formato básico: algo@algo.algo
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(value.trim());
+}
+
 export default function ForgotPasswordScreen({ navigation }) {
   const { forgotPassword } = useAuth();
   const [email, setEmail] = useState('');
-  const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -16,11 +21,15 @@ export default function ForgotPasswordScreen({ navigation }) {
       setErrorMessage('Informe seu e-mail.');
       return;
     }
+    if (!isValidEmail(email)) {
+      setErrorMessage('Informe um e-mail válido.');
+      return;
+    }
     setErrorMessage('');
     setLoading(true);
     try {
       await forgotPassword(email);
-      setSent(true);
+      navigation.navigate('ForgotPasswordSuccess', { email });
     } catch (err) {
       setErrorMessage(err.friendlyMessage || 'Não foi possível enviar o e-mail. Tente novamente.');
     } finally {
@@ -36,47 +45,40 @@ export default function ForgotPasswordScreen({ navigation }) {
         </TouchableOpacity>
 
         <View style={styles.card}>
-          {!sent ? (
-            <>
-              <Text style={styles.title}>Esqueci minha senha</Text>
-              <Text style={styles.subtitle}>Informe seu e-mail para receber o link de redefinição</Text>
+          <Text style={styles.title}>Esqueci minha senha</Text>
+          <Text style={styles.subtitle}>Informe seu e-mail para receber o link de redefinição</Text>
 
-              <View style={styles.inputGroup}>
-                <Ionicons name="mail-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
-                <TextInput
-                  style={styles.input}
-                  placeholder="E-mail"
-                  placeholderTextColor={colors.textLight}
-                  autoCapitalize="none"
-                  keyboardType="email-address"
-                  value={email}
-                  onChangeText={setEmail}
-                />
-              </View>
+          <View style={styles.inputGroup}>
+            <Ionicons name="mail-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder="E-mail"
+              placeholderTextColor={colors.textLight}
+              autoCapitalize="none"
+              keyboardType="email-address"
+              value={email}
+              onChangeText={setEmail}
+            />
+          </View>
+          {email.length > 0 && !isValidEmail(email) && (
+            <Text style={styles.emailHint}>Digite um e-mail válido, ex: nome@email.com</Text>
+          )}
 
-              {!!errorMessage && (
-                <View style={styles.errorBox}>
-                  <Ionicons name="alert-circle" size={16} color="#DC2626" />
-                  <Text style={styles.errorText}>{errorMessage}</Text>
-                </View>
-              )}
-
-              <TouchableOpacity style={styles.primaryButton} onPress={handleSend} activeOpacity={0.85} disabled={loading}>
-                {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Enviar link</Text>}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View style={{ alignItems: 'center' }}>
-              <Ionicons name="mail-open-outline" size={44} color={colors.blue} style={{ marginBottom: 14 }} />
-              <Text style={styles.title}>E-mail enviado!</Text>
-              <Text style={[styles.subtitle, { textAlign: 'center' }]}>
-                Verifique sua caixa de entrada para redefinir sua senha.
-              </Text>
-              <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.primaryButtonText}>Voltar ao login</Text>
-              </TouchableOpacity>
+          {!!errorMessage && (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
             </View>
           )}
+
+          <TouchableOpacity
+            style={[styles.primaryButton, (loading || !isValidEmail(email)) && styles.primaryButtonDisabled]}
+            onPress={handleSend}
+            activeOpacity={0.85}
+            disabled={loading || !isValidEmail(email)}
+          >
+            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Enviar link</Text>}
+          </TouchableOpacity>
         </View>
       </View>
     </KeyboardAvoidingView>
@@ -85,6 +87,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 24, justifyContent: 'center' },
+  primaryButtonDisabled: { opacity: 0.7 },
   backButton: {
     position: 'absolute',
     top: 50,
@@ -123,6 +126,13 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 10,
     marginBottom: 14,
+  },
+  emailHint: {
+    fontSize: 11.5,
+    color: colors.textLight,
+    marginTop: -10,
+    marginBottom: 16,
+    marginLeft: 4,
   },
   errorText: { color: '#DC2626', fontSize: 12.5, flex: 1 },
 });

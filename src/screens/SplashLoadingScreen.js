@@ -1,15 +1,16 @@
 import React from 'react';
-import { View, ActivityIndicator, Text, StyleSheet } from 'react-native';
+import { View, ActivityIndicator, Text, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/theme';
+import Logo from '../assets/logo.png';
 
 export default function SplashLoadingScreen() {
   return (
     <View style={styles.container}>
-      <View style={styles.logoBox}>
-        <Ionicons name="infinite" size={34} color="#fff" />
-      </View>
-      <Text style={styles.brand}>ConexPass</Text>
+      <Image
+        source={Logo}
+        style={{ height: 130, resizeMode: 'contain' }}
+      />
       <ActivityIndicator size="small" color={colors.blue} style={{ marginTop: 18 }} />
     </View>
   );

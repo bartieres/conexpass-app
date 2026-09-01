@@ -44,9 +44,7 @@ export function AuthProvider({ children }) {
   }, []);
 
   const register = useCallback(async (payload) => {
-    const newUser = await authService.register(payload);
-    setUser(newUser);
-    return newUser;
+    return authService.register(payload);
   }, []);
 
   const forgotPassword = useCallback(async (email) => {

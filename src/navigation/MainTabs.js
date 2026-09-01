@@ -12,6 +12,7 @@ import CheckInSuccessScreen from '../screens/CheckInSuccessScreen';
 import PlanScreen from '../screens/PlanScreen';
 import PlansScreen from '../screens/PlansScreen';
 import ProfileScreen from '../screens/ProfileScreen';
+import PersonalDataScreen from '../screens/PersonalDataScreen';
 
 const Tab = createBottomTabNavigator();
 const ExploreStackNav = createNativeStackNavigator();
@@ -55,6 +56,7 @@ function ProfileStack() {
     <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStackNav.Screen name="Plan" component={PlanStack} />
+      <ProfileStackNav.Screen name="PersonalData" component={PersonalDataScreen} />
     </ProfileStackNav.Navigator>
   );
 }

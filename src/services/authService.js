@@ -25,15 +25,9 @@ export const authService = {
   },
 
   // POST /auth/register { name, email, cpf, password } -> { token, user }
-  async register({ name, email, cpf, password }) {
-    const { data } = await api.post(ENDPOINTS.register, {
-      name: name.trim(),
-      email: email.trim(),
-      cpf: onlyDigits(cpf),
-      password,
-    });
-    await persistSession(data.token, data.user);
-    return data.user;
+  async register(payload) {
+    const { data } = await api.post(ENDPOINTS.register, payload);
+    return data;
   },
 
   // POST /auth/forgot-password { email } -> { message }

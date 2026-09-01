@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,14 @@ import {
   StyleSheet,
   FlatList,
   Image,
-  SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../theme/theme';
-import { CATEGORIES, GYMS } from '../data/mock';
+import { CATEGORIES } from '../data/mock';
+import { useCurrentLocation } from '../hooks/useCurrentLocation';
+import { gymService } from '../services/gymService';
 
 function GymCard({ gym, onPress }) {
   return (
@@ -37,8 +40,41 @@ function GymCard({ gym, onPress }) {
 export default function ExploreScreen({ navigation }) {
   const [view, setView] = useState('lista');
   const [activeCategory, setActiveCategory] = useState('todos');
-  const [selectedGym, setSelectedGym] = useState(GYMS[0]);
   const [search, setSearch] = useState('');
+
+  // Localização do usuário
+  const {
+    coords,
+    loading: loadingLocation,
+    permissionDenied,
+    errorMessage: locationError,
+    refetch,
+  } = useCurrentLocation();
+
+  // Academias próximas (dependem da localização)
+  const [gyms, setGyms] = useState([]);
+  const [selectedGym, setSelectedGym] = useState(null);
+  const [loadingGyms, setLoadingGyms] = useState(false);
+  const [gymsError, setGymsError] = useState('');
+
+  useEffect(() => {
+    if (!coords) return;
+    (async () => {
+      setLoadingGyms(true);
+      setGymsError('');
+      try {
+        const list = await gymService.getNearby(coords);
+        setGyms(list);
+        if (list.length > 0) setSelectedGym(list[0]);
+      } catch (err) {
+        setGymsError(err.friendlyMessage || 'Não foi possível carregar as academias próximas.');
+      } finally {
+        setLoadingGyms(false);
+      }
+    })();
+  }, [coords]);
+
+  const isLoadingAnything = loadingLocation || loadingGyms;
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -87,87 +123,126 @@ export default function ExploreScreen({ navigation }) {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.chipsRow}>
-        <FlatList
-          data={CATEGORIES}
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
-          renderItem={({ item }) => {
-            const active = activeCategory === item.id;
-            return (
-              <TouchableOpacity
-                style={[styles.chip, active && styles.chipActive]}
-                onPress={() => setActiveCategory(item.id)}
-              >
-                <Ionicons name={item.icon} size={15} color={active ? '#fff' : colors.blue} />
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{item.label}</Text>
-              </TouchableOpacity>
-            );
-          }}
-        />
-      </View>
-
-      {view === 'lista' ? (
-        <FlatList
-          data={GYMS}
-          keyExtractor={(item) => item.id}
-          contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 12 }}
-          ListHeaderComponent={<Text style={styles.sectionTitle}>Próximos de você</Text>}
-          renderItem={({ item }) => (
-            <GymCard gym={item} onPress={() => navigation.navigate('EstablishmentDetail', { gym: item })} />
-          )}
-          ListFooterComponent={
-            <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.9}>
-              <View style={styles.premiumIcon}>
-                <Ionicons name="star" size={18} color="#fff" />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.premiumTitle}>Seja Premium</Text>
-                <Text style={styles.premiumSubtitle}>
-                  Tenha mais check-ins por dia e desbloqueie benefícios exclusivos.
-                </Text>
-              </View>
-            </TouchableOpacity>
-          }
-        />
-      ) : (
-        <View style={styles.mapWrap}>
-          <View style={styles.mapArea}>
-            {GYMS.map((g) => (
-              <TouchableOpacity
-                key={g.id}
-                style={[styles.pin, { top: g.coord.top, left: g.coord.left }]}
-                onPress={() => setSelectedGym(g)}
-              >
-                <Ionicons name="location" size={30} color={g.id === selectedGym.id ? colors.blueDark : colors.blue} />
-              </TouchableOpacity>
-            ))}
-            <Text style={styles.mapCityLabel}>Londrina</Text>
-          </View>
-
-          <TouchableOpacity
-            style={styles.mapCard}
-            activeOpacity={0.9}
-            onPress={() => navigation.navigate('EstablishmentDetail', { gym: selectedGym })}
-          >
-            <Image source={{ uri: selectedGym.image }} style={styles.mapCardImage} />
-            <View style={{ flex: 1 }}>
-              <Text style={styles.gymName}>{selectedGym.name}</Text>
-              <Text style={styles.gymMeta}>
-                {selectedGym.distance} • {selectedGym.hours}
-              </Text>
-              <View style={styles.ratingRow}>
-                <Ionicons name="star" size={13} color={colors.star} />
-                <Text style={styles.ratingText}>
-                  {selectedGym.rating} ({selectedGym.reviews})
-                </Text>
-              </View>
-            </View>
-            <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+      {permissionDenied && (
+        <View style={styles.stateBox}>
+          <Ionicons name="location-outline" size={28} color={colors.textLight} />
+          <Text style={styles.stateText}>
+            Permita o acesso à localização para ver academias perto de você.
+          </Text>
+          <TouchableOpacity style={styles.stateButton} onPress={refetch}>
+            <Text style={styles.stateButtonText}>Permitir localização</Text>
           </TouchableOpacity>
         </View>
+      )}
+
+      {!permissionDenied && isLoadingAnything && (
+        <View style={styles.stateBox}>
+          <ActivityIndicator size="small" color={colors.blue} />
+          <Text style={styles.stateText}>Buscando academias próximas de você...</Text>
+        </View>
+      )}
+
+      {!permissionDenied && !isLoadingAnything && !!gymsError && (
+        <View style={styles.stateBox}>
+          <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
+          <Text style={styles.stateText}>{gymsError}</Text>
+          <TouchableOpacity style={styles.stateButton} onPress={refetch}>
+            <Text style={styles.stateButtonText}>Tentar novamente</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {!permissionDenied && !isLoadingAnything && !gymsError && (
+        <>
+          <View style={styles.chipsRow}>
+            <FlatList
+              data={CATEGORIES}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
+              renderItem={({ item }) => {
+                const active = activeCategory === item.id;
+                return (
+                  <TouchableOpacity
+                    style={[styles.chip, active && styles.chipActive]}
+                    onPress={() => setActiveCategory(item.id)}
+                  >
+                    <Ionicons name={item.icon} size={15} color={active ? '#fff' : colors.blue} />
+                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{item.label}</Text>
+                  </TouchableOpacity>
+                );
+              }}
+            />
+          </View>
+
+          {view === 'lista' ? (
+            <FlatList
+              data={gyms}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 12 }}
+              ListHeaderComponent={<Text style={styles.sectionTitle}>Próximos de você</Text>}
+              renderItem={({ item }) => (
+                <GymCard gym={item} onPress={() => navigation.navigate('EstablishmentDetail', { gym: item })} />
+              )}
+              ListFooterComponent={
+                <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.9}>
+                  <View style={styles.premiumIcon}>
+                    <Ionicons name="star" size={18} color="#fff" />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.premiumTitle}>Seja Premium</Text>
+                    <Text style={styles.premiumSubtitle}>
+                      Tenha mais check-ins por dia e desbloqueie benefícios exclusivos.
+                    </Text>
+                  </View>
+                </TouchableOpacity>
+              }
+            />
+          ) : (
+            <View style={styles.mapWrap}>
+              <View style={styles.mapArea}>
+                {gyms.map((g) => (
+                  <TouchableOpacity
+                    key={g.id}
+                    style={[styles.pin, { top: g.coord?.top ?? '50%', left: g.coord?.left ?? '50%' }]}
+                    onPress={() => setSelectedGym(g)}
+                  >
+                    <Ionicons
+                      name="location"
+                      size={30}
+                      color={g.id === selectedGym?.id ? colors.blueDark : colors.blue}
+                    />
+                  </TouchableOpacity>
+                ))}
+                <Text style={styles.mapCityLabel}>Londrina</Text>
+              </View>
+
+              {selectedGym && (
+                <TouchableOpacity
+                  style={styles.mapCard}
+                  activeOpacity={0.9}
+                  onPress={() => navigation.navigate('EstablishmentDetail', { gym: selectedGym })}
+                >
+                  <Image source={{ uri: selectedGym.image }} style={styles.mapCardImage} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.gymName}>{selectedGym.name}</Text>
+                    <Text style={styles.gymMeta}>
+                      {selectedGym.distance} • {selectedGym.hours}
+                    </Text>
+                    <View style={styles.ratingRow}>
+                      <Ionicons name="star" size={13} color={colors.star} />
+                      <Text style={styles.ratingText}>
+                        {selectedGym.rating} ({selectedGym.reviews})
+                      </Text>
+                    </View>
+                  </View>
+                  <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+                </TouchableOpacity>
+              )}
+            </View>
+          )}
+        </>
       )}
     </SafeAreaView>
   );
@@ -229,6 +304,22 @@ const styles = StyleSheet.create({
   toggleBtnActive: { backgroundColor: colors.blue },
   toggleText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
   toggleTextActive: { color: '#fff' },
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingHorizontal: 30,
+    paddingVertical: 30,
+  },
+  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateButton: {
+    backgroundColor: colors.blue,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    marginTop: 4,
+  },
+  stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
   chipsRow: { marginTop: 14 },
   chip: {
     flexDirection: 'row',

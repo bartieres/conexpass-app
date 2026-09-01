@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Image,
+  Image
 } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../theme/theme';
@@ -52,7 +52,7 @@ export default function LoginScreen({ navigation }) {
         <View style={styles.logoWrap}>
           <Image
             source={Logo}
-            style={{ height: 130, resizeMode: 'contain' }}
+            style={{ height: 120, resizeMode: 'contain' }}
           />
           <Text style={styles.tagline}>Treine onde e quando quiser</Text>
         </View>
@@ -108,7 +108,7 @@ export default function LoginScreen({ navigation }) {
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Entrar</Text>}
           </TouchableOpacity>
 
-          <View style={styles.dividerRow}>
+          {/*<View style={styles.dividerRow}>
             <View style={styles.divider} />
             <Text style={styles.dividerText}>ou continue com</Text>
             <View style={styles.divider} />
@@ -121,7 +121,7 @@ export default function LoginScreen({ navigation }) {
             <TouchableOpacity style={styles.socialButton}>
               <FontAwesome name="apple" size={20} color={colors.text} />
             </TouchableOpacity>
-          </View>
+          </View>*/}
 
           <View style={styles.footerRow}>
             <Text style={styles.footerText}>Não tem uma conta? </Text>

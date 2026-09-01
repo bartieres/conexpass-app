@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, typography } from '../theme/theme';
 import { USER } from '../data/mock';
@@ -7,7 +8,7 @@ import { useAuth } from '../context/AuthContext';
 
 const MENU = [
   { icon: 'card-outline', label: 'Meu plano', screen: 'Plan' },
-  { icon: 'person-outline', label: 'Dados pessoais' },
+  { icon: 'person-outline', label: 'Dados pessoais', screen: 'PersonalData' },
   { icon: 'wallet-outline', label: 'Pagamento' },
   { icon: 'notifications-outline', label: 'Notificações' },
   { icon: 'people-outline', label: 'Indique amigos', badge: 'Ganhe benefícios' },

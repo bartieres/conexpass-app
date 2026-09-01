@@ -2,10 +2,13 @@ import React from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import LoginScreen from './src/screens/LoginScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import RegisterSuccessScreen from './src/screens/RegisterSuccessScreen';
 import ForgotPasswordScreen from './src/screens/ForgotPasswordScreen';
+import ForgotPasswordSuccessScreen from './src/screens/ForgotPasswordSuccessScreen';
 import SplashLoadingScreen from './src/screens/SplashLoadingScreen';
 import MainTabs from './src/navigation/MainTabs';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
@@ -28,7 +31,9 @@ function RootNavigator() {
         <>
           <Stack.Screen name="Login" component={LoginScreen} />
           <Stack.Screen name="Register" component={RegisterScreen} />
+          <Stack.Screen name="RegisterSuccess" component={RegisterSuccessScreen} />
           <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
+          <Stack.Screen name="ForgotPasswordSuccess" component={ForgotPasswordSuccessScreen} />
         </>
       )}
     </Stack.Navigator>
@@ -37,11 +42,13 @@ function RootNavigator() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <StatusBar style="dark" />
-        <RootNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <NavigationContainer>
+          <StatusBar style="dark" />
+          <RootNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }

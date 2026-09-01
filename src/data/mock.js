@@ -58,6 +58,11 @@ export const HISTORY = [
   { id: 'h3', name: 'Academia Performance', date: '16/05/2025, 07:30', location: 'Londrina - PR', status: 'success' },
   { id: 'h4', name: 'Natação Ativa', date: '14/05/2025, 18:20', location: 'Londrina - PR', status: 'success' },
   { id: 'h5', name: 'CrossFit Londrina', date: '12/05/2025, 06:45', location: 'Londrina - PR', status: 'success' },
+  { id: 'h6', name: 'Academia Performance', date: 'Hoje, 08:45', location: 'Londrina - PR', status: 'success' },
+  { id: 'h7', name: 'Studio Fit Training', date: '18/05/2025, 19:10', location: 'Londrina - PR', status: 'success' },
+  { id: 'h8', name: 'Academia Performance', date: '16/05/2025, 07:30', location: 'Londrina - PR', status: 'success' },
+  { id: 'h9', name: 'Natação Ativa', date: '14/05/2025, 18:20', location: 'Londrina - PR', status: 'success' },
+  { id: 'h10', name: 'CrossFit Londrina', date: '12/05/2025, 06:45', location: 'Londrina - PR', status: 'success' },
 ];
 
 export const USER = {
