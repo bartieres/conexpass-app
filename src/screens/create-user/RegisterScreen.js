@@ -13,8 +13,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { useAuth } from '../context/AuthContext';
+import { colors, radius, shadow, typography } from '../../theme/theme';
+import { useAuth } from '../../context/AuthContext';
 
 function maskCPF(value) {
   return value

@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { useAuth } from '../context/AuthContext';
+import { colors, radius, shadow, typography } from '../../theme/theme';
+import { useAuth } from '../../context/AuthContext';
 
 function isValidEmail(value) {
   // Formato básico: algo@algo.algo

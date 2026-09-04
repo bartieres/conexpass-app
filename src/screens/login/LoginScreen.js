@@ -12,9 +12,9 @@ import {
   Image
 } from 'react-native';
 import { Ionicons, FontAwesome } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { useAuth } from '../context/AuthContext';
-import Logo from '../assets/logo.png';
+import { colors, radius, shadow, typography } from '../../theme/theme';
+import { useAuth } from '../../context/AuthContext';
+import Logo from '../../assets/logo.png';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();

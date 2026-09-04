@@ -2,9 +2,9 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius } from '../theme/theme';
+import { colors, radius } from '../../theme/theme';
 
-export default function ForgotPasswordSuccessScreen({ route, navigation }) {
+export default function RegisterSuccessScreen({ route, navigation }) {
   const email = route.params?.email || '';
 
   return (
@@ -14,20 +14,20 @@ export default function ForgotPasswordSuccessScreen({ route, navigation }) {
           <Ionicons name="mail-open-outline" size={44} color="#fff" />
         </View>
 
-        <Text style={styles.title}>Verifique seu e-mail</Text>
+        <Text style={styles.title}>Confirme seu e-mail</Text>
         <Text style={styles.subtitle}>
-          Enviamos um link para redefinir sua senha para{'\n'}
+          Enviamos um link de confirmação para{'\n'}
           <Text style={styles.emailText}>{email}</Text>
         </Text>
         <Text style={styles.helper}>
-          Abra seu e-mail e toque no link para criar uma nova senha. Não
-          esqueça de checar a caixa de spam.
+          Abra seu e-mail e toque no link para ativar sua conta. Não esqueça de
+          checar a caixa de spam.
         </Text>
       </View>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.primaryButtonText}>Voltar ao login</Text>
+          <Text style={styles.primaryButtonText}>Já confirmei, ir para login</Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
