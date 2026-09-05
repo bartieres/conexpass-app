@@ -1,6 +1,5 @@
 import { useAuth } from '../context/AuthContext';
-import { api } from './api';
-import { ENDPOINTS } from '../config/api';
+import { api, ENDPOINTS } from '../config/api';
 
 function onlyDigits(value = '') {
   return value.replace(/\D/g, '');

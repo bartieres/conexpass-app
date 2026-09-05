@@ -1,5 +1,4 @@
-import { api } from './api';
-import { ENDPOINTS } from '../config/api';
+import { api } from '../config/api';
 import { distanceInKm, formatDistance } from '../utils/geo';
 
 const BASE_URL = '/establishments';

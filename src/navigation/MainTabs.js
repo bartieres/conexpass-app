@@ -3,16 +3,24 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BottomNav from '../components/BottomNav';
 
-import ExploreScreen from '../screens/ExploreScreen';
+import ExploreScreen from '../screens/explore/ExploreScreen';
+import FiltersScreen from '../screens/explore/FiltersScreen';
 import EstablishmentDetailScreen from '../screens/EstablishmentDetailScreen';
-import FiltersScreen from '../screens/FiltersScreen';
-import HistoryScreen from '../screens/HistoryScreen';
+
+import HistoryScreen from '../screens/history/HistoryScreen';
+
 import CheckInScreen from '../screens/CheckInScreen';
 import CheckInSuccessScreen from '../screens/CheckInSuccessScreen';
 import PlanScreen from '../screens/PlanScreen';
 import PlansScreen from '../screens/PlansScreen';
-import ProfileScreen from '../screens/ProfileScreen';
-import PersonalDataScreen from '../screens/PersonalDataScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
+import PersonalDataScreen from '../screens/profile/conta/PersonalDataScreen';
+import SecurityScreen from '../screens/profile/conta/SecurityScreen';
+import ChangePasswordScreen from '../screens/profile/conta/ChangePasswordScreen';
+import NotificationScreen from '../screens/profile/preferencias/NotificationScreen';
+import LocationScreen from '../screens/profile/preferencias/LocationScreen';
+import HelpScreen from '../screens/profile/suporte/HelpScreen';
+import ContactScreen from '../screens/profile/suporte/ContactScreen';
 
 const Tab = createBottomTabNavigator();
 const ExploreStackNav = createNativeStackNavigator();
@@ -57,6 +65,12 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStackNav.Screen name="Plan" component={PlanStack} />
       <ProfileStackNav.Screen name="PersonalData" component={PersonalDataScreen} />
+      <ProfileStackNav.Screen name="Security" component={SecurityScreen} />
+      <ProfileStackNav.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <ProfileStackNav.Screen name="Notification" component={NotificationScreen} />
+      <ProfileStackNav.Screen name="Location" component={LocationScreen} />
+      <ProfileStackNav.Screen name="Help" component={HelpScreen} />
+      <ProfileStackNav.Screen name="Contact" component={ContactScreen} />
     </ProfileStackNav.Navigator>
   );
 }

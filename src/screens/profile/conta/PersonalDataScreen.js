@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,13 +10,13 @@ import {
   Platform,
   ActivityIndicator,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { useAuth } from '../context/AuthContext';
-import { userService } from '../services/userService';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { colors, radius, shadow, typography } from '../../../theme/theme';
+import { useAuth } from '../../../context/AuthContext';
+import { userService } from '../../../services/userService';
 
-function maskCPF(value) {
+function maskCPF(value = '') {
   return value
     .replace(/\D/g, '')
     .slice(0, 11)
@@ -25,7 +25,7 @@ function maskCPF(value) {
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
-function maskPhone(value) {
+function maskPhone(value = '') {
   return value
     .replace(/\D/g, '')
     .slice(0, 11)
@@ -33,57 +33,69 @@ function maskPhone(value) {
     .replace(/(\d{5})(\d{1,4})$/, '$1-$2');
 }
 
-function maskDate(value) {
-  return value
-    .replace(/\D/g, '')
-    .slice(0, 8)
-    .replace(/(\d{2})(\d)/, '$1/$2')
-    .replace(/(\d{2})(\d{1,4})$/, '$1/$2');
+// Data de nascimento vem do backend, não é digitada pelo usuário (campo não
+// editável). Aceita tanto 'YYYY-MM-DD' quanto já formatada, e não quebra se
+// vier vazia.
+function formatBirthDate(value) {
+  if (!value) return '';
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
+  if (match) {
+    const [, ano, mes, dia] = match;
+    return `${dia}/${mes}/${ano}`;
+  }
+  return value;
+}
+
+// Sexo pode vir como string simples ('M') ou como objeto { codigo, descricao },
+// dependendo de como o backend serializa. Cobrindo os dois formatos.
+function formatSexo(sexo) {
+  if (!sexo) return '';
+  if (typeof sexo === 'string') {
+    if (sexo === 'M') return 'Masculino';
+    if (sexo === 'F') return 'Feminino';
+    return sexo;
+  }
+  return sexo.descricao || sexo.codigo || '';
+}
+
+// Campo somente leitura, com o mesmo visual dos inputs editáveis, mas sem
+// permitir edição (nome, data de nascimento, sexo, CPF e e-mail).
+function ReadOnlyField({ icon, label, value }) {
+  return (
+    <View style={styles.inputGroup}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={[styles.inputBox, styles.inputBoxDisabled]}>
+        <Ionicons name={icon} size={18} color={colors.textLight} style={styles.inputIcon} />
+        <TextInput style={styles.input} value={value} editable={false} />
+      </View>
+    </View>
+  );
 }
 
 export default function PersonalDataScreen({ navigation }) {
-  const { user } = useAuth();
+  // Dados do usuário autenticado vêm direto do AuthContext — sem novo fetch
+  // aqui, já que o login/carregamento inicial da sessão é quem popula isso.
+  const { user, updateUser } = useAuth();
 
-  const [name, setName] = useState(user?.name || '');
-  const [email, setEmail] = useState(user?.email || '');
-  const [cpf, setCpf] = useState(user?.cpf ? maskCPF(user.cpf) : '');
-  const [phone, setPhone] = useState(user?.phone ? maskPhone(user.phone) : '');
-  const [birthDate, setBirthDate] = useState(user?.birthDate || '');
+  // Único campo editável nessa tela
+  const [phone, setPhone] = useState(user?.telefone ? maskPhone(user.telefone) : '');
 
-  const [loadingProfile, setLoadingProfile] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Busca dados atualizados assim que a tela abre (GET /users/me)
-  useEffect(() => {
-    (async () => {
-      try {
-        const profile = await userService.getProfile();
-        setName(profile.name || '');
-        setEmail(profile.email || '');
-        setCpf(profile.cpf ? maskCPF(profile.cpf) : '');
-        setPhone(profile.phone ? maskPhone(profile.phone) : '');
-        setBirthDate(profile.birthDate || '');
-      } catch (err) {
-        setErrorMessage(err.friendlyMessage || 'Não foi possível carregar seus dados.');
-      } finally {
-        setLoadingProfile(false);
-      }
-    })();
-  }, []);
-
   const handleSave = async () => {
-    if (!name.trim() || !email.trim()) {
-      setErrorMessage('Nome e e-mail são obrigatórios.');
-      return;
-    }
     setErrorMessage('');
     setSuccessMessage('');
     setSaving(true);
     try {
-      await userService.updateProfile({ name, email, phone, birthDate });
-      setSuccessMessage('Dados atualizados com sucesso!');
+      const updated = await userService.updateProfile({ phone });
+
+      // Mantém o AuthContext em dia com o telefone novo, sem precisar
+      // recarregar o usuário inteiro do backend.
+      updateUser?.({ phone: updated?.phone ?? phone });
+
+      setSuccessMessage('Telefone atualizado com sucesso!');
     } catch (err) {
       setErrorMessage(err.friendlyMessage || 'Não foi possível salvar suas alterações.');
     } finally {
@@ -91,7 +103,7 @@ export default function PersonalDataScreen({ navigation }) {
     }
   };
 
-  if (loadingProfile) {
+  if (!user) {
     return (
       <SafeAreaView style={[styles.safe, styles.centerAll]}>
         <ActivityIndicator size="small" color={colors.blue} />
@@ -110,37 +122,11 @@ export default function PersonalDataScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Nome completo</Text>
-          <View style={styles.inputBox}>
-            <Ionicons name="person-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Seu nome completo" />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>E-mail</Text>
-          <View style={styles.inputBox}>
-            <Ionicons name="mail-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              value={email}
-              onChangeText={setEmail}
-              placeholder="seu@email.com"
-              autoCapitalize="none"
-              keyboardType="email-address"
-            />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>CPF</Text>
-          <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-            <Ionicons name="card-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
-            <TextInput style={styles.input} value={cpf} editable={false} />
-          </View>
-          <Text style={styles.helperText}>O CPF não pode ser alterado.</Text>
-        </View>
+        <ReadOnlyField icon="person-outline" label="Nome completo" value={user.nome} />
+        <ReadOnlyField icon="mail-outline" label="E-mail" value={user.email} />
+        <ReadOnlyField icon="card-outline" label="CPF" value={user.documento} />
+        {/* <ReadOnlyField icon="calendar-outline" label="Data de nascimento" value={formatBirthDate(user.birthDate)} /> */}
+        <ReadOnlyField icon="body-outline" label="Sexo" value={formatSexo(user.sexo)} />
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Telefone</Text>
@@ -153,21 +139,6 @@ export default function PersonalDataScreen({ navigation }) {
               placeholder="(00) 00000-0000"
               keyboardType="numeric"
               maxLength={15}
-            />
-          </View>
-        </View>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Data de nascimento</Text>
-          <View style={styles.inputBox}>
-            <Ionicons name="calendar-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              value={birthDate}
-              onChangeText={(v) => setBirthDate(maskDate(v))}
-              placeholder="DD/MM/AAAA"
-              keyboardType="numeric"
-              maxLength={10}
             />
           </View>
         </View>

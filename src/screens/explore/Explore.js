@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -8,27 +8,26 @@ import {
   FlatList,
   Image,
   ActivityIndicator,
+  RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { CATEGORIES } from '../data/mock';
-import { useCurrentLocation } from '../hooks/useCurrentLocation';
-import { gymService } from '../services/gymService';
+import { colors, radius, shadow, typography } from '../../theme/theme';
+import { CATEGORIES } from '../../data/mock';
 
-function GymCard({ gym, onPress }) {
+function EstabelecimentoCard({ estabelecimento, onPress }) {
   return (
     <TouchableOpacity style={styles.gymCard} onPress={onPress} activeOpacity={0.85}>
-      <Image source={{ uri: gym.image }} style={styles.gymImage} />
+      <Image source={{ uri: estabelecimento.image }} style={styles.gymImage} />
       <View style={styles.gymInfo}>
-        <Text style={styles.gymName}>{gym.name}</Text>
+        <Text style={styles.gymName}>{estabelecimento.name}</Text>
         <Text style={styles.gymMeta}>
-          {gym.distance} • {gym.hours}
+          {estabelecimento.distance} • {estabelecimento.hours}
         </Text>
         <View style={styles.ratingRow}>
           <Ionicons name="star" size={13} color={colors.star} />
           <Text style={styles.ratingText}>
-            {gym.rating} ({gym.reviews})
+            {estabelecimento.rating} ({estabelecimento.reviews})
           </Text>
         </View>
       </View>
@@ -37,59 +36,52 @@ function GymCard({ gym, onPress }) {
   );
 }
 
-export default function ExploreScreen({ navigation }) {
-  const [view, setView] = useState('lista');
-  const [activeCategory, setActiveCategory] = useState('todos');
-  const [search, setSearch] = useState('');
-
-  // Localização do usuário
-  const {
-    coords,
-    loading: loadingLocation,
-    permissionDenied,
-    errorMessage: locationError,
-    refetch,
-  } = useCurrentLocation();
-
-  // Academias próximas (dependem da localização)
-  const [gyms, setGyms] = useState([]);
-  const [selectedGym, setSelectedGym] = useState(null);
-  const [loadingGyms, setLoadingGyms] = useState(false);
-  const [gymsError, setGymsError] = useState('');
-
-  useEffect(() => {
-    if (!coords) return;
-    (async () => {
-      setLoadingGyms(true);
-      setGymsError('');
-      try {
-        const list = await gymService.getNearby(coords);
-        setGyms(list);
-        if (list.length > 0) setSelectedGym(list[0]);
-      } catch (err) {
-        setGymsError(err.friendlyMessage || 'Não foi possível carregar as academias próximas.');
-      } finally {
-        setLoadingGyms(false);
-      }
-    })();
-  }, [coords]);
-
-  const isLoadingAnything = loadingLocation || loadingGyms;
+export default function Explore({
+  navigation,
+  search,
+  onChangeSearch,
+  onSubmitSearch,
+  activeCategory,
+  onSelectCategory,
+  raioKm,
+  onOpenFilters,
+  permissionDenied,
+  isLoadingAnything,
+  refreshing,
+  onRefresh,
+  onRetryLocation,
+  onRetryEstabelecimentos,
+  estabelecimentos,
+  estabelecimentosError,
+  selectedEstabelecimento,
+  onSelectEstabelecimento,
+  hasMore,
+  loadingMore,
+  onLoadMore,
+}) {
+  // view de mapa desativada por enquanto (ver bloco comentado no fim do arquivo)
+  // const [view, setView] = React.useState('lista');
 
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
         <View>
           <Text style={styles.headerTitle}>Explorar</Text>
-          <TouchableOpacity style={styles.locationRow}>
+          {/*
+            Antes tínhamos um seletor de cidade aqui. Como o único filtro de
+            localização que temos hoje é a distância a partir da posição do
+            usuário, deixamos só o texto informativo abaixo (sem dropdown).
+          */}
+          <View style={styles.locationRow}>
             <Ionicons name="location" size={14} color={colors.blue} />
-            <Text style={styles.locationText}>Londrina - PR</Text>
-            <Ionicons name="chevron-down" size={14} color={colors.textMuted} />
-          </TouchableOpacity>
+            <Text style={styles.locationText}>Até {raioKm} km de você</Text>
+          </View>
         </View>
-        <TouchableOpacity style={styles.iconButton}>
+
+        {/* Sino de notificações - será implementado depois */}
+        {/* <TouchableOpacity style={styles.iconButton}>
           <Ionicons name="notifications-outline" size={20} color={colors.text} />
-        </TouchableOpacity>
+        </TouchableOpacity> */}
       </View>
 
       <View style={styles.searchRow}>
@@ -97,17 +89,28 @@ export default function ExploreScreen({ navigation }) {
           <Ionicons name="search" size={17} color={colors.textLight} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar estabelecimentos..."
+            placeholder="Buscar por razão social..."
             placeholderTextColor={colors.textLight}
             value={search}
-            onChangeText={setSearch}
+            onChangeText={onChangeSearch}
+            onSubmitEditing={onSubmitSearch}
+            returnKeyType="search"
           />
         </View>
-        <TouchableOpacity style={styles.filterButton} onPress={() => navigation.navigate('Filters')}>
+        {/*
+          O ícone de filtro abre a FiltersScreen (categorias, distância,
+          estrelas e ordenação). A tela devolve os filtros escolhidos via
+          callback (onApply), e é o ExploreScreen quem chama o backend.
+        */}
+        <TouchableOpacity style={styles.filterButton} onPress={onOpenFilters}>
           <Ionicons name="options-outline" size={18} color="#fff" />
         </TouchableOpacity>
       </View>
 
+      {/* Filtro por estrelas e ordenação agora vivem na FiltersScreen (veja onOpenFilters) */}
+
+      {/* Toggle lista/mapa - mapa desativado por enquanto */}
+      {/*
       <View style={styles.toggleRow}>
         <TouchableOpacity
           style={[styles.toggleBtn, view === 'lista' && styles.toggleBtnActive]}
@@ -122,14 +125,15 @@ export default function ExploreScreen({ navigation }) {
           <Text style={[styles.toggleText, view === 'mapa' && styles.toggleTextActive]}>Mapa</Text>
         </TouchableOpacity>
       </View>
+      */}
 
       {permissionDenied && (
         <View style={styles.stateBox}>
           <Ionicons name="location-outline" size={28} color={colors.textLight} />
           <Text style={styles.stateText}>
-            Permita o acesso à localização para ver academias perto de você.
+            Permita o acesso à localização para ver estabelecimentos perto de você.
           </Text>
-          <TouchableOpacity style={styles.stateButton} onPress={refetch}>
+          <TouchableOpacity style={styles.stateButton} onPress={onRetryLocation}>
             <Text style={styles.stateButtonText}>Permitir localização</Text>
           </TouchableOpacity>
         </View>
@@ -138,21 +142,21 @@ export default function ExploreScreen({ navigation }) {
       {!permissionDenied && isLoadingAnything && (
         <View style={styles.stateBox}>
           <ActivityIndicator size="small" color={colors.blue} />
-          <Text style={styles.stateText}>Buscando academias próximas de você...</Text>
+          <Text style={styles.stateText}>Buscando estabelecimentos próximos de você...</Text>
         </View>
       )}
 
-      {!permissionDenied && !isLoadingAnything && !!gymsError && (
+      {!permissionDenied && !isLoadingAnything && !!estabelecimentosError && (
         <View style={styles.stateBox}>
           <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
-          <Text style={styles.stateText}>{gymsError}</Text>
-          <TouchableOpacity style={styles.stateButton} onPress={refetch}>
+          <Text style={styles.stateText}>{estabelecimentosError}</Text>
+          <TouchableOpacity style={styles.stateButton} onPress={onRetryEstabelecimentos}>
             <Text style={styles.stateButtonText}>Tentar novamente</Text>
           </TouchableOpacity>
         </View>
       )}
 
-      {!permissionDenied && !isLoadingAnything && !gymsError && (
+      {!permissionDenied && !isLoadingAnything && !estabelecimentosError && (
         <>
           <View style={styles.chipsRow}>
             <FlatList
@@ -166,7 +170,7 @@ export default function ExploreScreen({ navigation }) {
                 return (
                   <TouchableOpacity
                     style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => setActiveCategory(item.id)}
+                    onPress={() => onSelectCategory(item.id)}
                   >
                     <Ionicons name={item.icon} size={15} color={active ? '#fff' : colors.blue} />
                     <Text style={[styles.chipText, active && styles.chipTextActive]}>{item.label}</Text>
@@ -176,64 +180,89 @@ export default function ExploreScreen({ navigation }) {
             />
           </View>
 
-          {view === 'lista' ? (
-            <FlatList
-              data={gyms}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 12 }}
-              ListHeaderComponent={<Text style={styles.sectionTitle}>Próximos de você</Text>}
-              renderItem={({ item }) => (
-                <GymCard gym={item} onPress={() => navigation.navigate('EstablishmentDetail', { gym: item })} />
-              )}
-              ListFooterComponent={
-                <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.9}>
-                  <View style={styles.premiumIcon}>
-                    <Ionicons name="star" size={18} color="#fff" />
+          <FlatList
+            data={estabelecimentos}
+            keyExtractor={(item) => item.id}
+            contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 12 }}
+            ListHeaderComponent={<Text style={styles.sectionTitle}>Próximos de você</Text>}
+            refreshControl={
+              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.blue]} tintColor={colors.blue} />
+            }
+            renderItem={({ item }) => (
+              <EstabelecimentoCard
+                estabelecimento={item}
+                onPress={() => navigation.navigate('EstablishmentDetail', { gym: item })}
+              />
+            )}
+            // Infinite scroll: dispara a busca da próxima página quando o
+            // usuário chega perto do fim da lista.
+            onEndReached={onLoadMore}
+            onEndReachedThreshold={0.4}
+            ListFooterComponent={
+              <>
+                {loadingMore && (
+                  <View style={styles.loadingMoreBox}>
+                    <ActivityIndicator size="small" color={colors.blue} />
+                    <Text style={styles.loadingMoreText}>Carregando mais estabelecimentos...</Text>
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.premiumTitle}>Seja Premium</Text>
-                    <Text style={styles.premiumSubtitle}>
-                      Tenha mais check-ins por dia e desbloqueie benefícios exclusivos.
-                    </Text>
-                  </View>
-                </TouchableOpacity>
-              }
-            />
-          ) : (
+                )}
+
+                {/* Banner Premium só aparece quando não há mais páginas pra carregar */}
+                {!hasMore && !loadingMore && (
+                  <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.9}>
+                    <View style={styles.premiumIcon}>
+                      <Ionicons name="star" size={18} color="#fff" />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.premiumTitle}>Seja Premium</Text>
+                      <Text style={styles.premiumSubtitle}>
+                        Tenha mais check-ins por dia e desbloqueie benefícios exclusivos.
+                      </Text>
+                    </View>
+                  </TouchableOpacity>
+                )}
+              </>
+            }
+          />
+
+          {/*
+            View de mapa desativada por enquanto. Mantida comentada para
+            reaproveitar quando a funcionalidade for implementada.
+
             <View style={styles.mapWrap}>
               <View style={styles.mapArea}>
-                {gyms.map((g) => (
+                {estabelecimentos.map((g) => (
                   <TouchableOpacity
                     key={g.id}
                     style={[styles.pin, { top: g.coord?.top ?? '50%', left: g.coord?.left ?? '50%' }]}
-                    onPress={() => setSelectedGym(g)}
+                    onPress={() => onSelectEstabelecimento(g)}
                   >
                     <Ionicons
                       name="location"
                       size={30}
-                      color={g.id === selectedGym?.id ? colors.blueDark : colors.blue}
+                      color={g.id === selectedEstabelecimento?.id ? colors.blueDark : colors.blue}
                     />
                   </TouchableOpacity>
                 ))}
                 <Text style={styles.mapCityLabel}>Londrina</Text>
               </View>
 
-              {selectedGym && (
+              {selectedEstabelecimento && (
                 <TouchableOpacity
                   style={styles.mapCard}
                   activeOpacity={0.9}
-                  onPress={() => navigation.navigate('EstablishmentDetail', { gym: selectedGym })}
+                  onPress={() => navigation.navigate('EstablishmentDetail', { gym: selectedEstabelecimento })}
                 >
-                  <Image source={{ uri: selectedGym.image }} style={styles.mapCardImage} />
+                  <Image source={{ uri: selectedEstabelecimento.image }} style={styles.mapCardImage} />
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.gymName}>{selectedGym.name}</Text>
+                    <Text style={styles.gymName}>{selectedEstabelecimento.name}</Text>
                     <Text style={styles.gymMeta}>
-                      {selectedGym.distance} • {selectedGym.hours}
+                      {selectedEstabelecimento.distance} • {selectedEstabelecimento.hours}
                     </Text>
                     <View style={styles.ratingRow}>
                       <Ionicons name="star" size={13} color={colors.star} />
                       <Text style={styles.ratingText}>
-                        {selectedGym.rating} ({selectedGym.reviews})
+                        {selectedEstabelecimento.rating} ({selectedEstabelecimento.reviews})
                       </Text>
                     </View>
                   </View>
@@ -241,7 +270,7 @@ export default function ExploreScreen({ navigation }) {
                 </TouchableOpacity>
               )}
             </View>
-          )}
+          */}
         </>
       )}
     </SafeAreaView>
@@ -334,6 +363,14 @@ const styles = StyleSheet.create({
   chipText: { fontSize: 13, fontWeight: '600', color: colors.blue },
   chipTextActive: { color: '#fff' },
   sectionTitle: { ...typography.h3, marginBottom: 4 },
+  loadingMoreBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
+  loadingMoreText: { fontSize: 12.5, color: colors.textMuted },
   gymCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -368,6 +405,7 @@ const styles = StyleSheet.create({
   },
   premiumTitle: { color: '#fff', fontWeight: '800', fontSize: 14 },
   premiumSubtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
+  // Estilos do mapa mantidos (usados apenas quando a view de mapa for reativada)
   mapWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 16 },
   mapArea: {
     flex: 1,

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { authService } from '../services/authService';
-import { setOnUnauthorized } from '../services/api';
+import { setOnUnauthorized } from '../config/api';
 
 const AuthContext = createContext(null);
 

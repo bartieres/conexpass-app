@@ -1,23 +1,45 @@
-// Configuração central de acesso ao backend (Java + Spring Boot).
-//
-// IMPORTANTE:
-// - Em emulador Android, "localhost" do seu computador é acessado via 10.0.2.2.
-// - Em dispositivo físico (Expo Go), use o IP da sua máquina na rede local,
-//   ex: "http://192.168.0.15:8080/api" (celular e PC precisam estar na mesma Wi-Fi).
-// - Em produção, aponte para o domínio real da API (https://api.conexpass.com.br/api).
-//
-// Você pode também mover isso para variáveis de ambiente com `expo-constants`
-// (app.json -> "extra") quando tiver ambientes de homologação/produção.
+import axios from 'axios';
+import * as SecureStore from 'expo-secure-store';
+import constants from '../shared/constants';
 
-export const API_BASE_URL = 'http://192.168.0.59:8082/api';
+const TOKEN_KEY = 'conexpass_token';
 
-export const ENDPOINTS = {
-  login: '/auth/login',
-  register: '/auth/register',
-  forgotPassword: '/auth/forgot-password',
-  me: '/users',
-  gyms: '/gyms',
-  checkins: '/checkins',
-  plans: '/plans',
-  mySubscription: '/subscriptions/me',
-};
+export const api = axios.create({
+  baseURL: `${constants.URL.LOCATION.api}/api`,
+  timeout: 15000,
+  headers: { 'Content-Type': 'application/json' },
+});
+
+// Anexa o token JWT em toda requisição autenticada
+api.interceptors.request.use(async (config) => {
+  const token = await SecureStore.getItemAsync(TOKEN_KEY);
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Callback opcional disparado quando o backend responde 401 (token expirado/inválido)
+let onUnauthorized = null;
+export function setOnUnauthorized(callback) {
+  onUnauthorized = callback;
+}
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401 && onUnauthorized) {
+      onUnauthorized();
+    }
+    // Normaliza a mensagem de erro vinda do Spring Boot (ex: { message, errors })
+    const message =
+      error.response?.data?.message ||
+      error.response?.data?.error ||
+      (error.request && !error.response
+        ? 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.'
+        : 'Ocorreu um erro inesperado. Tente novamente.');
+    return Promise.reject({ ...error, friendlyMessage: message });
+  }
+);
+
+export { TOKEN_KEY };

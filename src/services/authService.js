@@ -1,6 +1,5 @@
 import * as SecureStore from 'expo-secure-store';
-import { api, TOKEN_KEY } from './api';
-import { ENDPOINTS } from '../config/api';
+import { api, TOKEN_KEY } from '../config/api';
 
 const USER_KEY = 'conexpass_user';
 
@@ -19,26 +18,26 @@ export const authService = {
     
     const payload = { email: identifier.trim(), senha: password };
 
-    const { data } = await api.post(ENDPOINTS.login, payload);
+    const { data } = await api.post('/auth/login', payload);
     await persistSession(data.token.accessToken, data.user);
     return data.user;
   },
 
   // POST /auth/register { name, email, cpf, password } -> { token, user }
   async register(payload) {
-    const { data } = await api.post(ENDPOINTS.register, payload);
+    const { data } = await api.post('/auth/register', payload);
     return data;
   },
 
   // POST /auth/forgot-password { email } -> { message }
   async forgotPassword(email) {
-    const { data } = await api.post(ENDPOINTS.forgotPassword, { email: email.trim() });
+    const { data } = await api.post('/auth/forgot-password', { email: email.trim() });
     return data;
   },
 
   // GET /users/me -> valida o token salvo e retorna o usuário atualizado
   async getMe() {
-    const { data } = await api.get(ENDPOINTS.me);
+    const { data } = await api.get('/users');
     return data;
   },
 

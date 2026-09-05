@@ -1,19 +1,65 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, SafeAreaView, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { CATEGORIES } from '../data/mock';
+import { colors, radius, shadow, typography } from '../../theme/theme';
+import { CATEGORIES } from '../../data/mock';
 
-export default function FiltersScreen({ navigation }) {
-  const [selected, setSelected] = useState(['academia']);
-  const [distance, setDistance] = useState(5);
-  const [minRating, setMinRating] = useState(0);
-  const sortOptions = ['Mais próximos', 'Melhor avaliados', 'Menor preço'];
-  const [sort, setSort] = useState(sortOptions[0]);
+// Chaves enviadas ao backend para cada opção de ordenação exibida na tela.
+// 'preco' fica pronto mas o back ainda pode não suportar - ver comentário abaixo.
+const SORT_OPTIONS = [
+  { label: 'Mais próximos', value: 'distancia' },
+  { label: 'Melhor avaliados', value: 'avaliacao' },
+  { label: 'Menor preço', value: 'preco' }, // TODO: confirmar suporte no backend
+];
+
+const RAIO_MIN_KM = 1;
+const RAIO_MAX_KM = 20;
+
+/**
+ * FiltersScreen
+ *
+ * Não tem estado de negócio próprio: recebe os filtros atuais via
+ * route.params.initialFiltros e devolve o resultado via route.params.onApply,
+ * quem realmente chama o backend é quem abriu essa tela (ExploreScreen).
+ *
+ * route.params esperado:
+ * {
+ *   initialFiltros: { categorias: string[], raioKm: number, estrelasMin: number, ordenarPor: string },
+ *   onApply: (filtros) => void,
+ * }
+ */
+export default function FiltersScreen({ navigation, route }) {
+  const initialFiltros = route?.params?.initialFiltros ?? {};
+  const onApply = route?.params?.onApply;
+
+  const [selected, setSelected] = useState(initialFiltros.categorias ?? []);
+  const [distance, setDistance] = useState(initialFiltros.raioKm ?? 5);
+  const [minRating, setMinRating] = useState(initialFiltros.estrelasMin ?? 0);
+  const [sort, setSort] = useState(initialFiltros.ordenarPor ?? SORT_OPTIONS[0].value);
 
   const toggleCategory = (id) => {
     setSelected((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+  };
+
+  const handleClear = () => {
+    setSelected([]);
+    setDistance(5);
+    setMinRating(0);
+    setSort(SORT_OPTIONS[0].value);
+  };
+
+  const handleApply = () => {
+    const filtros = {
+      categorias: selected,
+      raioKm: distance,
+      estrelasMin: minRating,
+      ordenarPor: sort,
+    };
+
+    if (onApply) onApply(filtros);
+    navigation.goBack();
   };
 
   return (
@@ -25,7 +71,7 @@ export default function FiltersScreen({ navigation }) {
           </TouchableOpacity>
         </View>
         <Text style={styles.headerTitle}>Filtros</Text>
-        <TouchableOpacity onPress={() => { setSelected([]); setDistance(5); setMinRating(0); }}>
+        <TouchableOpacity onPress={handleClear}>
           <Text style={styles.clearText}>Limpar</Text>
         </TouchableOpacity>
       </View>
@@ -53,8 +99,8 @@ export default function FiltersScreen({ navigation }) {
         </View>
         <Slider
           style={{ width: '100%', height: 36 }}
-          minimumValue={1}
-          maximumValue={20}
+          minimumValue={RAIO_MIN_KM}
+          maximumValue={RAIO_MAX_KM}
           step={1}
           value={distance}
           onValueChange={setDistance}
@@ -66,7 +112,10 @@ export default function FiltersScreen({ navigation }) {
         <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Avaliação mínima</Text>
         <View style={styles.starsRow}>
           {[1, 2, 3, 4, 5].map((n) => (
-            <TouchableOpacity key={n} onPress={() => setMinRating(n)}>
+            <TouchableOpacity
+              key={n}
+              onPress={() => setMinRating((atual) => (atual === n ? 0 : n))}
+            >
               <Ionicons
                 name={n <= minRating ? 'star' : 'star-outline'}
                 size={28}
@@ -79,11 +128,11 @@ export default function FiltersScreen({ navigation }) {
 
         <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Ordenar por</Text>
         <View style={styles.sortWrap}>
-          {sortOptions.map((opt) => (
-            <TouchableOpacity key={opt} style={styles.sortRow} onPress={() => setSort(opt)}>
-              <Text style={styles.sortLabel}>{opt}</Text>
-              <View style={[styles.radio, sort === opt && styles.radioActive]}>
-                {sort === opt && <View style={styles.radioDot} />}
+          {SORT_OPTIONS.map((opt) => (
+            <TouchableOpacity key={opt.value} style={styles.sortRow} onPress={() => setSort(opt.value)}>
+              <Text style={styles.sortLabel}>{opt.label}</Text>
+              <View style={[styles.radio, sort === opt.value && styles.radioActive]}>
+                {sort === opt.value && <View style={styles.radioDot} />}
               </View>
             </TouchableOpacity>
           ))}
@@ -91,7 +140,7 @@ export default function FiltersScreen({ navigation }) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.applyButton} onPress={() => navigation.goBack()} activeOpacity={0.85}>
+        <TouchableOpacity style={styles.applyButton} onPress={handleApply} activeOpacity={0.85}>
           <Text style={styles.applyButtonText}>Aplicar filtros</Text>
         </TouchableOpacity>
       </View>

@@ -1,8 +1,13 @@
-import { api } from './api';
+import { api as axiosPrivate } from '../config/api';
 
 const BASE_URL = '/checkins';
 
-export const checkinService = {
+export const findAllByCondition = async (params) => {
+  const response = await axiosPrivate.get(BASE_URL, { params });
+  return response.data;
+};
+
+/*export const checkinService = {
     
     findAll: async () => {
         var params = {
@@ -15,4 +20,4 @@ export const checkinService = {
         const response = await api.get(BASE_URL, { params });
         return response.data.response;
     },
-};
+};*/
