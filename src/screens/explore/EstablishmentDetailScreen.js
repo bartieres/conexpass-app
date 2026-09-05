@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../theme/theme';
-import { GYMS } from '../data/mock';
+import { colors, radius, shadow, typography } from '../../theme/theme';
+import { GYMS } from '../../data/mock';
 
 const AMENITY_ICONS = {
   'Wi-Fi': 'wifi-outline',
@@ -14,6 +14,13 @@ const AMENITY_ICONS = {
 export default function EstablishmentDetailScreen({ route, navigation }) {
   const gym = route.params?.gym || GYMS[0];
   const [favorite, setFavorite] = useState(false);
+
+  const handleCheckin = () => {
+    // A tela de check-in em si (ConfirmCheckIn) espera o estabelecimento
+    // com esse mesmo formato (name, address, hours), então passamos o
+    // objeto "gym" direto, só renomeando a chave.
+    navigation.navigate('ConfirmCheckIn', { estabelecimento: gym });
+  };
 
   return (
     <View style={styles.container}>
@@ -77,12 +84,8 @@ export default function EstablishmentDetailScreen({ route, navigation }) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={styles.checkinButton}
-          activeOpacity={0.85}
-          onPress={() => navigation.navigate('CheckInScreen', { gym })}
-        >
-          <Ionicons name="qr-code-outline" size={18} color="#fff" />
+        <TouchableOpacity style={styles.checkinButton} activeOpacity={0.85} onPress={handleCheckin}>
+          <Ionicons name="checkmark-circle-outline" size={19} color="#fff" />
           <Text style={styles.checkinButtonText}>Fazer Check-in</Text>
         </TouchableOpacity>
       </View>

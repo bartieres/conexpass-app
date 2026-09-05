@@ -20,7 +20,7 @@ function buildMenuSections({ onLogout, onDeleteAccount }) {
     {
       title: 'Preferências',
       items: [
-        { icon: 'notifications-outline', label: 'Notificações', screen: 'Notifications' },
+        { icon: 'notifications-outline', label: 'Notificações', screen: 'Notification' },
         { icon: 'location-outline', label: 'Localização', screen: 'Location' },
       ],
     },

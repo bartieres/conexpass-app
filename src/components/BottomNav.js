@@ -5,8 +5,8 @@ import { colors } from '../theme/theme';
 
 const TABS = [
   { key: 'Explorar', label: 'Explorar', icon: 'search-outline', iconActive: 'search' },
-  { key: 'Historico', label: 'Histórico', icon: 'time-outline', iconActive: 'time' },
-  { key: 'CheckIn', label: 'Check-in', icon: 'qr-code-outline', iconActive: 'qr-code', center: true },
+  //{ key: 'Historico', label: 'Histórico', icon: 'time-outline', iconActive: 'time' },
+  { key: 'CheckIns', label: 'Check-ins', icon: 'qr-code-outline', iconActive: 'qr-code' },
   { key: 'Planos', label: 'Planos', icon: 'card-outline', iconActive: 'card' },
   { key: 'Perfil', label: 'Perfil', icon: 'person-outline', iconActive: 'person' },
 ];

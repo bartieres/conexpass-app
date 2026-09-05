@@ -5,14 +5,15 @@ import BottomNav from '../components/BottomNav';
 
 import ExploreScreen from '../screens/explore/ExploreScreen';
 import FiltersScreen from '../screens/explore/FiltersScreen';
-import EstablishmentDetailScreen from '../screens/EstablishmentDetailScreen';
+import EstablishmentDetailScreen from '../screens/explore/EstablishmentDetailScreen';
 
 import HistoryScreen from '../screens/history/HistoryScreen';
 
-import CheckInScreen from '../screens/CheckInScreen';
-import CheckInSuccessScreen from '../screens/CheckInSuccessScreen';
-import PlanScreen from '../screens/PlanScreen';
-import PlansScreen from '../screens/PlansScreen';
+import CheckInScreen from '../screens/checkins/CheckInScreen';
+import ConfirmCheckInScreen from '../screens/explore/ConfirmCheckInScreen';
+
+import PlanScreen from '../screens/plan/PlanScreen';
+import PlansScreen from '../screens/plan/PlansScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import PersonalDataScreen from '../screens/profile/conta/PersonalDataScreen';
 import SecurityScreen from '../screens/profile/conta/SecurityScreen';
@@ -35,7 +36,7 @@ function ExploreStack() {
       <ExploreStackNav.Screen name="EstablishmentDetail" component={EstablishmentDetailScreen} />
       <ExploreStackNav.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
       <ExploreStackNav.Screen name="CheckInScreen" component={CheckInScreen} />
-      <ExploreStackNav.Screen name="CheckInSuccess" component={CheckInSuccessScreen} />
+      <ExploreStackNav.Screen name="ConfirmCheckIn" component={ConfirmCheckInScreen} />
     </ExploreStackNav.Navigator>
   );
 }
@@ -44,8 +45,6 @@ function CheckInStack() {
   return (
     <CheckInStackNav.Navigator screenOptions={{ headerShown: false }}>
       <CheckInStackNav.Screen name="CheckInScreen" component={CheckInScreen} />
-      <CheckInStackNav.Screen name="CheckInSuccess" component={CheckInSuccessScreen} />
-      <CheckInStackNav.Screen name="EstablishmentDetail" component={EstablishmentDetailScreen} />
     </CheckInStackNav.Navigator>
   );
 }
@@ -82,8 +81,8 @@ export default function MainTabs() {
       tabBar={(props) => <BottomNav {...props} />}
     >
       <Tab.Screen name="Explorar" component={ExploreStack} />
-      <Tab.Screen name="Historico" component={HistoryScreen} />
-      <Tab.Screen name="CheckIn" component={CheckInStack} />
+      {/*<Tab.Screen name="Historico" component={HistoryScreen} />*/}
+      <Tab.Screen name="CheckIns" component={CheckInStack} />
       <Tab.Screen name="Planos" component={PlanStack} />
       <Tab.Screen name="Perfil" component={ProfileStack} />
     </Tab.Navigator>
