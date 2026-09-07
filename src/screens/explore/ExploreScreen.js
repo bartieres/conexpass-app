@@ -6,6 +6,17 @@ import Explore from './Explore';
 const RAIO_INICIAL_KM = 10;
 const TAMANHO_PAGINA = 10;
 
+export function formatarDistancia(distanciaMetros) {
+  if (distanciaMetros < 1000) {
+    return `${Math.round(distanciaMetros)} m`;
+  }
+
+  return `${(distanciaMetros / 1000).toLocaleString('pt-BR', {
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1
+  })} km`;
+}
+
 /**
  * ExploreScreen (container)
  * Responsável por: localização do usuário, busca de estabelecimentos no backend,
@@ -42,23 +53,8 @@ export default function ExploreScreen({ navigation }) {
   const [estabelecimentosError, setEstabelecimentosError] = useState('');
   const [hasMore, setHasMore] = useState(true);
 
-  // Guarda a página atual fora do state para não precisar recriar a função
-  // de busca toda vez que ela muda (evita closures desatualizadas no onEndReached).
   const paginaRef = useRef(0);
 
-  /**
-   * Busca no backend. Texto, categorias, raio, estrelas mínimas e ordenação
-   * são tratados em um único endpoint, que agora também é paginado.
-   *
-   * - reset = true (padrão): usado em busca inicial, troca de filtro, busca
-   *   por texto e pull-to-refresh. Volta pra página 0 e substitui a lista.
-   * - reset = false: usado pelo infinite scroll (onEndReached). Busca a
-   *   próxima página e concatena no final da lista atual.
-   *
-   * Aceita "overrides" para quando precisamos usar um valor mais atual do
-   * que o que já está no state (ex: acabou de selecionar uma categoria e o
-   * state ainda não re-renderizou).
-   */
   const buscarEstabelecimentos = useCallback(
     async ({
       reset = true,
@@ -71,7 +67,6 @@ export default function ExploreScreen({ navigation }) {
     } = {}) => {
       if (!coords) return;
 
-      // evita disparar duas buscas de "próxima página" ao mesmo tempo
       if (!reset && (loadingMore || !hasMore)) return;
 
       const termo = termoOverride ?? search;
@@ -92,7 +87,7 @@ export default function ExploreScreen({ navigation }) {
         const filtros = {
           ...coords,
           termo: termo || undefined,
-          raioKm: raio,
+          raioKm: raio * 1000,
           categorias: categoriasAtuais.length > 0 ? categoriasAtuais : undefined,
           estrelasMin: estrelas > 0 ? estrelas : undefined,
           ordenarPor: ordenacao,
@@ -103,9 +98,6 @@ export default function ExploreScreen({ navigation }) {
           size: TAMANHO_PAGINA
         }
 
-        // Assumindo que o backend retorna algo como { itens, temMaisPaginas },
-        // seguindo o padrão de paginação do Spring (Page): ajuste dentro do
-        // estabelecimentoService se o formato de resposta for diferente.
         const data = await findAllByCondition({ ...filtros, ...pages });
         const { content, last } = data.response;
 
@@ -113,7 +105,7 @@ export default function ExploreScreen({ navigation }) {
           id: e.id,
           name: e.razaoSocial,
           category: e.tipo.descricao,
-          distance: '350 m',
+          distance: formatarDistancia(e.distanciaMetros),
           hours: 'Aberto até 22:00',
           rating: 4.8,
           reviews: 120,

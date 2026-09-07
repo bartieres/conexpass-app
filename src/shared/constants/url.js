@@ -13,7 +13,7 @@ export const URL_UAT = {
 export const URL_LOCAL = {
   href: 'http://localhost:3010',
   hostname: 'localhost',
-  api: 'http://192.168.0.59:8082' // IP da máquina na rede local (Expo Go em dispositivo físico)
+  api: 'http://192.168.0.78:8082'
 };
 
 export const LOCATION = (() => {

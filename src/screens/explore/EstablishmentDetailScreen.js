@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../../theme/theme';
-import { GYMS } from '../../data/mock';
+//import { GYMS } from '../../data/mock';
 
 const AMENITY_ICONS = {
   'Wi-Fi': 'wifi-outline',
@@ -12,7 +12,7 @@ const AMENITY_ICONS = {
 };
 
 export default function EstablishmentDetailScreen({ route, navigation }) {
-  const gym = route.params?.gym || GYMS[0];
+  const gym = route.params?.gym;
   const [favorite, setFavorite] = useState(false);
 
   const handleCheckin = () => {

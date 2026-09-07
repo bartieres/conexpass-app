@@ -18,7 +18,15 @@ export const authService = {
     
     const payload = { email: identifier.trim(), senha: password };
 
-    const { data } = await api.post('/auth/login', payload);
+    console.log('authService.login payload', payload);
+    const { data } = await api.post('/auth/login', {
+      ...payload,
+    },
+    {
+      headers: {
+        'X-Client-Type': 'APP'
+      }
+    });
     await persistSession(data.token.accessToken, data.user);
     return data.user;
   },

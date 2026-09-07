@@ -13,7 +13,11 @@ import CheckInScreen from '../screens/checkins/CheckInScreen';
 import ConfirmCheckInScreen from '../screens/explore/ConfirmCheckInScreen';
 
 import PlanScreen from '../screens/plan/PlanScreen';
-import PlansScreen from '../screens/plan/PlansScreen';
+import ChangePlanScreen from '../screens/plan/ChangePlanScreen';
+import PaymentDetailScreen from '../screens/plan/PaymentDetailScreen';
+import PaymentMethodScreen from '../screens/plan/PaymentMethodScreen';
+import PaymentScreen from '../screens/plan/PaymentScreen';
+
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import PersonalDataScreen from '../screens/profile/conta/PersonalDataScreen';
 import SecurityScreen from '../screens/profile/conta/SecurityScreen';
@@ -53,7 +57,10 @@ function PlanStack() {
   return (
     <PlanStackNav.Navigator screenOptions={{ headerShown: false }}>
       <PlanStackNav.Screen name="PlanMain" component={PlanScreen} />
-      <PlanStackNav.Screen name="Plans" component={PlansScreen} />
+      <PlanStackNav.Screen name="ChangePlan" component={ChangePlanScreen} />
+      <PlanStackNav.Screen name="PaymentDetail" component={PaymentDetailScreen} />
+      <PlanStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
+      <PlanStackNav.Screen name="Payment" component={PaymentScreen} />
     </PlanStackNav.Navigator>
   );
 }

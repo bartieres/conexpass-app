@@ -7,15 +7,8 @@ export const save = async (data) => {
   return response.data;
 };
 
-export const findAll = async () => {
-  var params = {
-    ignoreSize: true
-  };
-  return await findAllByCondition(params);
-};
-
 export const findAllByCondition = async (params) => {
-  const response = await axiosPrivate.get(BASE_URL, { params });
+  const response = await axiosPrivate.get(`${BASE_URL}/explorar`, { params });
   return response.data;
 };
 

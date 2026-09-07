@@ -15,6 +15,7 @@ api.interceptors.request.use(async (config) => {
   const token = await SecureStore.getItemAsync(TOKEN_KEY);
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
+    config.headers['X-Client-Type'] = 'APP';
   }
   return config;
 });
@@ -27,18 +28,24 @@ export function setOnUnauthorized(callback) {
 
 api.interceptors.response.use(
   (response) => response,
+
   (error) => {
     if (error.response?.status === 401 && onUnauthorized) {
       onUnauthorized();
     }
-    // Normaliza a mensagem de erro vinda do Spring Boot (ex: { message, errors })
+
     const message =
+      error.response?.data?.status?.messages?.[0] ||
       error.response?.data?.message ||
       error.response?.data?.error ||
       (error.request && !error.response
         ? 'Não foi possível conectar ao servidor. Verifique sua internet e tente novamente.'
         : 'Ocorreu um erro inesperado. Tente novamente.');
-    return Promise.reject({ ...error, friendlyMessage: message });
+
+    return Promise.reject({
+      ...error,
+      friendlyMessage: message
+    });
   }
 );
 
