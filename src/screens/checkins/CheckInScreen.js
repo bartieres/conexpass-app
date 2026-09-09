@@ -88,10 +88,10 @@ export default function CheckInsScreen() {
     setResumoError('');
     try {
       const data = await getResumo();
-      const { plano, qtdDisponivel, qtdAvulso, qtdBonus } = data.response;
+      const { plano, qtdPlano, qtdAvulso, qtdBonus } = data.response;
 
       setResumo({
-        disponiveis: qtdDisponivel ?? 0,
+        disponiveis: qtdPlano ?? 0,
         plano: plano.nome ?? 0,
         avulso: qtdAvulso ?? 0,
         bonus: qtdBonus ?? 0,

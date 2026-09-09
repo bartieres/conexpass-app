@@ -39,7 +39,7 @@ export default function ConfirmCheckIn({
   confirmError,
   onConfirmar,
 }) {
-  const meta = TYPE_META[tipoUtilizado] || TYPE_META.Plano;
+  const meta = TYPE_META[tipoUtilizado?.nome] || TYPE_META.Plano;
   const semCheckinsDisponiveis = !loadingResumo && !resumoError && !tipoUtilizado;
   const podeConfirmar =
     !!tipoUtilizado && !loadingLocation && !permissionDenied && !confirming && !loadingResumo && !resumoError;
@@ -102,10 +102,10 @@ export default function ConfirmCheckIn({
                 <View style={[styles.usoIconWrap, { backgroundColor: meta.bg }]}>
                   <Ionicons name={meta.icon} size={17} color={meta.color} />
                 </View>
-                <Text style={styles.usoLabel}>Check-in do {tipoUtilizado.toLowerCase()}</Text>
+                <Text style={styles.usoLabel}>Check-in do {tipoUtilizado.nome.toLowerCase()}</Text>
               </View>
               <View style={[styles.typePill, { backgroundColor: meta.bg }]}>
-                <Text style={[styles.typePillText, { color: meta.color }]}>{tipoUtilizado}</Text>
+                <Text style={[styles.typePillText, { color: meta.color }]}>{tipoUtilizado.nome}</Text>
               </View>
             </View>
           </View>

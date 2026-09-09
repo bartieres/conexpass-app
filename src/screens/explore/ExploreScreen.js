@@ -26,7 +26,7 @@ export function formatarDistancia(distanciaMetros) {
  *
  * O componente visual (Explore) só recebe dados e callbacks via props.
  */
-export default function ExploreScreen({ navigation }) {
+export default function ExploreScreen({ navigation, route }) {
   const [search, setSearch] = useState('');
 
   // Filtros completos (também editáveis via FiltersScreen)
@@ -151,6 +151,32 @@ export default function ExploreScreen({ navigation }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [coords]);
 
+  // Recebe os filtros de volta da FiltersScreen via route.params (nunca via
+  // função — funções não são serializáveis no estado de navegação e geram o
+  // aviso "Non-serializable values were found in the navigation state").
+  // Ao aplicar, já limpa o parâmetro pra não reaplicar de novo em um próximo
+  // foco da tela (ex: usuário voltando de outra tela sem mexer nos filtros).
+  useEffect(() => {
+    const filtrosAplicados = route?.params?.filtrosAplicados;
+    if (!filtrosAplicados) return;
+
+    setCategorias(filtrosAplicados.categorias ?? []);
+    setRaioKm(filtrosAplicados.raioKm ?? RAIO_INICIAL_KM);
+    setEstrelasMin(filtrosAplicados.estrelasMin ?? 0);
+    setOrdenarPor(filtrosAplicados.ordenarPor ?? 'distancia');
+
+    buscarEstabelecimentos({
+      reset: true,
+      categoriasOverride: filtrosAplicados.categorias ?? [],
+      raioOverride: filtrosAplicados.raioKm ?? RAIO_INICIAL_KM,
+      estrelasMinOverride: filtrosAplicados.estrelasMin ?? 0,
+      ordenarPorOverride: filtrosAplicados.ordenarPor ?? 'distancia',
+    });
+
+    navigation.setParams({ filtrosAplicados: undefined });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [route?.params?.filtrosAplicados]);
+
   // Pull-to-refresh: sempre reseta a paginação
   const handleRefresh = useCallback(() => {
     buscarEstabelecimentos({ reset: true, isRefresh: true });
@@ -176,26 +202,13 @@ export default function ExploreScreen({ navigation }) {
     [buscarEstabelecimentos]
   );
 
-  // Abre a FiltersScreen levando os filtros atuais e recebe o resultado via onApply
+  // Abre a FiltersScreen levando os filtros atuais. A resposta volta via
+  // route.params (ver useEffect acima), não via callback.
   const handleOpenFilters = useCallback(() => {
     navigation.navigate('Filters', {
       initialFiltros: { categorias, raioKm, estrelasMin, ordenarPor },
-      onApply: (novosFiltros) => {
-        setCategorias(novosFiltros.categorias);
-        setRaioKm(novosFiltros.raioKm);
-        setEstrelasMin(novosFiltros.estrelasMin);
-        setOrdenarPor(novosFiltros.ordenarPor);
-
-        buscarEstabelecimentos({
-          reset: true,
-          categoriasOverride: novosFiltros.categorias,
-          raioOverride: novosFiltros.raioKm,
-          estrelasMinOverride: novosFiltros.estrelasMin,
-          ordenarPorOverride: novosFiltros.ordenarPor,
-        });
-      },
     });
-  }, [navigation, categorias, raioKm, estrelasMin, ordenarPor, buscarEstabelecimentos]);
+  }, [navigation, categorias, raioKm, estrelasMin, ordenarPor]);
 
   const isLoadingAnything = loadingLocation || loadingEstabelecimentos;
 

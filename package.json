@@ -1,6 +1,9 @@
 {
   "name": "conexpass-app",
-  "version": "1.0.0",
+  "version": "1.0.1",
+  "android": {
+    "versionCode": 2
+  },
   "main": "node_modules/expo/AppEntry.js",
   "private": true,
   "scripts": {

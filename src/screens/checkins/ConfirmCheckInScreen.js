@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { findAllByCondition } from '../../services/checkinService';
+import { confirmar } from '../../services/checkinService';
 import { getResumo } from '../../services/assinaturaService';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import ConfirmCheckIn from './ConfirmCheckIn';
@@ -9,9 +9,9 @@ import ConfirmCheckIn from './ConfirmCheckIn';
 // (ou troque para vir pronta do backend, se ele já decidir isso).
 function definirTipoUtilizado(resumo) {
   if (!resumo) return null;
-  if (resumo.plano > 0) return 'Plano';
-  if (resumo.avulso > 0) return 'Avulso';
-  if (resumo.bonus > 0) return 'Bônus';
+  if (resumo.disponiveis > 0) return { codigo: 'PLANO', nome: 'Plano' };
+  if (resumo.avulso > 0) return { codigo: 'AVULSO', nome: 'Avulso' };
+  if (resumo.bonus > 0) return  { codigo: 'BONUS', nome: 'Bônus' };
   return null;
 }
 
@@ -43,10 +43,10 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
     try {
       // TODO: confirmar endpoint/formato exato no backend
       const data = await getResumo();
-      const { plano, qtdDisponivel, qtdAvulso, qtdBonus } = data.response;
+      const { plano, qtdPlano, qtdAvulso, qtdBonus } = data.response;
 
       setResumo({
-        disponiveis: qtdDisponivel ?? 0,
+        disponiveis: qtdPlano ?? 0,
         plano: plano.nome ?? 0,
         avulso: qtdAvulso ?? 0,
         bonus: qtdBonus ?? 0,
@@ -70,17 +70,24 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
     setConfirmError('');
     setConfirming(true);
     try {
-      // TODO: confirmar contrato do endpoint (nomes dos campos, se tipo vai
-      // como enum PLANO/AVULSO/BONUS, etc.)
-      await checkinService.confirmar({
-        estabelecimentoId: estabelecimento.id,
-        tipo: tipoUtilizado,
+      var payload = {
+        estabelecimento: {
+          id: estabelecimento.id
+        },
+        tipoCheckin: tipoUtilizado.codigo,
         latitude: coords.latitude,
         longitude: coords.longitude,
-      });
+      }
+      const data = await confirmar(payload);
 
-      // Sucesso: volta pra tela de Check-ins, que já mostra o histórico atualizado
-      navigation.navigate('CheckIns');
+      // Não navega direto pra tela de sucesso — o backend só registrou a
+      // SOLICITAÇÃO de check-in (status PENDENTE). A confirmação de verdade
+      // depende da recepção aprovar pelo painel deles, então vamos pra uma
+      // tela de espera que faz polling do status.
+      navigation.replace('CheckInPending', {
+        checkinId: data?.response?.id,
+        estabelecimento,
+      });
     } catch (err) {
       setConfirmError(err.friendlyMessage || 'Não foi possível confirmar seu check-in. Tente novamente.');
     } finally {

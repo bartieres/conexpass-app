@@ -21,18 +21,19 @@ const RAIO_MAX_KM = 20;
  * FiltersScreen
  *
  * Não tem estado de negócio próprio: recebe os filtros atuais via
- * route.params.initialFiltros e devolve o resultado via route.params.onApply,
- * quem realmente chama o backend é quem abriu essa tela (ExploreScreen).
+ * route.params.initialFiltros e, ao aplicar, NAVEGA DE VOLTA pra tela
+ * "Explorar" levando os novos filtros como parâmetro (apenas dados, nunca
+ * uma função — funções em route.params não são serializáveis e quebram o
+ * React Navigation, gerando o aviso "Non-serializable values were found in
+ * the navigation state").
  *
  * route.params esperado:
  * {
  *   initialFiltros: { categorias: string[], raioKm: number, estrelasMin: number, ordenarPor: string },
- *   onApply: (filtros) => void,
  * }
  */
 export default function FiltersScreen({ navigation, route }) {
   const initialFiltros = route?.params?.initialFiltros ?? {};
-  const onApply = route?.params?.onApply;
 
   const [selected, setSelected] = useState(initialFiltros.categorias ?? []);
   const [distance, setDistance] = useState(initialFiltros.raioKm ?? 5);
@@ -58,8 +59,9 @@ export default function FiltersScreen({ navigation, route }) {
       ordenarPor: sort,
     };
 
-    if (onApply) onApply(filtros);
-    navigation.goBack();
+    // Navega de volta pra tela "Explorar" já existente na stack, levando os
+    // filtros como parâmetro simples — nunca uma função.
+    navigation.navigate('ExploreMain', { filtrosAplicados: filtros });
   };
 
   return (

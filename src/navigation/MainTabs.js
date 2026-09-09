@@ -10,7 +10,9 @@ import EstablishmentDetailScreen from '../screens/explore/EstablishmentDetailScr
 import HistoryScreen from '../screens/history/HistoryScreen';
 
 import CheckInScreen from '../screens/checkins/CheckInScreen';
-import ConfirmCheckInScreen from '../screens/explore/ConfirmCheckInScreen';
+import ConfirmCheckInScreen from '../screens/checkins/ConfirmCheckInScreen';
+import CheckinSuccessScreen from '../screens/checkins/CheckinSuccessScreen';
+import CheckInPendingScreen from '../screens/checkins/CheckInPendingScreen';
 
 import PlanScreen from '../screens/plan/PlanScreen';
 import ChangePlanScreen from '../screens/plan/ChangePlanScreen';
@@ -39,8 +41,10 @@ function ExploreStack() {
       <ExploreStackNav.Screen name="ExploreMain" component={ExploreScreen} />
       <ExploreStackNav.Screen name="EstablishmentDetail" component={EstablishmentDetailScreen} />
       <ExploreStackNav.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
-      <ExploreStackNav.Screen name="CheckInScreen" component={CheckInScreen} />
+      <ExploreStackNav.Screen name="CheckIns" component={CheckInScreen} />
       <ExploreStackNav.Screen name="ConfirmCheckIn" component={ConfirmCheckInScreen} />
+      <ExploreStackNav.Screen name="CheckInSuccess" component={CheckinSuccessScreen} />
+      <ExploreStackNav.Screen name="CheckInPending" component={CheckInPendingScreen} />
     </ExploreStackNav.Navigator>
   );
 }
@@ -48,7 +52,7 @@ function ExploreStack() {
 function CheckInStack() {
   return (
     <CheckInStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <CheckInStackNav.Screen name="CheckInScreen" component={CheckInScreen} />
+      <CheckInStackNav.Screen name="CheckIns" component={CheckInScreen} />
     </CheckInStackNav.Navigator>
   );
 }
