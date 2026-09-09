@@ -86,9 +86,9 @@ export default function ExploreScreen({ navigation, route }) {
       try {
         const filtros = {
           ...coords,
-          termo: termo || undefined,
+          query: termo || undefined,
           raioKm: raio * 1000,
-          categorias: categoriasAtuais.length > 0 ? categoriasAtuais : undefined,
+          tipos: categoriasAtuais.length > 0 ? categoriasAtuais : undefined,
           estrelasMin: estrelas > 0 ? estrelas : undefined,
           ordenarPor: ordenacao,
         };
