@@ -54,7 +54,7 @@ export default function CheckInSuccessScreen({ route, navigation }) {
   // check-ins ou voltar a explorar) fica com ele, sem pressa.
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <View style={styles.content}>
         <View style={styles.iconWrap}>
           <Animated.View
@@ -90,15 +90,15 @@ export default function CheckInSuccessScreen({ route, navigation }) {
           <Text style={styles.primaryButtonText}>Ver meus check-ins</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity
+        {/*<TouchableOpacity
           style={styles.secondaryButton}
           onPress={() => navigation.replace('Explorar')}
           activeOpacity={0.7}
         >
           <Text style={styles.secondaryButtonText}>Voltar para Explorar</Text>
-        </TouchableOpacity>
+        </TouchableOpacity>*/}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

@@ -17,6 +17,11 @@ export function formatarDistancia(distanciaMetros) {
   })} km`;
 }
 
+function formatarHora(hora) {
+  if (!hora) return '';
+  return hora.slice(0, 5); // "06:00:00" -> "06:00"
+}
+
 /**
  * ExploreScreen (container)
  * Responsável por: localização do usuário, busca de estabelecimentos no backend,
@@ -86,7 +91,7 @@ export default function ExploreScreen({ navigation, route }) {
       try {
         const filtros = {
           ...coords,
-          query: termo || undefined,
+          termo: termo || undefined,
           raioKm: raio * 1000,
           tipos: categoriasAtuais.length > 0 ? categoriasAtuais : undefined,
           estrelasMin: estrelas > 0 ? estrelas : undefined,
@@ -101,21 +106,25 @@ export default function ExploreScreen({ navigation, route }) {
         const data = await findAllByCondition({ ...filtros, ...pages });
         const { content, last } = data.response;
 
-        const formatted = content.map((e) => ({
-          id: e.id,
-          name: e.razaoSocial,
-          category: e.tipo.descricao,
-          distance: formatarDistancia(e.distanciaMetros),
-          hours: 'Aberto até 22:00',
-          rating: 4.8,
-          reviews: 120,
-          address: 'Rua das Acácias, 123 — Jardim Botânico, Londrina - PR',
-          about:
-            'Estrutura completa com equipamentos modernos e profissionais qualificados para te ajudar a alcançar seus objetivos.',
-          amenities: ['Wi-Fi', 'Vestiário', 'Estacionamento', 'Ar-cond.'],
-          image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
-          coord: { top: '46%', left: '46%' },
-        }));
+        const formatted = content.map((e) => {
+          const horarioFuncionamento = e.horarioFuncionamento;
+          return {
+            id: e.id,
+            name: e.razaoSocial,
+            category: e.tipo.descricao,
+            distance: formatarDistancia(e.distanciaMetros),
+            hours: horarioFuncionamento
+              ? horarioFuncionamento.aberto
+                ? `Aberto até as ${formatarHora(horarioFuncionamento.horarioFechamento)}`
+                : horarioFuncionamento.diaAbertura
+                ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
+                : 'Fechado'
+              : null,
+            //reviews: 120,
+            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
+            //coord: { top: '46%', left: '46%' },
+          }
+        });
 
         paginaRef.current = pagina;
         setHasMore(last === false);

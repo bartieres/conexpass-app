@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { findAllByCondition } from '../../services/checkinService';
-import { getResumo } from '../../services/assinaturaService';
+import { getTotal, findAllByCondition } from '../../services/checkinService';
 import { dateTimeToDateMasked } from '../../utils/date';
 import CheckIns from './CheckIn';
 
@@ -12,7 +11,7 @@ const PERIODOS = [
   { id: '15', label: 'Últimos 15 dias', dias: 15 },
   { id: '30', label: 'Últimos 30 dias', dias: 30 },
 ];
-const PERIODO_INICIAL = PERIODOS[2]; // 30 dias
+const PERIODO_INICIAL = PERIODOS[1]; // 15 dias
 
 // Mapeia o código do tipo de check-in que vem do backend pro rótulo exibido
 function formatarTipo(tipo) {
@@ -87,12 +86,12 @@ export default function CheckInsScreen() {
     setLoadingResumo(true);
     setResumoError('');
     try {
-      const data = await getResumo();
+      const data = await getTotal();
       const { plano, qtdPlano, qtdAvulso, qtdBonus } = data.response;
 
       setResumo({
         disponiveis: qtdPlano ?? 0,
-        plano: plano.nome ?? 0,
+        plano: plano?.nome ?? 0,
         avulso: qtdAvulso ?? 0,
         bonus: qtdBonus ?? 0,
       });
@@ -140,7 +139,8 @@ export default function CheckInsScreen() {
           establishmentName: c.estabelecimento?.razaoSocial || c.nome,
           dateLabel: formatarRotuloData(c.data),
           dateRaw: c.data,
-          formattedTime: dateTimeToDateMasked(c.data),
+          formattedTime: dateTimeToDateMasked(c.dataSolicitacao),
+          observation: c.observacao,
           type: formatarTipo(c.tipo),
           status: c.situacao?.codigo === 'CONFIRMADO' ? 'success' : 'error',
         }));

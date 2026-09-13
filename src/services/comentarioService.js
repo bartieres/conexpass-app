@@ -12,9 +12,15 @@ export const getStatus = async (id) => {
   return response.data;
 };
 
-export const findAllByCondition = async (params) => {
-  const response = await axiosPrivate.get(BASE_URL, { params });
-  return response.data;
+export const listarPorEstabelecimento = async (params) => {
+  return [
+    {
+      id: 100,
+      autorNome: 'Andre',
+      texto: 'Teste',
+      dataFormatada: '2026-09-10 11:00:00',
+    }
+  ]
 };
 
 export const getTotal = async () => {

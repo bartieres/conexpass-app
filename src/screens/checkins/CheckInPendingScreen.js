@@ -136,7 +136,7 @@ export default function CheckInPendingScreen({ route, navigation }) {
   const rotateInterpolate = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <View style={styles.content}>
         {status === 'aguardando' && (
           <>
@@ -210,7 +210,7 @@ export default function CheckInPendingScreen({ route, navigation }) {
           </TouchableOpacity>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

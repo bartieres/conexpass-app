@@ -7,8 +7,6 @@ import ExploreScreen from '../screens/explore/ExploreScreen';
 import FiltersScreen from '../screens/explore/FiltersScreen';
 import EstablishmentDetailScreen from '../screens/explore/EstablishmentDetailScreen';
 
-import HistoryScreen from '../screens/history/HistoryScreen';
-
 import CheckInScreen from '../screens/checkins/CheckInScreen';
 import ConfirmCheckInScreen from '../screens/checkins/ConfirmCheckInScreen';
 import CheckinSuccessScreen from '../screens/checkins/CheckinSuccessScreen';
@@ -19,6 +17,7 @@ import ChangePlanScreen from '../screens/plan/ChangePlanScreen';
 import PaymentDetailScreen from '../screens/plan/PaymentDetailScreen';
 import PaymentMethodScreen from '../screens/plan/PaymentMethodScreen';
 import PaymentScreen from '../screens/plan/PaymentScreen';
+import PlanHistoryScreen from '../screens/plan/PlanHistoryScreen';
 
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import PersonalDataScreen from '../screens/profile/conta/PersonalDataScreen';
@@ -38,10 +37,10 @@ const ProfileStackNav = createNativeStackNavigator();
 function ExploreStack() {
   return (
     <ExploreStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ExploreStackNav.Screen name="ExploreMain" component={ExploreScreen} />
+      <ExploreStackNav.Screen name="Explorar" component={ExploreScreen} />
       <ExploreStackNav.Screen name="EstablishmentDetail" component={EstablishmentDetailScreen} />
       <ExploreStackNav.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
-      <ExploreStackNav.Screen name="CheckIns" component={CheckInScreen} />
+      <CheckInStackNav.Screen name="CheckIns" component={CheckInScreen} />
       <ExploreStackNav.Screen name="ConfirmCheckIn" component={ConfirmCheckInScreen} />
       <ExploreStackNav.Screen name="CheckInSuccess" component={CheckinSuccessScreen} />
       <ExploreStackNav.Screen name="CheckInPending" component={CheckInPendingScreen} />
@@ -65,6 +64,7 @@ function PlanStack() {
       <PlanStackNav.Screen name="PaymentDetail" component={PaymentDetailScreen} />
       <PlanStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
       <PlanStackNav.Screen name="Payment" component={PaymentScreen} />
+      <PlanStackNav.Screen name="PlanHistory" component={PlanHistoryScreen} />
     </PlanStackNav.Navigator>
   );
 }
@@ -92,9 +92,8 @@ export default function MainTabs() {
       tabBar={(props) => <BottomNav {...props} />}
     >
       <Tab.Screen name="Explorar" component={ExploreStack} />
-      {/*<Tab.Screen name="Historico" component={HistoryScreen} />*/}
-      <Tab.Screen name="CheckIns" component={CheckInStack} />
-      <Tab.Screen name="Planos" component={PlanStack} />
+      <Tab.Screen name="CheckIn" component={CheckInStack} />
+      <Tab.Screen name="Plano" component={PlanStack} />
       <Tab.Screen name="Perfil" component={ProfileStack} />
     </Tab.Navigator>
   );

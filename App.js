@@ -15,6 +15,25 @@ import { AuthProvider, useAuth }    from './src/context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
+// Deep linking: conexpass://estabelecimento/123 abre direto o detalhe do
+// estabelecimento 123 (se o app já estiver instalado).
+//
+// IMPORTANTE: o mapeamento de "EstablishmentDetail" dentro de "MainTabs" abaixo
+// é um PALPITE — depende de como as telas estão de fato aninhadas dentro do
+// seu MainTabs.js (tabs + stack). Ajustar assim que soubermos a estrutura real.
+const linking = {
+  prefixes: ['conexpass://'],
+  config: {
+    screens: {
+      MainTabs: {
+        screens: {
+          EstablishmentDetail: 'estabelecimento/:id',
+        },
+      },
+    },
+  },
+};
+
 function RootNavigator() {
   const { isAuthenticated, isBooting } = useAuth();
 
@@ -44,7 +63,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <AuthProvider>
-        <NavigationContainer>
+        <NavigationContainer linking={linking}>
           <StatusBar style="dark" />
           <RootNavigator />
         </NavigationContainer>

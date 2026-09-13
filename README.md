@@ -107,3 +107,5 @@ domínio, chamando a instância `api` já configurada com o token).
   chamadas reais da sua API Spring Boot quando o backend estiver pronto.
 - Paleta, ícones (Ionicons) e nomes de tela seguem exatamente os textos do
   mockup (Explorar, Detalhes do Estabelecimento, Histórico, etc.).
+
+eas build --platform android --profile preview

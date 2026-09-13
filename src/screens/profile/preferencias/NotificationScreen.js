@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert, Ac
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
-import { userService } from '../../../services/userService';
+import { getNotificationPreferences, updateNotificationPreferences } from '../../../services/notificacaoService';
 
 /**
  * Item de notificação com Switch.
@@ -41,8 +41,8 @@ export default function NotificationScreen({ navigation }) {
   // TODO: esses três ainda serão implementados no backend. Os valores abaixo
   // são só os padrões exibidos por enquanto (não persistem nada e o toggle
   // fica desabilitado).
-  const [planUpdates] = useState(true);
-  const [checkin] = useState(true);
+  const [planUpdates] = useState(false);
+  const [checkin] = useState(false);
   const [offers] = useState(false);
 
   // Busca o valor real salvo no backend ao abrir a tela, em vez de assumir
@@ -53,7 +53,7 @@ export default function NotificationScreen({ navigation }) {
       setLoadError('');
       try {
         // TODO: confirmar o formato exato retornado pelo endpoint de preferências
-        const preferencias = await userService.getNotificationPreferences();
+        const preferencias = await getNotificationPreferences();
         setConexpassInfo(preferencias?.conexpassInfo ?? true);
       } catch (err) {
         setLoadError(err.friendlyMessage || 'Não foi possível carregar suas preferências.');
@@ -69,7 +69,7 @@ export default function NotificationScreen({ navigation }) {
     setSavingConexpassInfo(true);
     try {
       // TODO: confirmar o formato exato esperado pelo endpoint de preferências
-      await userService.updateNotificationPreferences({ conexpassInfo: novoValor });
+      await updateNotificationPreferences({ conexpassInfo: novoValor });
     } catch (err) {
       // reverte se a chamada falhar
       setConexpassInfo(valorAnterior);
@@ -80,7 +80,7 @@ export default function NotificationScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -139,7 +139,7 @@ export default function NotificationScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </View>
   );
 }
 

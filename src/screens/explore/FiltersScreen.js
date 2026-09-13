@@ -61,7 +61,7 @@ export default function FiltersScreen({ navigation, route }) {
 
     // Navega de volta pra tela "Explorar" já existente na stack, levando os
     // filtros como parâmetro simples — nunca uma função.
-    navigation.navigate('ExploreMain', { filtrosAplicados: filtros });
+    navigation.navigate('Explorar', { filtrosAplicados: filtros });
   };
 
   return (

@@ -3,6 +3,7 @@
     "name": "ConexPass",
     "slug": "conexpass-app",
     "version": "1.0.0",
+    "scheme": "conexpass",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F5F7FB",

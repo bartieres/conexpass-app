@@ -25,11 +25,16 @@ function EstabelecimentoCard({ estabelecimento, onPress }) {
           {estabelecimento.distance} • {estabelecimento.hours}
         </Text>
         <View style={styles.ratingRow}>
+          <Text style={styles.ratingText}>
+            {estabelecimento.category}
+          </Text>
+        </View>
+        {/*<View style={styles.ratingRow}>
           <Ionicons name="star" size={13} color={colors.star} />
           <Text style={styles.ratingText}>
             {estabelecimento.rating} ({estabelecimento.reviews})
           </Text>
-        </View>
+        </View>*/}
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
     </TouchableOpacity>

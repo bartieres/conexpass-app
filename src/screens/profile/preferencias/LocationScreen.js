@@ -57,7 +57,7 @@ export default function LocationScreen({ navigation }) {
   };
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -109,7 +109,7 @@ export default function LocationScreen({ navigation }) {
           </View>
         )}
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

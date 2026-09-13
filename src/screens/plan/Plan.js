@@ -45,14 +45,6 @@ export default function Plan({
 }) {
   return (
     <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Planos</Text>
-        <View style={{ width: 38 }} />
-      </View>
-
       <ScrollView contentContainerStyle={styles.body}>
         {loading && (
           <View style={styles.stateBox}>

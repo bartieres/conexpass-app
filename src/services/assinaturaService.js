@@ -7,7 +7,4 @@ const BASE_URL = '/subscriptions';
   return response.data;
 };*/
 
-export const getResumo = async (params) => {
-  const response = await axiosPrivate.get(`${BASE_URL}/resumo`, { params });
-  return response.data;
-};
+

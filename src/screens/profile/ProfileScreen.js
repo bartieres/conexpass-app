@@ -64,7 +64,7 @@ export default function ProfileScreen({ navigation }) {
   // no payload do usuário — troque assim que /users/me trouxer o plano.
   const name = user?.nome || 'Usuário';
   const email = user?.email || '';
-  const plan = user?.plan || USER.plan;
+  const plan = user?.plano?.nome || "";
 
   const handleDeleteAccount = () => {
     Alert.alert(

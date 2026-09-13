@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { confirmar } from '../../services/checkinService';
-import { getResumo } from '../../services/assinaturaService';
+import { getTotal, confirmar } from '../../services/checkinService';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import ConfirmCheckIn from './ConfirmCheckIn';
 
@@ -41,8 +40,7 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
     setLoadingResumo(true);
     setResumoError('');
     try {
-      // TODO: confirmar endpoint/formato exato no backend
-      const data = await getResumo();
+      const data = await getTotal();
       const { plano, qtdPlano, qtdAvulso, qtdBonus } = data.response;
 
       setResumo({
@@ -74,7 +72,7 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
         estabelecimento: {
           id: estabelecimento.id
         },
-        tipoCheckin: tipoUtilizado.codigo,
+        tipo: tipoUtilizado.codigo,
         latitude: coords.latitude,
         longitude: coords.longitude,
       }

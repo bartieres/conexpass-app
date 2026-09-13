@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
-import { userService } from '../../../services/userService';
+import { changePassword } from '../../../services/userService';
 
 const MIN_LENGTH = 8;
 
@@ -116,7 +116,7 @@ export default function ChangePasswordScreen({ navigation }) {
     try {
       // TODO: confirmar o nome/formato exato do endpoint no backend
       // (ex: PATCH /users/me/password)
-      await userService.changePassword({ currentPassword, newPassword });
+      await changePassword({ senhaAtual: currentPassword, novaSenha: newPassword });
 
       setSuccessMessage('Senha alterada com sucesso!');
       setCurrentPassword('');

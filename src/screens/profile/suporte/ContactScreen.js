@@ -13,19 +13,22 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
-import { supportService } from '../../../services/suporteService';
+import { sendMessage } from '../../../services/suporteService';
 
 const MAX_MENSAGEM = 500;
 
-// Lista de assuntos. Pra adicionar um novo, é só incluir aqui.
 const ASSUNTOS = [
   { id: 'checkin-recusado', label: 'Meu check-in foi recusado.' },
+  { id: 'checkin-problema', label: 'Estou com um problema no check-in.' },
   { id: 'cobranca-sem-uso', label: 'Fui cobrado e não consegui utilizar o plano.' },
-  { id: 'pagamento', label: 'Problema com pagamento ou cobrança indevida.' },
+  { id: 'pagamento', label: 'Problema com pagamento ou cobrança.' },
   { id: 'plano', label: 'Dúvidas sobre meu plano ou assinatura.' },
-  { id: 'cancelamento', label: 'Cancelamento de conta.' },
-  { id: 'sugestao-estabelecimento', label: 'Sugestão de estabelecimento parceiro.' },
+  { id: 'cancelamento', label: 'Quero cancelar minha assinatura.' },
+  { id: 'conta', label: 'Problema com minha conta ou cadastro.' },
+  { id: 'sugestao-estabelecimento', label: 'Quero sugerir um estabelecimento.' },
+  { id: 'problema-estabelecimento', label: 'Problema com um estabelecimento.' },
   { id: 'problema-tecnico', label: 'Problema técnico no aplicativo.' },
+  { id: 'sugestao', label: 'Quero enviar uma sugestão ou ideia.' },
   { id: 'outro', label: 'Outro assunto.' },
 ];
 
@@ -96,7 +99,7 @@ export default function ContactScreen({ navigation }) {
     setSending(true);
     try {
       // TODO: confirmar o formato exato esperado pelo endpoint de suporte
-      await supportService.sendMessage({ assunto: assuntoId, mensagem: mensagem.trim() });
+      await sendMessage({ assunto: assuntoId, mensagem: mensagem.trim() });
 
       setSuccessMessage('Mensagem enviada! Nossa equipe vai te responder em breve.');
       setAssuntoId(null);

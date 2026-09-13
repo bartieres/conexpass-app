@@ -18,7 +18,6 @@ export const authService = {
     
     const payload = { email: identifier.trim(), senha: password };
 
-    console.log('authService.login payload', payload);
     const { data } = await api.post('/auth/login', {
       ...payload,
     },

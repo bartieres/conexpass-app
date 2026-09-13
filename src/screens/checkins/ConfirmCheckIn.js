@@ -45,7 +45,7 @@ export default function ConfirmCheckIn({
     !!tipoUtilizado && !loadingLocation && !permissionDenied && !confirming && !loadingResumo && !resumoError;
 
   return (
-    <SafeAreaView style={styles.safe}>
+    <View style={styles.safe}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -174,7 +174,7 @@ export default function ConfirmCheckIn({
           )}
         </TouchableOpacity>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 

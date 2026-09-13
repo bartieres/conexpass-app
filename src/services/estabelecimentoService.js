@@ -12,6 +12,11 @@ export const findAllByCondition = async (params) => {
   return response.data;
 };
 
+export const findById = async (id) => {
+  const response = await axiosPrivate.get(`${BASE_URL}/explorar/${id}`);
+  return response.data;
+};
+
 export const deletar = async (id) => {
   const response = await axiosPrivate.delete(`${BASE_URL}/${id}`);
   return response.data;

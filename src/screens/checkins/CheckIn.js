@@ -136,6 +136,8 @@ function CheckInRow({ item }) {
 
         <Text style={styles.rowDate}>{item.formattedTime}</Text>
 
+        {item.observation && <Text style={styles.rowDate}>{item.observation}</Text>}
+
         <View style={styles.rowStatusRow}>
           <Ionicons
             name={item.status === 'success' ? 'checkmark-circle' : 'close-circle'}
@@ -217,14 +219,14 @@ export default function CheckIn({
             <ResumoCard resumo={resumo} loading={loadingResumo} error={resumoError} onRetry={onRetryResumo} />
 
             <View style={styles.historicoHeaderRow}>
-              <Text style={styles.historicoTitle}>Histórico</Text>
+              <Text style={styles.historicoTitle}>Check-ins</Text>
               <PeriodoDropdown periodos={periodos} periodoId={periodoId} onSelect={onSelectPeriodo} />
             </View>
 
             {loading && (
               <View style={styles.stateBox}>
                 <ActivityIndicator size="small" color={colors.blue} />
-                <Text style={styles.stateText}>Carregando seu histórico...</Text>
+                <Text style={styles.stateText}>Carregando seus check-ins...</Text>
               </View>
             )}
 
@@ -239,9 +241,9 @@ export default function CheckIn({
             )}
           </>
         }
-        renderSectionHeader={({ section }) =>
+        /*renderSectionHeader={({ section }) =>
           listaCarregada ? <Text style={styles.sectionHeader}>{section.title}</Text> : null
-        }
+        }*/
         renderItem={({ item }) => (listaCarregada ? <CheckInRow item={item} /> : null)}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
@@ -267,7 +269,7 @@ export default function CheckIn({
             )}
 
             {/* Visível desde já, mesmo sendo funcionalidade pós-MVP */}
-            {listaCarregada && !loadingMore && <ReferralBanner />}
+            { /*listaCarregada && !loadingMore && <ReferralBanner /> */}
           </>
         }
       />

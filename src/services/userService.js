@@ -1,9 +1,16 @@
 import { useAuth } from '../context/AuthContext';
 import { api, ENDPOINTS } from '../config/api';
 
+const BASE_URL = '/users';
+
 function onlyDigits(value = '') {
   return value.replace(/\D/g, '');
 }
+
+export const changePassword = async (data) => {
+  const response = await api.patch(`${BASE_URL}/senha`, data);
+  return response.data;
+};
 
 export const userService = {
   // GET /users/me -> dados atualizados do usuário
