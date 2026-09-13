@@ -89,11 +89,13 @@ export default function EstablishmentDetail({
   };
 
   const fechado = gym.horarioFuncionamento?.aberto === false;
+  const checkinHojeUtilizado = gym.checkinHojeAutorizado !== true;
 
   const checkinDesabilitado =
     gym.parceiro === false ||
     gym.inclusoPlanoUsuario === false ||
-    fechado;
+    fechado ||
+    checkinHojeUtilizado;
 
   const textoBotao =
     gym.parceiro === false
@@ -102,6 +104,8 @@ export default function EstablishmentDetail({
       ? 'Não incluso no seu plano'
       : fechado
       ? 'Fechado no momento'
+      : checkinHojeUtilizado
+      ? 'Check-in diário utilizado'
       : 'Fazer Check-in';
 
   return (

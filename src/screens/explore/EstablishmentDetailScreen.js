@@ -86,6 +86,7 @@ function montarEstabelecimento(gymResumo, e) {
     horariosExcecao: e.horariosExcecao || [],
     interesseRegistrado: e.interesseRegistrado ?? false,
     inclusoPlanoUsuario: e.inclusoPlanoUsuario,
+    checkinHojeAutorizado: e.checkinHojeAutorizado,
     plano: e.plano ?? null,
     parceiro: e.parceiro,
   };

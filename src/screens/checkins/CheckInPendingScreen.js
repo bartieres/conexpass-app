@@ -120,8 +120,12 @@ export default function CheckInPendingScreen({ route, navigation }) {
           pararPolling();
           setCancelando(true);
           try {
-            // TODO: confirmar endpoint exato de cancelamento
-            await cancelar(checkinId);
+            const payload = {
+              id: checkinId,
+              observacao: 'Check-in cancelado pelo Usuário'
+            };
+            
+            await cancelar(payload);
           } catch (err) {
             // mesmo se falhar o cancelamento no backend, deixa o usuário sair da tela
           } finally {

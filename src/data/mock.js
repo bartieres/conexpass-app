@@ -1,9 +1,10 @@
 export const CATEGORIES = [
-  { id: 'todos', label: 'Todos', icon: 'grid-outline' },
-  { id: 'academia', label: 'Academia', icon: 'barbell-outline' },
-  { id: 'crossfit', label: 'CrossFit', icon: 'flash-outline' },
-  { id: 'natacao', label: 'Natação', icon: 'water-outline' },
-  { id: 'lutas', label: 'Lutas', icon: 'shield-outline' },
+  { id: 'TODOS', label: 'Todos', icon: 'grid-outline' },
+  { id: 'ACADEMIA', label: 'Academia', icon: 'barbell-outline' },
+  { id: 'PILATES', label: 'Pilates', icon: 'body-outline' },
+  { id: 'CROSSFIT', label: 'CrossFit', icon: 'flash-outline' },
+  { id: 'NATACAO', label: 'Natação', icon: 'water-outline' },
+  { id: 'LUTA', label: 'Lutas', icon: 'shield-outline' },
 ];
 
 export const GYMS = [

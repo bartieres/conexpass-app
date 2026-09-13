@@ -37,7 +37,7 @@ const ProfileStackNav = createNativeStackNavigator();
 function ExploreStack() {
   return (
     <ExploreStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ExploreStackNav.Screen name="Explorar" component={ExploreScreen} />
+      <ExploreStackNav.Screen name="ExplorarMain" component={ExploreScreen} />
       <ExploreStackNav.Screen name="EstablishmentDetail" component={EstablishmentDetailScreen} />
       <ExploreStackNav.Screen name="Filters" component={FiltersScreen} options={{ presentation: 'modal' }} />
       <CheckInStackNav.Screen name="CheckIns" component={CheckInScreen} />

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -14,27 +14,37 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../../theme/theme';
 import { CATEGORIES } from '../../data/mock';
+import SuggestEstablishmentModal from './SuggestEstablishmentModal';
 
 function EstabelecimentoCard({ estabelecimento, onPress }) {
   return (
     <TouchableOpacity style={styles.gymCard} onPress={onPress} activeOpacity={0.85}>
-      <Image source={{ uri: estabelecimento.image }} style={styles.gymImage} />
+      <View style={styles.gymImageWrap}>
+        <Image source={{ uri: estabelecimento.image }} style={styles.gymImage} />
+        {/* Destaque de check-in já feito hoje nesse estabelecimento */}
+        {estabelecimento.checkinHoje && (
+          <View style={styles.checkinBadge}>
+            <Ionicons name="checkmark" size={11} color="#fff" />
+          </View>
+        )}
+      </View>
       <View style={styles.gymInfo}>
-        <Text style={styles.gymName}>{estabelecimento.name}</Text>
+        <View style={styles.gymNameRow}>
+          <Text style={styles.gymName} numberOfLines={1}>
+            {estabelecimento.name}
+          </Text>
+          {estabelecimento.checkinHoje && (
+            <View style={styles.checkinPill}>
+              <Text style={styles.checkinPillText}>Check-in hoje</Text>
+            </View>
+          )}
+        </View>
         <Text style={styles.gymMeta}>
           {estabelecimento.distance} • {estabelecimento.hours}
         </Text>
         <View style={styles.ratingRow}>
-          <Text style={styles.ratingText}>
-            {estabelecimento.category}
-          </Text>
+          <Text style={styles.ratingText}>{estabelecimento.category}</Text>
         </View>
-        {/*<View style={styles.ratingRow}>
-          <Ionicons name="star" size={13} color={colors.star} />
-          <Text style={styles.ratingText}>
-            {estabelecimento.rating} ({estabelecimento.reviews})
-          </Text>
-        </View>*/}
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
     </TouchableOpacity>
@@ -46,7 +56,7 @@ export default function Explore({
   search,
   onChangeSearch,
   onSubmitSearch,
-  activeCategory,
+  categoriasSelecionadas,
   onSelectCategory,
   raioKm,
   onOpenFilters,
@@ -63,7 +73,18 @@ export default function Explore({
   hasMore,
   loadingMore,
   onLoadMore,
+  suggestModalVisible,
+  onOpenSuggestModal,
+  onCloseSuggestModal,
+  onSubmitSuggestEstablishment,
+  sendingSuggestion,
+  suggestionError,
+  suggestionSuccess,
 }) {
+  // "Todos" fica ativo quando não há nenhuma categoria selecionada; qualquer
+  // outra categoria fica ativa se estiver dentro do array (multi-seleção).
+  const isCategoriaAtiva = (id) => (id === 'todos' ? categoriasSelecionadas.length === 0 : categoriasSelecionadas.includes(id));
+
   // view de mapa desativada por enquanto (ver bloco comentado no fim do arquivo)
   // const [view, setView] = React.useState('lista');
 
@@ -171,7 +192,7 @@ export default function Explore({
               keyExtractor={(item) => item.id}
               contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
               renderItem={({ item }) => {
-                const active = activeCategory === item.id;
+                const active = isCategoriaAtiva(item.id);
                 return (
                   <TouchableOpacity
                     style={[styles.chip, active && styles.chipActive]}
@@ -212,8 +233,24 @@ export default function Explore({
                   </View>
                 )}
 
+                {/* Banner de indicação: aparece sempre que a lista terminou de
+                    carregar (não só quando "acaba", já que é útil mesmo com
+                    poucos resultados) */}
+                {!loadingMore && (
+                  <TouchableOpacity style={styles.suggestBanner} activeOpacity={0.85} onPress={onOpenSuggestModal}>
+                    <View style={styles.suggestIcon}>
+                      <Ionicons name="add-circle-outline" size={18} color={colors.blue} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.suggestTitle}>Não encontrou o estabelecimento que procura?</Text>
+                      <Text style={styles.suggestSubtitle}>Indique agora e avaliamos a parceria.</Text>
+                    </View>
+                    <Ionicons name="chevron-forward" size={18} color={colors.blue} />
+                  </TouchableOpacity>
+                )}
+
                 {/* Banner Premium só aparece quando não há mais páginas pra carregar */}
-                {!hasMore && !loadingMore && (
+                {/*{!hasMore && !loadingMore && (
                   <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.9}>
                     <View style={styles.premiumIcon}>
                       <Ionicons name="star" size={18} color="#fff" />
@@ -225,7 +262,7 @@ export default function Explore({
                       </Text>
                     </View>
                   </TouchableOpacity>
-                )}
+                )}*/}
               </>
             }
           />
@@ -278,6 +315,15 @@ export default function Explore({
           */}
         </>
       )}
+
+      <SuggestEstablishmentModal
+        visible={suggestModalVisible}
+        onClose={onCloseSuggestModal}
+        onSubmit={onSubmitSuggestEstablishment}
+        sending={sendingSuggestion}
+        error={suggestionError}
+        success={suggestionSuccess}
+      />
     </SafeAreaView>
   );
 }
@@ -385,12 +431,48 @@ const styles = StyleSheet.create({
     gap: 12,
     ...shadow,
   },
+  gymImageWrap: { position: 'relative' },
   gymImage: { width: 64, height: 64, borderRadius: radius.md },
+  checkinBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#fff',
+  },
   gymInfo: { flex: 1, gap: 2 },
-  gymName: { fontSize: 14.5, fontWeight: '700', color: colors.text },
+  gymNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  gymName: { fontSize: 14.5, fontWeight: '700', color: colors.text, flexShrink: 1 },
+  checkinPill: { backgroundColor: colors.successLight, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill },
+  checkinPillText: { fontSize: 10, fontWeight: '700', color: colors.success },
   gymMeta: { fontSize: 12, color: colors.textMuted },
   ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
   ratingText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  suggestBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#EEF1FC',
+    borderRadius: radius.lg,
+    padding: 14,
+    marginTop: 6,
+  },
+  suggestIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: '#fff',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  suggestTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
+  suggestSubtitle: { fontSize: 11.5, color: colors.textMuted, marginTop: 1 },
   premiumBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -410,7 +492,6 @@ const styles = StyleSheet.create({
   },
   premiumTitle: { color: '#fff', fontWeight: '800', fontSize: 14 },
   premiumSubtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
-  // Estilos do mapa mantidos (usados apenas quando a view de mapa for reativada)
   mapWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 16 },
   mapArea: {
     flex: 1,

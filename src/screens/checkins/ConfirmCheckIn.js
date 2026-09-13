@@ -37,7 +37,7 @@ export default function ConfirmCheckIn({
   onRetryLocation,
   confirming,
   confirmError,
-  onConfirmar,
+  onSolicitar,
 }) {
   const meta = TYPE_META[tipoUtilizado?.nome] || TYPE_META.Plano;
   const semCheckinsDisponiveis = !loadingResumo && !resumoError && !tipoUtilizado;
@@ -164,7 +164,7 @@ export default function ConfirmCheckIn({
       <View style={styles.footer}>
         <TouchableOpacity
           style={[styles.confirmButton, !podeConfirmar && styles.confirmButtonDisabled]}
-          onPress={onConfirmar}
+          onPress={onSolicitar}
           disabled={!podeConfirmar}
         >
           {confirming ? (

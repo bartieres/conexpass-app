@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { getTotal, confirmar } from '../../services/checkinService';
+import { getTotal, solicitar } from '../../services/checkinService';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import ConfirmCheckIn from './ConfirmCheckIn';
 
@@ -62,7 +62,7 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
 
   const tipoUtilizado = definirTipoUtilizado(resumo);
 
-  const handleConfirmar = async () => {
+  const handleSolicitar = async () => {
     if (!tipoUtilizado || !coords) return;
 
     setConfirmError('');
@@ -76,18 +76,14 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
         latitude: coords.latitude,
         longitude: coords.longitude,
       }
-      const data = await confirmar(payload);
+      const data = await solicitar(payload);
 
-      // Não navega direto pra tela de sucesso — o backend só registrou a
-      // SOLICITAÇÃO de check-in (status PENDENTE). A confirmação de verdade
-      // depende da recepção aprovar pelo painel deles, então vamos pra uma
-      // tela de espera que faz polling do status.
       navigation.replace('CheckInPending', {
         checkinId: data?.response?.id,
         estabelecimento,
       });
     } catch (err) {
-      setConfirmError(err.friendlyMessage || 'Não foi possível confirmar seu check-in. Tente novamente.');
+      setConfirmError(err.friendlyMessage || 'Não foi possível solicitar seu check-in. Tente novamente.');
     } finally {
       setConfirming(false);
     }
@@ -107,7 +103,7 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
       onRetryLocation={refetchLocation}
       confirming={confirming}
       confirmError={confirmError}
-      onConfirmar={handleConfirmar}
+      onSolicitar={handleSolicitar}
     />
   );
 }

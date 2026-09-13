@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import { findAllByCondition } from '../../services/estabelecimentoService';
+import { save as sugerirEstabelecimento } from '../../services/estabelecimentoLeadService';
 import Explore from './Explore';
 
 const RAIO_INICIAL_KM = 10;
@@ -25,16 +26,18 @@ function formatarHora(hora) {
 /**
  * ExploreScreen (container)
  * Responsável por: localização do usuário, busca de estabelecimentos no backend,
- * paginação (infinite scroll), estado de loading/erro, pull-to-refresh e todos
- * os filtros (texto, categoria rápida, e os filtros completos vindos da
- * FiltersScreen: categorias, raio, estrelas mínimas e ordenação).
+ * paginação (infinite scroll), estado de loading/erro, pull-to-refresh, todos
+ * os filtros (texto, categorias — multi-seleção tanto pelos chips rápidos
+ * quanto pela FiltersScreen) e o modal de "indicar estabelecimento".
  *
  * O componente visual (Explore) só recebe dados e callbacks via props.
  */
 export default function ExploreScreen({ navigation, route }) {
   const [search, setSearch] = useState('');
 
-  // Filtros completos (também editáveis via FiltersScreen)
+  // Filtros completos. "categorias" é sempre um array — tanto os chips
+  // rápidos quanto a FiltersScreen escrevem/leem o mesmo estado, então os
+  // dois lugares ficam sempre sincronizados entre si.
   const [categorias, setCategorias] = useState([]); // [] = "todos"
   const [raioKm, setRaioKm] = useState(RAIO_INICIAL_KM);
   const [estrelasMin, setEstrelasMin] = useState(0);
@@ -58,6 +61,12 @@ export default function ExploreScreen({ navigation, route }) {
   const [estabelecimentosError, setEstabelecimentosError] = useState('');
   const [hasMore, setHasMore] = useState(true);
 
+  // Modal "Não encontrou o estabelecimento que procura?"
+  const [suggestModalVisible, setSuggestModalVisible] = useState(false);
+  const [sendingSuggestion, setSendingSuggestion] = useState(false);
+  const [suggestionError, setSuggestionError] = useState('');
+  const [suggestionSuccess, setSuggestionSuccess] = useState(false);
+
   const paginaRef = useRef(0);
 
   const buscarEstabelecimentos = useCallback(
@@ -76,6 +85,7 @@ export default function ExploreScreen({ navigation, route }) {
 
       const termo = termoOverride ?? search;
       const categoriasAtuais = categoriasOverride ?? categorias;
+      const categoriasFiltradas = categoriasAtuais.includes('TODOS') ? undefined : categoriasAtuais;
       const raio = raioOverride ?? raioKm;
       const estrelas = estrelasMinOverride ?? estrelasMin;
       const ordenacao = ordenarPorOverride ?? ordenarPor;
@@ -93,7 +103,7 @@ export default function ExploreScreen({ navigation, route }) {
           ...coords,
           termo: termo || undefined,
           raioKm: raio * 1000,
-          tipos: categoriasAtuais.length > 0 ? categoriasAtuais : undefined,
+          tipos: categoriasFiltradas && categoriasFiltradas.length > 0 ? categoriasFiltradas : undefined,
           estrelasMin: estrelas > 0 ? estrelas : undefined,
           ordenarPor: ordenacao,
         };
@@ -120,6 +130,7 @@ export default function ExploreScreen({ navigation, route }) {
                 ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
                 : 'Fechado'
               : null,
+            checkinHoje: e.checkinRealizadoHoje ?? false, // implementar flag que indica se fez checkin hoje
             //reviews: 120,
             image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
             //coord: { top: '46%', left: '46%' },
@@ -163,8 +174,6 @@ export default function ExploreScreen({ navigation, route }) {
   // Recebe os filtros de volta da FiltersScreen via route.params (nunca via
   // função — funções não são serializáveis no estado de navegação e geram o
   // aviso "Non-serializable values were found in the navigation state").
-  // Ao aplicar, já limpa o parâmetro pra não reaplicar de novo em um próximo
-  // foco da tela (ex: usuário voltando de outra tela sem mexer nos filtros).
   useEffect(() => {
     const filtrosAplicados = route?.params?.filtrosAplicados;
     if (!filtrosAplicados) return;
@@ -201,14 +210,24 @@ export default function ExploreScreen({ navigation, route }) {
     buscarEstabelecimentos({ reset: true });
   }, [buscarEstabelecimentos]);
 
-  // Chip rápido de categoria (seleção única, na própria tela Explorar): reseta a paginação
+  // Chip rápido de categoria: agora é multi-seleção (toggle), igual à
+  // FiltersScreen — tocar em "todos" limpa a seleção; tocar numa categoria já
+  // marcada remove ela; tocar numa não marcada adiciona.
   const handleSelectCategory = useCallback(
     (categoryId) => {
-      const novasCategorias = categoryId === 'todos' ? [] : [categoryId];
+      let novasCategorias;
+      if (categoryId === 'todos') {
+        novasCategorias = [];
+      } else if (categorias.includes(categoryId)) {
+        novasCategorias = categorias.filter((c) => c !== categoryId);
+      } else {
+        novasCategorias = [...categorias, categoryId];
+      }
+
       setCategorias(novasCategorias);
       buscarEstabelecimentos({ reset: true, categoriasOverride: novasCategorias });
     },
-    [buscarEstabelecimentos]
+    [categorias, buscarEstabelecimentos]
   );
 
   // Abre a FiltersScreen levando os filtros atuais. A resposta volta via
@@ -219,11 +238,32 @@ export default function ExploreScreen({ navigation, route }) {
     });
   }, [navigation, categorias, raioKm, estrelasMin, ordenarPor]);
 
-  const isLoadingAnything = loadingLocation || loadingEstabelecimentos;
+  // Modal "Não encontrou o estabelecimento que procura?"
+  const handleOpenSuggestModal = useCallback(() => {
+    setSuggestionError('');
+    setSuggestionSuccess(false);
+    setSuggestModalVisible(true);
+  }, []);
 
-  // Chip ativo exibido na tela Explorar: só reflete seleção única simples.
-  // Se a FiltersScreen aplicar múltiplas categorias, nenhum chip fica marcado.
-  const activeCategory = categorias.length === 1 ? categorias[0] : 'todos';
+  const handleCloseSuggestModal = useCallback(() => {
+    setSuggestModalVisible(false);
+  }, []);
+
+  const handleSubmitSuggestEstablishment = useCallback(async (dados) => {
+    setSendingSuggestion(true);
+    setSuggestionError('');
+    try {
+      // TODO: confirmar endpoint/formato exato no backend
+      await sugerirEstabelecimento(dados);
+      setSuggestionSuccess(true);
+    } catch (err) {
+      setSuggestionError(err.friendlyMessage || 'Não foi possível enviar sua indicação. Tente novamente.');
+    } finally {
+      setSendingSuggestion(false);
+    }
+  }, []);
+
+  const isLoadingAnything = loadingLocation || loadingEstabelecimentos;
 
   return (
     <Explore
@@ -231,7 +271,7 @@ export default function ExploreScreen({ navigation, route }) {
       search={search}
       onChangeSearch={setSearch}
       onSubmitSearch={handleSubmitSearch}
-      activeCategory={activeCategory}
+      categoriasSelecionadas={categorias}
       onSelectCategory={handleSelectCategory}
       raioKm={raioKm}
       onOpenFilters={handleOpenFilters}
@@ -248,6 +288,13 @@ export default function ExploreScreen({ navigation, route }) {
       hasMore={hasMore}
       loadingMore={loadingMore}
       onLoadMore={handleLoadMore}
+      suggestModalVisible={suggestModalVisible}
+      onOpenSuggestModal={handleOpenSuggestModal}
+      onCloseSuggestModal={handleCloseSuggestModal}
+      onSubmitSuggestEstablishment={handleSubmitSuggestEstablishment}
+      sendingSuggestion={sendingSuggestion}
+      suggestionError={suggestionError}
+      suggestionSuccess={suggestionSuccess}
     />
   );
 }

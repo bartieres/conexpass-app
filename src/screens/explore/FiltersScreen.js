@@ -15,7 +15,7 @@ const SORT_OPTIONS = [
 ];
 
 const RAIO_MIN_KM = 1;
-const RAIO_MAX_KM = 20;
+const RAIO_MAX_KM = 50;
 
 /**
  * FiltersScreen
@@ -46,7 +46,7 @@ export default function FiltersScreen({ navigation, route }) {
 
   const handleClear = () => {
     setSelected([]);
-    setDistance(5);
+    setDistance(10);
     setMinRating(0);
     setSort(SORT_OPTIONS[0].value);
   };
@@ -61,7 +61,7 @@ export default function FiltersScreen({ navigation, route }) {
 
     // Navega de volta pra tela "Explorar" já existente na stack, levando os
     // filtros como parâmetro simples — nunca uma função.
-    navigation.navigate('Explorar', { filtrosAplicados: filtros });
+    navigation.navigate('ExplorarMain', { filtrosAplicados: filtros });
   };
 
   return (
@@ -111,7 +111,8 @@ export default function FiltersScreen({ navigation, route }) {
           thumbTintColor={colors.blue}
         />
 
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Avaliação mínima</Text>
+        {/* Filtro de Avaliação mínima */}
+        {/*<Text style={[styles.sectionTitle, { marginTop: 20 }]}>Avaliação mínima</Text>
         <View style={styles.starsRow}>
           {[1, 2, 3, 4, 5].map((n) => (
             <TouchableOpacity
@@ -126,9 +127,10 @@ export default function FiltersScreen({ navigation, route }) {
             </TouchableOpacity>
           ))}
           <Text style={styles.ouMaisText}>ou mais</Text>
-        </View>
+        </View>*/}
 
-        <Text style={[styles.sectionTitle, { marginTop: 20 }]}>Ordenar por</Text>
+        {/* Filtro de Ordenar por */}
+        {/*<Text style={[styles.sectionTitle, { marginTop: 20 }]}>Ordenar por</Text>
         <View style={styles.sortWrap}>
           {SORT_OPTIONS.map((opt) => (
             <TouchableOpacity key={opt.value} style={styles.sortRow} onPress={() => setSort(opt.value)}>
@@ -138,7 +140,7 @@ export default function FiltersScreen({ navigation, route }) {
               </View>
             </TouchableOpacity>
           ))}
-        </View>
+        </View>*/}
       </ScrollView>
 
       <View style={styles.footer}>
