@@ -81,6 +81,7 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="Location" component={LocationScreen} />
       <ProfileStackNav.Screen name="Help" component={HelpScreen} />
       <ProfileStackNav.Screen name="Contact" component={ContactScreen} />
+      <ProfileStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
     </ProfileStackNav.Navigator>
   );
 }

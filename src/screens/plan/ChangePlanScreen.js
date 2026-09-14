@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
-import { getPlanosDisponiveis } from '../../services/planoService';
+import { findAllByCondition } from '../../services/planoService';
+import { alterarPlano } from '../../services/assinaturaService';
+
+const TAMANHO_PAGINA = 50;
 
 function formatarMoeda(valor) {
   if (valor == null) return '';
@@ -16,34 +19,87 @@ function formatarData(dataISO) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function calcularDesconto(valorOriginal, valor) {
+  if (!valorOriginal || valorOriginal <= valor) return null;
+  return Math.round((1 - valor / valorOriginal) * 100);
+}
+
 /**
- * Tabela comparativa dos planos disponíveis. Uma linha por plano, com o
- * plano atual destacado.
+ * Card individual de plano — substitui a linha de tabela anterior. Cada
+ * plano ganha destaque próprio (retângulo branco, benefícios listados,
+ * preço grande e, quando existir, o desconto "de X por Y").
  */
-function PlanRow({ plano, isAtual, isSelecionado, onSelect }) {
+function PlanCard({ plano, isAtual, onSelect }) {
+  const desconto = calcularDesconto(plano.valorOriginal, plano.valor);
+  const destacarComoRecomendado = plano.recomendado && !isAtual;
+
   return (
-    <TouchableOpacity
-      style={[styles.planRow, isSelecionado && styles.planRowSelected]}
-      onPress={() => onSelect(plano)}
-      disabled={isAtual}
-      activeOpacity={0.8}
+    <View
+      style={[
+        styles.planCard,
+        isAtual && styles.planCardAtual,
+        destacarComoRecomendado && styles.planCardRecomendado,
+      ]}
     >
-      <View style={{ flex: 1.4 }}>
-        <View style={styles.planRowNameRow}>
-          <Text style={styles.planRowName}>{plano.nome}</Text>
-          {isAtual && (
-            <View style={styles.currentTag}>
-              <Text style={styles.currentTagText}>Atual</Text>
-            </View>
-          )}
+      {destacarComoRecomendado && (
+        <View style={styles.recommendedRibbon}>
+          <Ionicons name="star" size={12} color="#fff" />
+          <Text style={styles.recommendedRibbonText}>Recomendado</Text>
         </View>
-        <Text style={styles.planRowChecking}>{plano.checkinsPorDia}x check-in/dia</Text>
+      )}
+
+      <View style={styles.planCardHeader}>
+        <Text style={styles.planCardName}>{plano.nome}</Text>
+        {isAtual && (
+          <View style={styles.currentTag}>
+            <Text style={styles.currentTagText}>Seu plano atual</Text>
+          </View>
+        )}
+        {!isAtual && !!desconto && (
+          <View style={styles.discountTag}>
+            <Text style={styles.discountTagText}>-{desconto}%</Text>
+          </View>
+        )}
       </View>
-      <Text style={[styles.planRowCell, { flex: 1, textAlign: 'right' }]}>{formatarMoeda(plano.valor)}</Text>
-      <View style={{ width: 28, alignItems: 'flex-end' }}>
-        {isSelecionado && !isAtual && <Ionicons name="checkmark-circle" size={20} color={colors.blue} />}
+
+      <View style={styles.priceRow}>
+        {!!plano.valorOriginal && plano.valorOriginal > plano.valor && (
+          <Text style={styles.priceOriginal}>de {formatarMoeda(plano.valorOriginal)}</Text>
+        )}
+        <Text style={styles.priceValue}>
+          {!!plano.valorOriginal && plano.valorOriginal > plano.valor ? 'por ' : ''}
+          <Text style={styles.priceValueNumber}>{formatarMoeda(plano.valor)}</Text>
+          <Text style={styles.priceValueSuffix}>/mês</Text>
+        </Text>
       </View>
-    </TouchableOpacity>
+
+      <View style={styles.checkinRow}>
+        <Ionicons name="calendar-outline" size={14} color={colors.blue} />
+        <Text style={styles.checkinText}>{plano.checkinsPorDia}x check-in por dia</Text>
+      </View>
+
+      {!!plano.beneficios?.length && (
+        <View style={styles.beneficiosList}>
+          {plano.beneficios.map((beneficio) => (
+            <View key={beneficio} style={styles.beneficioRow}>
+              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+              <Text style={styles.beneficioText}>{beneficio}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      <TouchableOpacity
+        style={[styles.selectButton, isAtual && styles.selectButtonAtual]}
+        onPress={() => onSelect(plano)}
+        disabled={isAtual}
+        activeOpacity={0.85}
+      >
+        <Text style={[styles.selectButtonText, isAtual && styles.selectButtonTextAtual]}>
+          {isAtual ? 'Plano atual' : 'Selecionar plano'}
+        </Text>
+      </TouchableOpacity>
+    </View>
   );
 }
 
@@ -63,9 +119,46 @@ export default function ChangePlanScreen({ route, navigation }) {
     setLoading(true);
     setError('');
     try {
-      // TODO: confirmar endpoint/formato exato no backend
-      const data = await getPlanosDisponiveis();
-      setPlanos(data);
+      const pages = {
+        orderBy: 'nivel',
+        size: TAMANHO_PAGINA
+      }
+
+      const data = await findAllByCondition({ ...pages });
+      const response = data.response;
+
+      const formatted = response.content.map((e) => {
+        return ({
+          id: e.id,
+          nome: `Plano ${e.nome}`,
+          descricao: e.descricao,
+          valor: e.valor,
+          valorOriginal: e.valorOriginal ?? null,
+          recomendado: e.recomendado ?? false,
+          checkinsPorDia: e.limiteCheckinDia,
+          dataContratacao: e.dataContratacao,
+          beneficios: e.beneficios,
+          nivel: e.nivel
+        });
+      });
+
+      // Fallback: se nenhum plano veio marcado como recomendado pelo
+      // backend, destaca o de preço "do meio" (nem o mais barato, nem o
+      // mais caro) — critério fácil de trocar depois por outra regra.
+      const algumRecomendadoPeloBackend = formatted.some((p) => p.recomendado === true);
+      if (!algumRecomendadoPeloBackend && formatted.length > 2) {
+        const ordenadosPorValor = [...formatted].sort((a, b) => a.valor - b.valor);
+        const idDoMeio = ordenadosPorValor[Math.floor(ordenadosPorValor.length / 2)].id;
+        formatted.forEach((p) => {
+          p.recomendado = p.id === idDoMeio;
+        });
+      } else {
+        formatted.forEach((p) => {
+          p.recomendado = p.recomendado === true;
+        });
+      }
+
+      setPlanos(formatted);
     } catch (err) {
       setError(err.friendlyMessage || 'Não foi possível carregar os planos disponíveis.');
     } finally {
@@ -90,10 +183,32 @@ export default function ChangePlanScreen({ route, navigation }) {
     setConfirming(true);
     setConfirmError('');
     try {
-      // TODO: confirmar contrato do endpoint (proporcional, data de vigência, etc.)
-      await planoService.alterarPlano({ novoplanoId: planoSelecionado.id });
+      const payload = {
+        planoAtual: planoAtual,
+        planoNovo: {
+          id: planoSelecionado.id,
+          valor: planoSelecionado.valor,
+          nivel: planoSelecionado.nivel,
+        }
+      };
+
+      await alterarPlano(payload);
+
+      // Fecha o modal de confirmação ANTES de mostrar o Alert de sucesso —
+      // senão os dois ficam empilhados na tela ao mesmo tempo.
       setConfirmVisible(false);
-      navigation.goBack();
+
+      // O Alert precisa vir ANTES do goBack(): depois que a tela sai da
+      // pilha de navegação ela deixa de existir, então mostrar o Alert
+      // "depois" do goBack não funcionaria — o goBack só acontece quando o
+      // usuário toca "OK".
+      Alert.alert(
+        planoAtual ? 'Plano alterado!' : 'Assinatura contratada!',
+        planoAtual
+          ? `Você agora está no ${planoSelecionado.nome}.`
+          : `Você contratou o ${planoSelecionado.nome} com sucesso.`,
+        [{ text: 'OK', onPress: () => navigation.goBack() }]
+      );
     } catch (err) {
       setConfirmError(err.friendlyMessage || 'Não foi possível alterar seu plano. Tente novamente.');
     } finally {
@@ -133,19 +248,12 @@ export default function ChangePlanScreen({ route, navigation }) {
         )}
 
         {!loading && !error && (
-          <View style={styles.tableCard}>
-            <View style={styles.tableHeaderRow}>
-              <Text style={[styles.tableHeaderText, { flex: 1.4 }]}>Plano</Text>
-              <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'right' }]}>Valor</Text>
-              <View style={{ width: 28 }} />
-            </View>
-
-            {planos.map((plano, index) => (
-              <PlanRow
+          <View style={styles.plansList}>
+            {planos.map((plano) => (
+              <PlanCard
                 key={plano.id}
                 plano={plano}
                 isAtual={planoAtual?.id ? plano.id === planoAtual.id : plano.nome === planoAtual?.nome}
-                isSelecionado={planoSelecionado?.id === plano.id}
                 onSelect={handleSelecionar}
               />
             ))}
@@ -169,7 +277,7 @@ export default function ChangePlanScreen({ route, navigation }) {
                 <View style={styles.compareBox}>
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Plano atual</Text>
-                    <Text style={styles.compareValue}>{planoAtual?.nome}</Text>
+                    <Text style={styles.compareValue}>{planoAtual?.nome ?? '—'}</Text>
                   </View>
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Novo plano</Text>
@@ -178,28 +286,32 @@ export default function ChangePlanScreen({ route, navigation }) {
                   <View style={styles.compareDivider} />
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Valor atual</Text>
-                    <Text style={styles.compareValue}>{formatarMoeda(planoAtual?.valor)}</Text>
+                    <Text style={styles.compareValue}>{planoAtual ? formatarMoeda(planoAtual.valor) : '—'}</Text>
                   </View>
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Novo valor</Text>
                     <Text style={styles.compareValue}>{formatarMoeda(planoSelecionado.valor)}</Text>
                   </View>
-                  <View style={styles.compareRow}>
-                    <Text style={styles.compareLabel}>Diferença</Text>
-                    <Text style={[styles.compareValue, diferenca > 0 ? styles.compareUp : styles.compareDown]}>
-                      {diferenca > 0 ? '+' : ''}
-                      {formatarMoeda(diferenca)}
-                    </Text>
-                  </View>
+                  {!!planoAtual && (
+                    <View style={styles.compareRow}>
+                      <Text style={styles.compareLabel}>Diferença</Text>
+                      <Text style={[styles.compareValue, diferenca > 0 ? styles.compareUp : styles.compareDown]}>
+                        {diferenca > 0 ? '+' : ''}
+                        {formatarMoeda(diferenca)}
+                      </Text>
+                    </View>
+                  )}
                   <View style={styles.compareDivider} />
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Entra em vigor</Text>
-                    <Text style={styles.compareValue}>Próximo ciclo</Text>
+                    <Text style={styles.compareValue}>{planoAtual ? 'Próximo ciclo' : 'Imediatamente'}</Text>
                   </View>
-                  <View style={styles.compareRow}>
-                    <Text style={styles.compareLabel}>Próxima cobrança</Text>
-                    <Text style={styles.compareValue}>{formatarData(planoAtual?.proximaCobranca?.data)}</Text>
-                  </View>
+                  {!!planoAtual?.proximaCobranca?.data && (
+                    <View style={styles.compareRow}>
+                      <Text style={styles.compareLabel}>Próxima cobrança</Text>
+                      <Text style={styles.compareValue}>{formatarData(planoAtual.proximaCobranca.data)}</Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* TODO: se a regra de negócio cobrar valor proporcional na troca,
@@ -258,7 +370,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
-  intro: { fontSize: 13, color: colors.textMuted, lineHeight: 18, marginBottom: 16 },
+  intro: { fontSize: 13, color: colors.textMuted, lineHeight: 18, marginBottom: 18 },
 
   stateBox: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 40 },
   stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
@@ -271,25 +383,75 @@ const styles = StyleSheet.create({
   },
   stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
-  tableCard: { backgroundColor: '#fff', borderRadius: radius.lg, padding: 6, ...shadow },
-  tableHeaderRow: { flexDirection: 'row', paddingHorizontal: 12, paddingVertical: 10 },
-  tableHeaderText: { fontSize: 11.5, fontWeight: '700', color: colors.textMuted, textTransform: 'uppercase' },
-  planRow: {
+  plansList: { gap: 16 },
+
+  planCard: {
+    backgroundColor: '#fff',
+    borderRadius: radius.xl,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: 'transparent',
+    position: 'relative',
+    overflow: 'hidden',
+    ...shadow,
+  },
+  planCardAtual: { borderColor: colors.blue, backgroundColor: '#F7F9FF' },
+  planCardRecomendado: { borderColor: '#F59E0B', paddingTop: 34 },
+
+  recommendedRibbon: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 14,
-    borderTopWidth: 1,
-    borderTopColor: colors.border,
-    borderRadius: radius.md,
+    justifyContent: 'center',
+    gap: 5,
+    backgroundColor: '#F59E0B',
+    paddingVertical: 6,
   },
-  planRowSelected: { backgroundColor: '#EEF1FC' },
-  planRowNameRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  planRowName: { fontSize: 14.5, fontWeight: '700', color: colors.text },
-  currentTag: { backgroundColor: colors.chipBg, paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill },
-  currentTagText: { fontSize: 10.5, fontWeight: '700', color: colors.blue },
-  planRowChecking: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  planRowCell: { fontSize: 14, fontWeight: '700', color: colors.text },
+  recommendedRibbonText: { color: '#fff', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.3 },
+
+  planCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
+  planCardName: { fontSize: 18, fontWeight: '800', color: colors.text, flex: 1 },
+  currentTag: { backgroundColor: colors.blue, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  currentTagText: { fontSize: 10.5, fontWeight: '700', color: '#fff' },
+  discountTag: { backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  discountTagText: { fontSize: 11, fontWeight: '800', color: '#DC2626' },
+
+  priceRow: { marginBottom: 12 },
+  priceOriginal: { fontSize: 13, color: colors.textLight, textDecorationLine: 'line-through', marginBottom: 2 },
+  priceValue: { fontSize: 13, color: colors.textMuted },
+  priceValueNumber: { fontSize: 26, fontWeight: '800', color: colors.text },
+  priceValueSuffix: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+
+  checkinRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: colors.chipBg,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    marginBottom: 14,
+  },
+  checkinText: { fontSize: 12, fontWeight: '600', color: colors.blue },
+
+  beneficiosList: { gap: 8, marginBottom: 18 },
+  beneficioRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  beneficioText: { fontSize: 13, color: colors.text, flex: 1 },
+
+  selectButton: {
+    backgroundColor: colors.blue,
+    height: 48,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectButtonAtual: { backgroundColor: colors.chipBg },
+  selectButtonText: { color: '#fff', fontWeight: '700', fontSize: 14.5 },
+  selectButtonTextAtual: { color: colors.blue },
 
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
   modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: 20 },

@@ -25,6 +25,12 @@ function buildMenuSections({ onLogout, onDeleteAccount }) {
       ],
     },
     {
+      title: 'Assinatura',
+      items: [
+        { icon: 'card-outline', label: 'Forma de Pagamento', screen: 'PaymentMethod' }
+      ],
+    },
+    {
       title: 'Suporte',
       items: [
         { icon: 'help-circle-outline', label: 'Central de ajuda', screen: 'Help' },

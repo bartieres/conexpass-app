@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
-import { getCartaoAtual } from '../../services/cartaoService';
+import { getCartaoAtual } from '../../services/formaPagamentoService';
 
 const BANDEIRA_ICON = {
   MASTERCARD: 'card',
@@ -22,7 +22,8 @@ export default function PaymentMethodScreen({ navigation }) {
     try {
       // TODO: confirmar endpoint/formato exato no backend
       const data = await getCartaoAtual();
-      setCartao(data);
+      const { response } = data;
+      setCartao(response);
     } catch (err) {
       setError(err.friendlyMessage || 'Não foi possível carregar sua forma de pagamento.');
     } finally {
