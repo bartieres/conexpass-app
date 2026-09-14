@@ -15,7 +15,6 @@ import CheckInPendingScreen from '../screens/checkins/CheckInPendingScreen';
 import PlanScreen from '../screens/plan/PlanScreen';
 import ChangePlanScreen from '../screens/plan/ChangePlanScreen';
 import PaymentDetailScreen from '../screens/plan/PaymentDetailScreen';
-import PaymentMethodScreen from '../screens/plan/PaymentMethodScreen';
 import PaymentScreen from '../screens/plan/PaymentScreen';
 import PlanHistoryScreen from '../screens/plan/PlanHistoryScreen';
 
@@ -27,6 +26,8 @@ import NotificationScreen from '../screens/profile/preferencias/NotificationScre
 import LocationScreen from '../screens/profile/preferencias/LocationScreen';
 import HelpScreen from '../screens/profile/suporte/HelpScreen';
 import ContactScreen from '../screens/profile/suporte/ContactScreen';
+import PaymentMethodScreen from '../screens/profile/assinatura/PaymentMethodScreen';
+import RegisterCardScreen from '../screens/profile/assinatura/RegisterCardScreen';
 
 const Tab = createBottomTabNavigator();
 const ExploreStackNav = createNativeStackNavigator();
@@ -62,7 +63,6 @@ function PlanStack() {
       <PlanStackNav.Screen name="PlanMain" component={PlanScreen} />
       <PlanStackNav.Screen name="ChangePlan" component={ChangePlanScreen} />
       <PlanStackNav.Screen name="PaymentDetail" component={PaymentDetailScreen} />
-      <PlanStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
       <PlanStackNav.Screen name="Payment" component={PaymentScreen} />
       <PlanStackNav.Screen name="PlanHistory" component={PlanHistoryScreen} />
     </PlanStackNav.Navigator>
@@ -82,6 +82,7 @@ function ProfileStack() {
       <ProfileStackNav.Screen name="Help" component={HelpScreen} />
       <ProfileStackNav.Screen name="Contact" component={ContactScreen} />
       <ProfileStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
+      <ProfileStackNav.Screen name="RegisterCard" component={RegisterCardScreen} />
     </ProfileStackNav.Navigator>
   );
 }

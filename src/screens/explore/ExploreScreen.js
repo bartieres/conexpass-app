@@ -253,7 +253,6 @@ export default function ExploreScreen({ navigation, route }) {
     setSendingSuggestion(true);
     setSuggestionError('');
     try {
-      // TODO: confirmar endpoint/formato exato no backend
       await sugerirEstabelecimento(dados);
       setSuggestionSuccess(true);
     } catch (err) {

@@ -2,8 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../theme/theme';
-import { getCartaoAtual } from '../../services/formaPagamentoService';
+import { colors, radius, shadow } from '../../../theme/theme';
+import { getCartaoAtual } from '../../../services/formaPagamentoService';
 
 const BANDEIRA_ICON = {
   MASTERCARD: 'card',
@@ -20,7 +20,6 @@ export default function PaymentMethodScreen({ navigation }) {
     setLoading(true);
     setError('');
     try {
-      // TODO: confirmar endpoint/formato exato no backend
       const data = await getCartaoAtual();
       const { response } = data;
       setCartao(response);
@@ -36,9 +35,7 @@ export default function PaymentMethodScreen({ navigation }) {
   }, [buscarCartao]);
 
   const handleAlterarCartao = () => {
-    // TODO: essa tela ainda não existe — provavelmente vai abrir um checkout
-    // de tokenização de cartão (Stripe/Pagar.me/etc). Por enquanto só avisa.
-    Alert.alert('Em breve', 'A alteração de cartão estará disponível em breve.');
+    navigation.navigate('RegisterCard');
   };
 
   return (

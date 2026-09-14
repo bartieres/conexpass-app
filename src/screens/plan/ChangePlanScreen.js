@@ -114,6 +114,7 @@ export default function ChangePlanScreen({ route, navigation }) {
   const [confirmVisible, setConfirmVisible] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [confirmError, setConfirmError] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const buscarPlanos = useCallback(async () => {
     setLoading(true);
@@ -194,21 +195,8 @@ export default function ChangePlanScreen({ route, navigation }) {
 
       await alterarPlano(payload);
 
-      // Fecha o modal de confirmação ANTES de mostrar o Alert de sucesso —
-      // senão os dois ficam empilhados na tela ao mesmo tempo.
       setConfirmVisible(false);
-
-      // O Alert precisa vir ANTES do goBack(): depois que a tela sai da
-      // pilha de navegação ela deixa de existir, então mostrar o Alert
-      // "depois" do goBack não funcionaria — o goBack só acontece quando o
-      // usuário toca "OK".
-      Alert.alert(
-        planoAtual ? 'Plano alterado!' : 'Assinatura contratada!',
-        planoAtual
-          ? `Você agora está no ${planoSelecionado.nome}.`
-          : `Você contratou o ${planoSelecionado.nome} com sucesso.`,
-        [{ text: 'OK', onPress: () => navigation.goBack() }]
-      );
+      setSuccess(true);
     } catch (err) {
       setConfirmError(err.friendlyMessage || 'Não foi possível alterar seu plano. Tente novamente.');
     } finally {
@@ -227,37 +215,88 @@ export default function ChangePlanScreen({ route, navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
-        <Text style={styles.intro}>
-          Compare os planos disponíveis e escolha o que melhor se encaixa no seu uso.
-        </Text>
+        {success ? (
+          <View style={styles.successBox}>
+            <Ionicons
+              name="checkmark-circle"
+              size={48}
+              color={colors.success}
+            />
 
-        {loading && (
-          <View style={styles.stateBox}>
-            <ActivityIndicator size="small" color={colors.blue} />
-          </View>
-        )}
+            <Text style={styles.successTitle}>
+              {planoAtual ? 'Plano alterado!' : 'Assinatura contratada!'}
+            </Text>
 
-        {!loading && !!error && (
-          <View style={styles.stateBox}>
-            <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
-            <Text style={styles.stateText}>{error}</Text>
-            <TouchableOpacity style={styles.stateButton} onPress={buscarPlanos}>
-              <Text style={styles.stateButtonText}>Tentar novamente</Text>
+            <Text style={styles.successText}>
+              {planoAtual
+                ? `Você agora está no ${planoSelecionado?.nome}.`
+                : `Você contratou o ${planoSelecionado?.nome} com sucesso.`}
+            </Text>
+
+            <TouchableOpacity
+              style={styles.successButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.successButtonText}>
+                Fechar
+              </Text>
             </TouchableOpacity>
           </View>
-        )}
+        ) : (
+          <>
+            <Text style={styles.intro}>
+              Compare os planos disponíveis e escolha o que melhor se encaixa no seu uso.
+            </Text>
 
-        {!loading && !error && (
-          <View style={styles.plansList}>
-            {planos.map((plano) => (
-              <PlanCard
-                key={plano.id}
-                plano={plano}
-                isAtual={planoAtual?.id ? plano.id === planoAtual.id : plano.nome === planoAtual?.nome}
-                onSelect={handleSelecionar}
-              />
-            ))}
-          </View>
+            {loading && (
+              <View style={styles.stateBox}>
+                <ActivityIndicator
+                  size="small"
+                  color={colors.blue}
+                />
+              </View>
+            )}
+
+            {!loading && !!error && (
+              <View style={styles.stateBox}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={26}
+                  color="#DC2626"
+                />
+
+                <Text style={styles.stateText}>
+                  {error}
+                </Text>
+
+                <TouchableOpacity
+                  style={styles.stateButton}
+                  onPress={buscarPlanos}
+                >
+                  <Text style={styles.stateButtonText}>
+                    Tentar novamente
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            )}
+
+            {!loading && !error && (
+              <View style={styles.plansList}>
+                {planos.map((plano) => (
+                  <PlanCard
+                    key={plano.id}
+                    plano={plano}
+                    isAtual={
+                      planoAtual?.id
+                        ? plano.id === planoAtual.id
+                        : plano.nome === planoAtual?.nome
+                    }
+                    onSelect={handleSelecionar}
+                  />
+                ))}
+              </View>
+            )}
+          </>
         )}
       </ScrollView>
 
@@ -498,4 +537,41 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   modalConfirmText: { fontSize: 14, fontWeight: '700', color: '#fff' },
+  successBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 50,
+    paddingHorizontal: 20,
+  },
+
+  successTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    marginTop: 14,
+    textAlign: 'center',
+  },
+
+  successText: {
+    fontSize: 13.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 19,
+    marginTop: 8,
+    maxWidth: 320,
+  },
+
+  successButton: {
+    backgroundColor: colors.chipBg,
+    paddingHorizontal: 28,
+    paddingVertical: 12,
+    borderRadius: radius.md,
+    marginTop: 24,
+  },
+
+  successButtonText: {
+    color: colors.blue,
+    fontWeight: '700',
+    fontSize: 14,
+  },
 });
