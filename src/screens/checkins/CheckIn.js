@@ -155,7 +155,7 @@ function CheckInRow({ item }) {
 
 // Card promocional de indicação — visível desde já, mas sem ação de verdade
 // por enquanto (funcionalidade prevista para depois do MVP).
-function ReferralBanner() {
+/*function ReferralBanner() {
   return (
     <TouchableOpacity style={styles.referralCard} activeOpacity={0.85} disabled>
       <View style={styles.referralIconWrap}>
@@ -168,7 +168,7 @@ function ReferralBanner() {
       <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
     </TouchableOpacity>
   );
-}
+}*/
 
 export default function CheckIn({
   resumo,

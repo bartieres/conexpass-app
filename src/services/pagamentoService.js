@@ -1,6 +1,6 @@
-import { api as axiosPrivate } from '../config/api';
+//import { api as axiosPrivate } from '../config/api';
 
-const BASE_URL = '/plans';
+//const BASE_URL = '/plans';
 
 /*export const findAllByCondition = async (params) => {
   const response = await axiosPrivate.get(BASE_URL, { params });

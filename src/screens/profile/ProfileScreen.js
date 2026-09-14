@@ -1,9 +1,7 @@
-import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, typography } from '../../theme/theme';
-import { USER } from '../../data/mock';
+import { colors, radius } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
 
 // Seções do menu, agrupadas como uma tela de configurações. Cada item pode

@@ -11,3 +11,8 @@ export const alterarPlano = async (payload) => {
   const response = await axiosPrivate.patch(`${BASE_URL}/plan`, payload);
   return response.data;
 };
+
+export const cancelarPlano = async (payload) => {
+  const response = await axiosPrivate.patch(`${BASE_URL}/cancelar`, payload);
+  return response.data;
+};

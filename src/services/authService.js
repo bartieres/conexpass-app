@@ -3,10 +3,6 @@ import { api, TOKEN_KEY } from '../config/api';
 
 const USER_KEY = 'conexpass_user';
 
-function onlyDigits(value = '') {
-  return value.replace(/\D/g, '');
-}
-
 async function persistSession(token, user) {
   await SecureStore.setItemAsync(TOKEN_KEY, token);
   await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));

@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../theme/theme';
+import { colors, radius } from '../../theme/theme';
 
 // Motivos exibidos no relatório de problema. Ajuste os textos livremente —
 // só o "value" de cada um é o que vai pro backend.

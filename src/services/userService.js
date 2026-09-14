@@ -1,5 +1,5 @@
 import { useAuth } from '../context/AuthContext';
-import { api, ENDPOINTS } from '../config/api';
+import { api } from '../config/api';
 
 const BASE_URL = '/users';
 
@@ -12,24 +12,21 @@ export const changePassword = async (data) => {
   return response.data;
 };
 
-export const userService = {
-  // GET /users/me -> dados atualizados do usuário
-  async getProfile() {
-    const { user } = useAuth();
-    const { data } = await api.get(`${ENDPOINTS.me}/${user.id}`);
-    return data;
-  },
+export const getProfile = async () => {
+  const { user } = useAuth();
+  const { data } = await api.get(`${BASE_URL}/${user.id}`);
+  return data;
+};
 
-  // PUT /users/me { name, email, phone, birthDate } -> user atualizado
-  // OBS: CPF normalmente não é editável depois do cadastro (regra comum),
-  // por isso não é enviado aqui. Se seu backend permitir, é só incluir.
-  async updateProfile({ name, email, phone, birthDate }) {
-    const { data } = await api.put(ENDPOINTS.me, {
-      name: name.trim(),
-      email: email.trim(),
-      phone: onlyDigits(phone),
-      birthDate, // enviar em ISO (YYYY-MM-DD) se o backend exigir — ver observação abaixo
-    });
-    return data;
-  },
+// PUT /users/me { name, email, phone, birthDate } -> user atualizado
+// OBS: CPF normalmente não é editável depois do cadastro (regra comum),
+// por isso não é enviado aqui. Se seu backend permitir, é só incluir.
+export const  updateProfile = async ({ name, email, phone, birthDate }) => {
+  const { data } = await api.put(BASE_URL, {
+    name: name.trim(),
+    email: email.trim(),
+    phone: onlyDigits(phone),
+    birthDate, // enviar em ISO (YYYY-MM-DD) se o backend exigir — ver observação abaixo
+  });
+  return data;
 };

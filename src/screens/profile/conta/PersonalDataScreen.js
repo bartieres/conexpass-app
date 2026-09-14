@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -12,18 +12,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { colors, radius, shadow, typography } from '../../../theme/theme';
+import { colors, radius, shadow } from '../../../theme/theme';
 import { useAuth } from '../../../context/AuthContext';
-import { userService } from '../../../services/userService';
+import { updateProfile } from '../../../services/userService';
 
-function maskCPF(value = '') {
+/*function maskCPF(value = '') {
   return value
     .replace(/\D/g, '')
     .slice(0, 11)
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d)/, '$1.$2')
     .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-}
+}*/
 
 function maskPhone(value = '') {
   return value
@@ -36,7 +36,7 @@ function maskPhone(value = '') {
 // Data de nascimento vem do backend, não é digitada pelo usuário (campo não
 // editável). Aceita tanto 'YYYY-MM-DD' quanto já formatada, e não quebra se
 // vier vazia.
-function formatBirthDate(value) {
+/*function formatBirthDate(value) {
   if (!value) return '';
   const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(value);
   if (match) {
@@ -44,7 +44,7 @@ function formatBirthDate(value) {
     return `${dia}/${mes}/${ano}`;
   }
   return value;
-}
+}*/
 
 // Sexo pode vir como string simples ('M') ou como objeto { codigo, descricao },
 // dependendo de como o backend serializa. Cobrindo os dois formatos.
@@ -89,7 +89,7 @@ export default function PersonalDataScreen({ navigation }) {
     setSuccessMessage('');
     setSaving(true);
     try {
-      const updated = await userService.updateProfile({ phone });
+      const updated = await updateProfile({ phone });
 
       // Mantém o AuthContext em dia com o telefone novo, sem precisar
       // recarregar o usuário inteiro do backend.

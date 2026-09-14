@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import { findAllByCondition } from '../../services/estabelecimentoService';
 import { save as sugerirEstabelecimento } from '../../services/estabelecimentoLeadService';

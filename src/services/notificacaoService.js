@@ -1,6 +1,6 @@
-import { api as axiosPrivate } from '../config/api';
+//import { api as axiosPrivate } from '../config/api';
 
-const BASE_URL = '/support';
+//const BASE_URL = '/support';
 
 export const getNotificationPreferences = async (data) => {
   //const response = await axiosPrivate.post(BASE_URL, data);
