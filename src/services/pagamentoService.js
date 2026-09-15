@@ -1,11 +1,11 @@
-//import { api as axiosPrivate } from '../config/api';
+import { api as axiosPrivate } from '../config/api';
 
-//const BASE_URL = '/plans';
+const BASE_URL = '/payments';
 
-/*export const findAllByCondition = async (params) => {
+export const findAllByCondition = async (params) => {
   const response = await axiosPrivate.get(BASE_URL, { params });
   return response.data;
-};*/
+};
 
 export const getResumo = async () => {
   //const response = await axiosPrivate.get(`${BASE_URL}/user`);
@@ -21,8 +21,8 @@ export const getResumo = async () => {
       beneficios: [
         'Acesso ilimitado a conteúdos exclusivos',
         'Suporte prioritário',
-        'Descontos em eventos parceiros'
-      ]
-    }
+        'Descontos em eventos parceiros',
+      ],
+    },
   };
 };

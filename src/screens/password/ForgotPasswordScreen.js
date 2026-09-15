@@ -1,5 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  KeyboardAvoidingView,
+  Platform,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
@@ -31,25 +40,41 @@ export default function ForgotPasswordScreen({ navigation }) {
       await forgotPassword(email);
       navigation.navigate('ForgotPasswordSuccess', { email });
     } catch (err) {
-      setErrorMessage(err.friendlyMessage || 'Não foi possível enviar o e-mail. Tente novamente.');
+      setErrorMessage(
+        err.friendlyMessage ||
+          'Não foi possível enviar o e-mail. Tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.bg }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.container}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
         <View style={styles.card}>
           <Text style={styles.title}>Esqueci minha senha</Text>
-          <Text style={styles.subtitle}>Informe seu e-mail para receber o link de redefinição</Text>
+          <Text style={styles.subtitle}>
+            Informe seu e-mail para receber o link de redefinição
+          </Text>
 
           <View style={styles.inputGroup}>
-            <Ionicons name="mail-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+            <Ionicons
+              name="mail-outline"
+              size={18}
+              color={colors.textLight}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="E-mail"
@@ -61,7 +86,9 @@ export default function ForgotPasswordScreen({ navigation }) {
             />
           </View>
           {email.length > 0 && !isValidEmail(email) && (
-            <Text style={styles.emailHint}>Digite um e-mail válido, ex: nome@email.com</Text>
+            <Text style={styles.emailHint}>
+              Digite um e-mail válido, ex: nome@email.com
+            </Text>
           )}
 
           {!!errorMessage && (
@@ -72,12 +99,19 @@ export default function ForgotPasswordScreen({ navigation }) {
           )}
 
           <TouchableOpacity
-            style={[styles.primaryButton, (loading || !isValidEmail(email)) && styles.primaryButtonDisabled]}
+            style={[
+              styles.primaryButton,
+              (loading || !isValidEmail(email)) && styles.primaryButtonDisabled,
+            ]}
             onPress={handleSend}
             activeOpacity={0.85}
             disabled={loading || !isValidEmail(email)}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Enviar link</Text>}
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Enviar link</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -100,7 +134,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow,
   },
-  card: { backgroundColor: colors.card, borderRadius: radius.xl, padding: 22, ...shadow },
+  card: {
+    backgroundColor: colors.card,
+    borderRadius: radius.xl,
+    padding: 22,
+    ...shadow,
+  },
   title: { ...typography.h2, marginBottom: 6 },
   subtitle: { ...typography.muted, marginBottom: 20 },
   inputGroup: {
@@ -116,7 +155,15 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, fontSize: 14, color: colors.text },
-  primaryButton: { backgroundColor: colors.blue, borderRadius: radius.md, height: 50, alignItems: 'center', justifyContent: 'center', width: '100%', marginTop: 8 },
+  primaryButton: {
+    backgroundColor: colors.blue,
+    borderRadius: radius.md,
+    height: 50,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    marginTop: 8,
+  },
   primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   errorBox: {
     flexDirection: 'row',

@@ -1,10 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   findById,
-  registrarInteresse as registrarInteresseService,
-  reportarProblema as reportarProblemaService,
+  registrarInteresse,
+  reportarProblema,
 } from '../../services/estabelecimentoService';
-import { listarPorEstabelecimento, adicionar as adicionarComentario } from '../../services/comentarioService';
+import {
+  listarPorEstabelecimento,
+  adicionar as adicionarComentario,
+} from '../../services/comentarioService';
 import EstablishmentDetail from './EstablishmentDetail';
 
 // Mesmos códigos de comodidade cadastrados no painel web (EstabelecimentoFormPage),
@@ -15,7 +18,10 @@ const AMENITY_META = {
   WIFI: { label: 'Wi-Fi', icon: 'wifi-outline' },
   SHOWER: { label: 'Chuveiro', icon: 'water-outline' },
   LOCKERS: { label: 'Armários', icon: 'lock-closed-outline' },
-  ACCESSIBLE_ACCESS: { label: 'Acesso p/ cadeirantes', icon: 'accessibility-outline' },
+  ACCESSIBLE_ACCESS: {
+    label: 'Acesso p/ cadeirantes',
+    icon: 'accessibility-outline',
+  },
   BICYCLE_PARKING: { label: 'Bicicletário', icon: 'bicycle-outline' },
   AIR_CONDITIONING: { label: 'Ar-condicionado', icon: 'snow-outline' },
   DRINKING_FOUNTAIN: { label: 'Bebedouro', icon: 'water-outline' },
@@ -35,7 +41,11 @@ function formatarEndereco(endereco) {
 function formatarDataComentario(dataISO) {
   if (!dataISO) return '';
   const data = new Date(dataISO);
-  return data.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  return data.toLocaleDateString('pt-BR', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  });
 }
 
 function formatarHora(hora) {
@@ -61,15 +71,17 @@ function montarEstabelecimento(gymResumo, e) {
     category: e.tipo.descricao,
     about: e.descricao,
     address: formatarEndereco(e.endereco),
-    amenities: (e.comodidades || []).map((item) => {
-      const codigo = item?.codigo?.codigo ?? item?.codigo ?? item;
-      const descricao = item?.codigo?.descricao ?? item?.descricao;
-      if (!codigo) return null;
-      return {
-        label: descricao || AMENITY_META[codigo]?.label || codigo,
-        icon: AMENITY_META[codigo]?.icon || 'checkmark-circle-outline',
-      };
-    }).filter(Boolean),
+    amenities: (e.comodidades || [])
+      .map((item) => {
+        const codigo = item?.codigo?.codigo ?? item?.codigo ?? item;
+        const descricao = item?.codigo?.descricao ?? item?.descricao;
+        if (!codigo) return null;
+        return {
+          label: descricao || AMENITY_META[codigo]?.label || codigo,
+          icon: AMENITY_META[codigo]?.icon || 'checkmark-circle-outline',
+        };
+      })
+      .filter(Boolean),
     website: e.website,
     instagram: e.instagram,
     horarioFuncionamento: horarioFuncionamento,
@@ -77,8 +89,8 @@ function montarEstabelecimento(gymResumo, e) {
       ? horarioFuncionamento.aberto
         ? `Aberto até as ${formatarHora(horarioFuncionamento.horarioFechamento)}`
         : horarioFuncionamento.diaAbertura
-        ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
-        : 'Fechado'
+          ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
+          : 'Fechado'
       : null,
     rating: e.avaliacaoMedia,
     reviews: e.totalAvaliacoes,
@@ -122,7 +134,10 @@ export default function EstablishmentDetailScreen({ route, navigation }) {
 
       setEstabelecimento(montarEstabelecimento(gymResumo, e));
     } catch (err) {
-      setDetalhesError(err.friendlyMessage || 'Não foi possível carregar os detalhes desse estabelecimento.');
+      setDetalhesError(
+        err.friendlyMessage ||
+          'Não foi possível carregar os detalhes desse estabelecimento.'
+      );
     } finally {
       setLoadingDetalhes(false);
     }
@@ -147,7 +162,9 @@ export default function EstablishmentDetailScreen({ route, navigation }) {
         }))
       );
     } catch (err) {
-      setComentariosError(err.friendlyMessage || 'Não foi possível carregar os comentários.');
+      setComentariosError(
+        err.friendlyMessage || 'Não foi possível carregar os comentários.'
+      );
     } finally {
       setLoadingComentarios(false);
     }
@@ -165,11 +182,14 @@ export default function EstablishmentDetailScreen({ route, navigation }) {
     try {
       // TODO: confirmar endpoint/formato exato — o backend decide se o
       // interesse foi registrado com sucesso e devolve a flag atualizada.
-      const data = await registrarInteresseService(estabelecimento.id);
+      const data = await registrarInteresse(estabelecimento.id);
       const registrado = data?.response?.interesseRegistrado ?? true;
 
-      setEstabelecimento((atual) => ({ ...atual, interesseRegistrado: registrado }));
-    } catch (err) {
+      setEstabelecimento((atual) => ({
+        ...atual,
+        interesseRegistrado: registrado,
+      }));
+    } catch (_err) {
       // falha silenciosa por enquanto — o botão simplesmente volta ao estado normal
     } finally {
       setRegistrandoInteresse(false);
@@ -183,14 +203,17 @@ export default function EstablishmentDetailScreen({ route, navigation }) {
     setReportandoProblema(true);
     try {
       // TODO: confirmar endpoint/formato exato no backend
-      await reportarProblemaService({
+      await reportarProblema({
         estabelecimentoId: estabelecimento.id,
         motivo,
         descricao,
       });
       setReportModalVisible(false);
     } catch (err) {
-      setReportError(err.friendlyMessage || 'Não foi possível enviar seu relato. Tente novamente.');
+      setReportError(
+        err.friendlyMessage ||
+          'Não foi possível enviar seu relato. Tente novamente.'
+      );
     } finally {
       setReportandoProblema(false);
     }
@@ -202,19 +225,23 @@ export default function EstablishmentDetailScreen({ route, navigation }) {
     setEnviandoComentario(true);
     try {
       // TODO: confirmar endpoint/formato exato no backend
-      const data = await adicionarComentario({ estabelecimentoId: estabelecimento.id, texto });
+      const data = await adicionarComentario({
+        estabelecimentoId: estabelecimento.id,
+        texto,
+      });
       const novoComentario = data?.response ?? data;
 
       setComentarios((atual) => [
         {
           id: novoComentario.id,
-          autorNome: novoComentario.autor?.nome || novoComentario.autorNome || 'Você',
+          autorNome:
+            novoComentario.autor?.nome || novoComentario.autorNome || 'Você',
           texto: novoComentario.texto || texto,
           dataFormatada: formatarDataComentario(novoComentario.data) || 'agora',
         },
         ...atual,
       ]);
-    } catch (err) {
+    } catch (_err) {
       // TODO: mostrar erro de envio de comentário (ex: toast) — por ora, falha silenciosa
     } finally {
       setEnviandoComentario(false);

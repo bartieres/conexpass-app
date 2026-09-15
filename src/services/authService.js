@@ -11,17 +11,19 @@ async function persistSession(token, user) {
 export const authService = {
   // POST /auth/login  { identifier, password } -> { token, user }
   async login(identifier, password) {
-    
     const payload = { email: identifier.trim(), senha: password };
 
-    const { data } = await api.post('/auth/login', {
-      ...payload,
-    },
-    {
-      headers: {
-        'X-Client-Type': 'APP'
+    const { data } = await api.post(
+      '/auth/login',
+      {
+        ...payload,
+      },
+      {
+        headers: {
+          'X-Client-Type': 'APP',
+        },
       }
-    });
+    );
     await persistSession(data.token.accessToken, data.user);
     return data.user;
   },
@@ -34,7 +36,9 @@ export const authService = {
 
   // POST /auth/forgot-password { email } -> { message }
   async forgotPassword(email) {
-    const { data } = await api.post('/auth/forgot-password', { email: email.trim() });
+    const { data } = await api.post('/auth/forgot-password', {
+      email: email.trim(),
+    });
     return data;
   },
 

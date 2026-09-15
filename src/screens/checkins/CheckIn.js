@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import {
   View,
   Text,
@@ -18,7 +18,11 @@ import { colors, radius, shadow, typography } from '../../theme/theme';
 const TYPE_META = {
   Plano: { color: colors.blue, bg: '#E8EEFC', icon: 'calendar-outline' },
   Avulso: { color: '#B45309', bg: '#FEF3C7', icon: 'cart-outline' },
-  Bônus: { color: colors.success, bg: colors.successLight, icon: 'gift-outline' },
+  Bônus: {
+    color: colors.success,
+    bg: colors.successLight,
+    icon: 'gift-outline',
+  },
 };
 
 function StatBox({ label, value, meta }) {
@@ -62,14 +66,20 @@ function ResumoCard({ resumo, loading, error, onRetry }) {
 
       <View style={styles.statsRow}>
         <StatBox label="Plano" value={resumo.plano} meta={TYPE_META.Plano} />
-        <StatBox label="Avulsos" value={resumo.avulso} meta={TYPE_META.Avulso} />
+        <StatBox
+          label="Avulsos"
+          value={resumo.avulso}
+          meta={TYPE_META.Avulso}
+        />
         <StatBox label="Bônus" value={resumo.bonus} meta={TYPE_META.Bônus} />
       </View>
 
       <View style={styles.totalPill}>
         <Text style={styles.totalPillLabel}>Total disponível</Text>
         <View style={styles.totalPillBadge}>
-          <Text style={styles.totalPillBadgeText}>{resumo.disponiveis} check-ins</Text>
+          <Text style={styles.totalPillBadgeText}>
+            {resumo.disponiveis} check-ins
+          </Text>
         </View>
       </View>
     </View>
@@ -82,14 +92,26 @@ function PeriodoDropdown({ periodos, periodoId, onSelect }) {
 
   return (
     <>
-      <TouchableOpacity style={styles.periodoButton} onPress={() => setVisible(true)}>
+      <TouchableOpacity
+        style={styles.periodoButton}
+        onPress={() => setVisible(true)}
+      >
         <Ionicons name="calendar-outline" size={14} color={colors.blue} />
         <Text style={styles.periodoButtonText}>{atual.label}</Text>
         <Ionicons name="chevron-down" size={14} color={colors.blue} />
       </TouchableOpacity>
 
-      <Modal visible={visible} animationType="fade" transparent onRequestClose={() => setVisible(false)}>
-        <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={() => setVisible(false)}>
+      <Modal
+        visible={visible}
+        animationType="fade"
+        transparent
+        onRequestClose={() => setVisible(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setVisible(false)}
+        >
           <View style={styles.dropdownMenu}>
             {periodos.map((periodo) => {
               const active = periodo.id === periodoId;
@@ -102,10 +124,17 @@ function PeriodoDropdown({ periodos, periodoId, onSelect }) {
                     setVisible(false);
                   }}
                 >
-                  <Text style={[styles.dropdownItemText, active && styles.dropdownItemTextActive]}>
+                  <Text
+                    style={[
+                      styles.dropdownItemText,
+                      active && styles.dropdownItemTextActive,
+                    ]}
+                  >
                     {periodo.label}
                   </Text>
-                  {active && <Ionicons name="checkmark" size={16} color={colors.blue} />}
+                  {active && (
+                    <Ionicons name="checkmark" size={16} color={colors.blue} />
+                  )}
                 </TouchableOpacity>
               );
             })}
@@ -130,22 +159,35 @@ function CheckInRow({ item }) {
             {item.establishmentName}
           </Text>
           <View style={[styles.typePill, { backgroundColor: meta.bg }]}>
-            <Text style={[styles.typePillText, { color: meta.color }]}>{item.type}</Text>
+            <Text style={[styles.typePillText, { color: meta.color }]}>
+              {item.type}
+            </Text>
           </View>
         </View>
 
         <Text style={styles.rowDate}>{item.formattedTime}</Text>
 
-        {item.observation && <Text style={styles.rowDate}>{item.observation}</Text>}
+        {item.observation && (
+          <Text style={styles.rowDate}>{item.observation}</Text>
+        )}
 
         <View style={styles.rowStatusRow}>
           <Ionicons
-            name={item.status === 'success' ? 'checkmark-circle' : 'close-circle'}
+            name={
+              item.status === 'success' ? 'checkmark-circle' : 'close-circle'
+            }
             size={13}
             color={item.status === 'success' ? colors.success : '#DC2626'}
           />
-          <Text style={[styles.rowStatusText, item.status !== 'success' && styles.rowStatusTextError]}>
-            {item.status === 'success' ? 'Check-in realizado' : 'Check-in não confirmado'}
+          <Text
+            style={[
+              styles.rowStatusText,
+              item.status !== 'success' && styles.rowStatusTextError,
+            ]}
+          >
+            {item.status === 'success'
+              ? 'Check-in realizado'
+              : 'Check-in não confirmado'}
           </Text>
         </View>
       </View>
@@ -197,7 +239,10 @@ export default function CheckIn({
       if (!grupos.has(item.dateLabel)) grupos.set(item.dateLabel, []);
       grupos.get(item.dateLabel).push(item);
     });
-    return Array.from(grupos.entries()).map(([title, data]) => ({ title, data }));
+    return Array.from(grupos.entries()).map(([title, data]) => ({
+      title,
+      data,
+    }));
   }, [historico]);
 
   const listaCarregada = !loading && !historicoError;
@@ -216,25 +261,43 @@ export default function CheckIn({
         stickySectionHeadersEnabled={false}
         ListHeaderComponent={
           <>
-            <ResumoCard resumo={resumo} loading={loadingResumo} error={resumoError} onRetry={onRetryResumo} />
+            <ResumoCard
+              resumo={resumo}
+              loading={loadingResumo}
+              error={resumoError}
+              onRetry={onRetryResumo}
+            />
 
             <View style={styles.historicoHeaderRow}>
               <Text style={styles.historicoTitle}>Check-ins</Text>
-              <PeriodoDropdown periodos={periodos} periodoId={periodoId} onSelect={onSelectPeriodo} />
+              <PeriodoDropdown
+                periodos={periodos}
+                periodoId={periodoId}
+                onSelect={onSelectPeriodo}
+              />
             </View>
 
             {loading && (
               <View style={styles.stateBox}>
                 <ActivityIndicator size="small" color={colors.blue} />
-                <Text style={styles.stateText}>Carregando seus check-ins...</Text>
+                <Text style={styles.stateText}>
+                  Carregando seus check-ins...
+                </Text>
               </View>
             )}
 
             {!loading && !!historicoError && (
               <View style={styles.stateBox}>
-                <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={28}
+                  color="#DC2626"
+                />
                 <Text style={styles.stateText}>{historicoError}</Text>
-                <TouchableOpacity style={styles.stateButton} onPress={onRetryHistorico}>
+                <TouchableOpacity
+                  style={styles.stateButton}
+                  onPress={onRetryHistorico}
+                >
                   <Text style={styles.stateButtonText}>Tentar novamente</Text>
                 </TouchableOpacity>
               </View>
@@ -244,18 +307,31 @@ export default function CheckIn({
         /*renderSectionHeader={({ section }) =>
           listaCarregada ? <Text style={styles.sectionHeader}>{section.title}</Text> : null
         }*/
-        renderItem={({ item }) => (listaCarregada ? <CheckInRow item={item} /> : null)}
+        renderItem={({ item }) =>
+          listaCarregada ? <CheckInRow item={item} /> : null
+        }
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListEmptyComponent={
           listaCarregada ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name="receipt-outline" size={36} color={colors.textLight} />
-              <Text style={styles.emptyText}>Nenhum check-in registrado nesse período</Text>
+              <Ionicons
+                name="receipt-outline"
+                size={36}
+                color={colors.textLight}
+              />
+              <Text style={styles.emptyText}>
+                Nenhum check-in registrado nesse período
+              </Text>
             </View>
           ) : null
         }
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.blue]} tintColor={colors.blue} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.blue]}
+            tintColor={colors.blue}
+          />
         }
         onEndReached={onLoadMore}
         onEndReachedThreshold={0.4}
@@ -269,7 +345,7 @@ export default function CheckIn({
             )}
 
             {/* Visível desde já, mesmo sendo funcionalidade pós-MVP */}
-            { /*listaCarregada && !loadingMore && <ReferralBanner /> */}
+            {/*listaCarregada && !loadingMore && <ReferralBanner /> */}
           </>
         }
       />
@@ -291,12 +367,27 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   resumoStateBox: { alignItems: 'center', paddingVertical: 30, gap: 8 },
-  resumoErrorText: { color: colors.textMuted, fontSize: 12.5, textAlign: 'center' },
-  resumoRetryText: { color: colors.blue, fontWeight: '700', fontSize: 12.5, textDecorationLine: 'underline' },
+  resumoErrorText: {
+    color: colors.textMuted,
+    fontSize: 12.5,
+    textAlign: 'center',
+  },
+  resumoRetryText: {
+    color: colors.blue,
+    fontWeight: '700',
+    fontSize: 12.5,
+    textDecorationLine: 'underline',
+  },
   resumoTitle: { ...typography.h3, marginBottom: 14 },
 
   statsRow: { flexDirection: 'row', gap: 10, marginBottom: 14 },
-  statBox: { flex: 1, borderRadius: radius.md, padding: 12, alignItems: 'center', gap: 4 },
+  statBox: {
+    flex: 1,
+    borderRadius: radius.md,
+    padding: 12,
+    alignItems: 'center',
+    gap: 4,
+  },
   statIconWrap: {
     width: 28,
     height: 28,
@@ -318,7 +409,12 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   totalPillLabel: { fontSize: 13, fontWeight: '600', color: colors.text },
-  totalPillBadge: { backgroundColor: colors.blue, paddingHorizontal: 12, paddingVertical: 5, borderRadius: radius.pill },
+  totalPillBadge: {
+    backgroundColor: colors.blue,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+  },
   totalPillBadgeText: { color: '#fff', fontWeight: '800', fontSize: 12.5 },
 
   historicoHeaderRow: {
@@ -361,8 +457,18 @@ const styles = StyleSheet.create({
   dropdownItemText: { fontSize: 13.5, color: colors.text },
   dropdownItemTextActive: { color: colors.blue, fontWeight: '700' },
 
-  stateBox: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 30 },
-  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 30,
+  },
+  stateText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   stateButton: {
     backgroundColor: colors.blue,
     paddingHorizontal: 18,
@@ -397,17 +503,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rowTopLine: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  rowTopLine: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
   rowName: { flex: 1, fontSize: 14, fontWeight: '700', color: colors.text },
-  typePill: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill },
+  typePill: {
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
   typePillText: { fontSize: 11, fontWeight: '700' },
   rowDate: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
-  rowStatusRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
+  rowStatusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 4,
+  },
   rowStatusText: { fontSize: 11.5, color: colors.success, fontWeight: '600' },
   rowStatusTextError: { color: '#DC2626' },
   separator: { height: 10 },
 
-  loadingMoreBox: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 16 },
+  loadingMoreBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 16,
+  },
   loadingMoreText: { fontSize: 12.5, color: colors.textMuted },
 
   referralCard: {
@@ -428,7 +554,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   referralTitle: { fontSize: 14, fontWeight: '800', color: colors.blue },
-  referralSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 2, lineHeight: 16 },
+  referralSubtitle: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+    lineHeight: 16,
+  },
 
   emptyWrap: { alignItems: 'center', marginTop: 40, gap: 10 },
   emptyText: { color: colors.textLight, fontSize: 13 },

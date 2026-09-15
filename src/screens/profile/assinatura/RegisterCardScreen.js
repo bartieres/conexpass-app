@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 
 import {
   View,
@@ -14,18 +14,106 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-
 import { colors, radius, shadow } from '../../../theme/theme';
+
+import { save } from '../../../services/formaPagamentoService';
+
+const BANDEIRA_ICON = {
+  VISA: 'card',
+  MASTERCARD: 'card',
+  ELO: 'card',
+};
+
+const identificarBandeira = (numero) => {
+  const n = numero.replace(/\D/g, '');
+
+  if (!n) {
+    return null;
+  }
+
+  // Visa
+  if (/^4/.test(n)) {
+    return 'VISA';
+  }
+
+  // Mastercard
+  if (/^(5[1-5])/.test(n) || /^(22[2-9]|2[3-6]|27[0-1]|2720)/.test(n)) {
+    return 'MASTERCARD';
+  }
+
+  // Elo - principais faixas
+  const eloRanges = [
+    /^4011/,
+    /^431274/,
+    /^438935/,
+    /^451416/,
+    /^457393/,
+    /^4576/,
+    /^504175/,
+    /^5067/,
+    /^627780/,
+    /^636368/,
+    /^636297/,
+    /^650031/,
+    /^650032/,
+    /^650033/,
+    /^650035/,
+    /^650036/,
+    /^650037/,
+    /^650038/,
+    /^650039/,
+    /^65004/,
+    /^65005/,
+    /^65007/,
+    /^65009/,
+    /^65041/,
+    /^65042/,
+    /^65043/,
+    /^65048/,
+    /^65049/,
+    /^6505/,
+    /^6507/,
+    /^6509/,
+    /^6516/,
+    /^6550/,
+  ];
+
+  if (eloRanges.some((regex) => regex.test(n))) {
+    return 'ELO';
+  }
+
+  return null;
+};
+
+const nomeBandeira = (bandeira) => {
+  switch (bandeira) {
+    case 'VISA':
+      return 'Visa';
+
+    case 'MASTERCARD':
+      return 'Mastercard';
+
+    case 'ELO':
+      return 'Elo';
+
+    default:
+      return null;
+  }
+};
 
 export default function RegisterCardScreen({ navigation }) {
   const [numero, setNumero] = useState('');
   const [nome, setNome] = useState('');
   const [validade, setValidade] = useState('');
   const [cvv, setCvv] = useState('');
+
+  const [bandeira, setBandeira] = useState(null);
+
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
   const formatarNumero = (value) => {
-    const somenteNumeros = value.replace(/\D/g, '').slice(0, 16);
+    const somenteNumeros = value.replace(/\D/g, '').slice(0, 19);
 
     return somenteNumeros.replace(/(.{4})/g, '$1 ').trim();
   };
@@ -40,24 +128,47 @@ export default function RegisterCardScreen({ navigation }) {
     return somenteNumeros;
   };
 
+  const handleNumeroChange = (value) => {
+    const numeroFormatado = formatarNumero(value);
+
+    setNumero(numeroFormatado);
+    setBandeira(identificarBandeira(numeroFormatado));
+  };
+
   const validar = () => {
-    if (numero.replace(/\D/g, '').length < 13) {
+    const numeroLimpo = numero.replace(/\D/g, '');
+
+    if (numeroLimpo.length < 13) {
       Alert.alert('Cartão inválido', 'Informe um número de cartão válido.');
+
       return false;
     }
 
     if (!nome.trim()) {
       Alert.alert('Nome obrigatório', 'Informe o nome impresso no cartão.');
+
       return false;
     }
 
     if (validade.length !== 5) {
       Alert.alert('Validade inválida', 'Informe a validade no formato MM/AA.');
+
+      return false;
+    }
+
+    const [mes, ano] = validade.split('/');
+
+    const mesNumero = Number(mes);
+
+    if (!mes || !ano || mesNumero < 1 || mesNumero > 12) {
+      Alert.alert('Validade inválida', 'Informe uma data de validade válida.');
+
       return false;
     }
 
     if (cvv.length < 3) {
       Alert.alert('CVV inválido', 'Informe o código de segurança do cartão.');
+
       return false;
     }
 
@@ -69,37 +180,77 @@ export default function RegisterCardScreen({ navigation }) {
       return;
     }
 
+    setError('');
+    setLoading(true);
+
     try {
-      setLoading(true);
+      const numeroCartao = numero.replace(/\D/g, '');
 
       /*
        * IMPORTANTE:
        *
-       * Aqui não devemos enviar o número completo e o CVV
-       * diretamente para o seu backend.
+       * Este é o ponto onde deverá entrar a tokenização
+       * do gateway escolhido.
        *
-       * O fluxo ideal é:
+       * O fluxo de produção deve ser:
        *
-       * 1. Tokenizar o cartão através do gateway
-       * 2. Receber o token/card_id
-       * 3. Enviar somente esse identificador para sua API
+       * 1. App coleta número, validade e CVV.
+       * 2. App envia os dados diretamente para o gateway
+       *    através do mecanismo de tokenização disponibilizado.
+       * 3. Gateway retorna um token/card_id.
+       * 4. App envia somente o token para o seu backend.
        *
-       * Exemplo:
+       * O backend NÃO deve receber:
+       *
+       * - número completo do cartão
+       * - CVV
+       *
+       * Exemplo futuro:
        *
        * const token = await tokenizarCartao({
-       *   number: numero.replace(/\D/g, ''),
-       *   holder_name: nome,
+       *   number: numeroCartao,
+       *   holder_name: nome.trim().toUpperCase(),
        *   expiration_date: validade,
        *   cvv,
        * });
        *
-       * await cadastrarCartao(token.id);
+       * await save({
+       *   tipo: 'CREDIT_CARD',
+       *   token: token.id,
+       * });
+       *
+       * Por enquanto o save abaixo mantém a integração atual
+       * para você conseguir testar o fluxo do MVP.
        */
 
-      // TODO: integrar com o gateway de pagamento
+      const payload = {
+        tipo: 'CREDIT_CARD',
+        cartao: {
+          bandeira: bandeira,
+          ultimosDigitos: numeroCartao,
+          titularCartao: nome.trim().toUpperCase(),
+          validade,
+          cvv,
+        },
+      };
 
+      await save(payload);
+
+      Alert.alert(
+        'Cartão cadastrado!',
+        'Seu cartão foi cadastrado e já pode ser usado nas próximas cobranças.',
+        [
+          {
+            text: 'OK',
+            onPress: () => navigation.goBack(),
+          },
+        ]
+      );
     } catch (err) {
-        setError(err.friendlyMessage || 'Não foi possível cadastrar o cartão.');
+      setError(
+        err.friendlyMessage ||
+          'Não foi possível cadastrar o cartão. Confira os dados e tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -116,17 +267,10 @@ export default function RegisterCardScreen({ navigation }) {
           onPress={() => navigation.goBack()}
           disabled={loading}
         >
-          <Ionicons
-            name="arrow-back"
-            size={22}
-            color={colors.text}
-          />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          {/** Pode trocar para "Cadastrar cartão" */}
-          Cadastrar cartão
-        </Text>
+        <Text style={styles.headerTitle}>Cadastrar cartão</Text>
 
         <View style={{ width: 38 }} />
       </View>
@@ -138,60 +282,49 @@ export default function RegisterCardScreen({ navigation }) {
       >
         <View style={styles.infoBox}>
           <View style={styles.infoIcon}>
-            <Ionicons
-              name="card-outline"
-              size={24}
-              color={colors.blue}
-            />
+            <Ionicons name="card-outline" size={24} color={colors.blue} />
           </View>
 
           <View style={{ flex: 1 }}>
-            <Text style={styles.infoTitle}>
-              Cartão de crédito
-            </Text>
+            <Text style={styles.infoTitle}>Cartão de crédito</Text>
 
             <Text style={styles.infoText}>
-              Cadastre um cartão para utilizar nas cobranças da
-              sua assinatura.
+              Cadastre um cartão para utilizar nas cobranças da sua assinatura.
             </Text>
           </View>
         </View>
 
-        <Text style={styles.sectionTitle}>
-          Dados do cartão
-        </Text>
+        <Text style={styles.sectionTitle}>Dados do cartão</Text>
 
         <View style={styles.form}>
           <View style={styles.field}>
-            <Text style={styles.label}>
-              Número do cartão
-            </Text>
+            <Text style={styles.label}>Número do cartão</Text>
 
             <View style={styles.inputWrapper}>
               <Ionicons
-                name="card-outline"
+                name={BANDEIRA_ICON[bandeira] || 'card-outline'}
                 size={20}
-                color={colors.textMuted}
+                color={bandeira ? colors.blue : colors.textMuted}
               />
 
               <TextInput
                 style={styles.input}
                 value={numero}
-                onChangeText={(value) =>
-                  setNumero(formatarNumero(value))
-                }
+                onChangeText={handleNumeroChange}
                 placeholder="0000 0000 0000 0000"
                 placeholderTextColor={colors.textLight}
                 keyboardType="number-pad"
-                maxLength={19}
+                maxLength={23}
               />
             </View>
+
+            {!!bandeira && (
+              <Text style={styles.cardBrand}>{nomeBandeira(bandeira)}</Text>
+            )}
           </View>
 
           <View style={styles.field}>
-            <Text style={styles.label}>
-              Nome no cartão
-            </Text>
+            <Text style={styles.label}>Nome no cartão</Text>
 
             <View style={styles.inputWrapper}>
               <Ionicons
@@ -213,9 +346,7 @@ export default function RegisterCardScreen({ navigation }) {
 
           <View style={styles.row}>
             <View style={[styles.field, { flex: 1 }]}>
-              <Text style={styles.label}>
-                Validade
-              </Text>
+              <Text style={styles.label}>Validade</Text>
 
               <View style={styles.inputWrapper}>
                 <Ionicons
@@ -227,9 +358,7 @@ export default function RegisterCardScreen({ navigation }) {
                 <TextInput
                   style={styles.input}
                   value={validade}
-                  onChangeText={(value) =>
-                    setValidade(formatarValidade(value))
-                  }
+                  onChangeText={(value) => setValidade(formatarValidade(value))}
                   placeholder="MM/AA"
                   placeholderTextColor={colors.textLight}
                   keyboardType="number-pad"
@@ -239,9 +368,7 @@ export default function RegisterCardScreen({ navigation }) {
             </View>
 
             <View style={[styles.field, { flex: 1 }]}>
-              <Text style={styles.label}>
-                CVV
-              </Text>
+              <Text style={styles.label}>CVV</Text>
 
               <View style={styles.inputWrapper}>
                 <Ionicons
@@ -267,6 +394,14 @@ export default function RegisterCardScreen({ navigation }) {
           </View>
         </View>
 
+        {!!error && (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle" size={16} color="#DC2626" />
+
+            <Text style={styles.errorText}>{error}</Text>
+          </View>
+        )}
+
         <View style={styles.securityBox}>
           <Ionicons
             name="shield-checkmark-outline"
@@ -275,24 +410,18 @@ export default function RegisterCardScreen({ navigation }) {
           />
 
           <Text style={styles.securityText}>
-            Seus dados de pagamento são processados de forma
-            segura pelo nosso provedor de pagamentos.
+            Seus dados de pagamento são processados de forma segura pelo nosso
+            provedor de pagamentos.
           </Text>
         </View>
 
         <TouchableOpacity
-          style={[
-            styles.saveButton,
-            loading && styles.saveButtonDisabled,
-          ]}
+          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
           onPress={handleSalvar}
           disabled={loading}
         >
           {loading ? (
-            <ActivityIndicator
-              size="small"
-              color="#fff"
-            />
+            <ActivityIndicator size="small" color="#fff" />
           ) : (
             <>
               <Ionicons
@@ -301,9 +430,7 @@ export default function RegisterCardScreen({ navigation }) {
                 color="#fff"
               />
 
-              <Text style={styles.saveButtonText}>
-                Salvar cartão
-              </Text>
+              <Text style={styles.saveButtonText}>Salvar cartão</Text>
             </>
           )}
         </TouchableOpacity>
@@ -432,6 +559,30 @@ const styles = StyleSheet.create({
     height: '100%',
     fontSize: 14,
     color: colors.text,
+  },
+
+  cardBrand: {
+    fontSize: 11.5,
+    color: colors.blue,
+    fontWeight: '600',
+    marginTop: 5,
+    marginLeft: 4,
+  },
+
+  errorBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: '#FEF2F2',
+    borderRadius: radius.md,
+    padding: 10,
+    marginTop: 16,
+  },
+
+  errorText: {
+    color: '#DC2626',
+    fontSize: 12.5,
+    flex: 1,
   },
 
   securityBox: {

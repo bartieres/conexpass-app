@@ -1,5 +1,13 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator, Modal } from 'react-native';
+import { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+  Modal,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
 import { findAllByCondition } from '../../services/planoService';
@@ -63,25 +71,37 @@ function PlanCard({ plano, isAtual, onSelect }) {
 
       <View style={styles.priceRow}>
         {!!plano.valorOriginal && plano.valorOriginal > plano.valor && (
-          <Text style={styles.priceOriginal}>de {formatarMoeda(plano.valorOriginal)}</Text>
+          <Text style={styles.priceOriginal}>
+            de {formatarMoeda(plano.valorOriginal)}
+          </Text>
         )}
         <Text style={styles.priceValue}>
-          {!!plano.valorOriginal && plano.valorOriginal > plano.valor ? 'por ' : ''}
-          <Text style={styles.priceValueNumber}>{formatarMoeda(plano.valor)}</Text>
+          {!!plano.valorOriginal && plano.valorOriginal > plano.valor
+            ? 'por '
+            : ''}
+          <Text style={styles.priceValueNumber}>
+            {formatarMoeda(plano.valor)}
+          </Text>
           <Text style={styles.priceValueSuffix}>/mês</Text>
         </Text>
       </View>
 
       <View style={styles.checkinRow}>
         <Ionicons name="calendar-outline" size={14} color={colors.blue} />
-        <Text style={styles.checkinText}>{plano.checkinsPorDia}x check-in por dia</Text>
+        <Text style={styles.checkinText}>
+          {plano.checkinsPorDia}x check-in por dia
+        </Text>
       </View>
 
       {!!plano.beneficios?.length && (
         <View style={styles.beneficiosList}>
           {plano.beneficios.map((beneficio) => (
             <View key={beneficio} style={styles.beneficioRow}>
-              <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+              <Ionicons
+                name="checkmark-circle"
+                size={16}
+                color={colors.success}
+              />
               <Text style={styles.beneficioText}>{beneficio}</Text>
             </View>
           ))}
@@ -94,7 +114,12 @@ function PlanCard({ plano, isAtual, onSelect }) {
         disabled={isAtual}
         activeOpacity={0.85}
       >
-        <Text style={[styles.selectButtonText, isAtual && styles.selectButtonTextAtual]}>
+        <Text
+          style={[
+            styles.selectButtonText,
+            isAtual && styles.selectButtonTextAtual,
+          ]}
+        >
           {isAtual ? 'Plano atual' : 'Selecionar plano'}
         </Text>
       </TouchableOpacity>
@@ -121,14 +146,14 @@ export default function ChangePlanScreen({ route, navigation }) {
     try {
       const pages = {
         orderBy: 'nivel',
-        size: TAMANHO_PAGINA
-      }
+        size: TAMANHO_PAGINA,
+      };
 
       const data = await findAllByCondition({ ...pages });
       const response = data.response;
 
       const formatted = response.content.map((e) => {
-        return ({
+        return {
           id: e.id,
           nome: `Plano ${e.nome}`,
           descricao: e.descricao,
@@ -138,17 +163,22 @@ export default function ChangePlanScreen({ route, navigation }) {
           checkinsPorDia: e.limiteCheckinDia,
           dataContratacao: e.dataContratacao,
           beneficios: e.beneficios,
-          nivel: e.nivel
-        });
+          nivel: e.nivel,
+        };
       });
 
       // Fallback: se nenhum plano veio marcado como recomendado pelo
       // backend, destaca o de preço "do meio" (nem o mais barato, nem o
       // mais caro) — critério fácil de trocar depois por outra regra.
-      const algumRecomendadoPeloBackend = formatted.some((p) => p.recomendado === true);
+      const algumRecomendadoPeloBackend = formatted.some(
+        (p) => p.recomendado === true
+      );
       if (!algumRecomendadoPeloBackend && formatted.length > 2) {
-        const ordenadosPorValor = [...formatted].sort((a, b) => a.valor - b.valor);
-        const idDoMeio = ordenadosPorValor[Math.floor(ordenadosPorValor.length / 2)].id;
+        const ordenadosPorValor = [...formatted].sort(
+          (a, b) => a.valor - b.valor
+        );
+        const idDoMeio =
+          ordenadosPorValor[Math.floor(ordenadosPorValor.length / 2)].id;
         formatted.forEach((p) => {
           p.recomendado = p.id === idDoMeio;
         });
@@ -160,7 +190,10 @@ export default function ChangePlanScreen({ route, navigation }) {
 
       setPlanos(formatted);
     } catch (err) {
-      setError(err.friendlyMessage || 'Não foi possível carregar os planos disponíveis.');
+      setError(
+        err.friendlyMessage ||
+          'Não foi possível carregar os planos disponíveis.'
+      );
     } finally {
       setLoading(false);
     }
@@ -176,7 +209,10 @@ export default function ChangePlanScreen({ route, navigation }) {
     setConfirmError('');
   };
 
-  const diferenca = planoSelecionado && planoAtual ? planoSelecionado.valor - planoAtual.valor : 0;
+  const diferenca =
+    planoSelecionado && planoAtual
+      ? planoSelecionado.valor - planoAtual.valor
+      : 0;
 
   const handleConfirmar = async () => {
     if (!planoSelecionado) return;
@@ -189,7 +225,7 @@ export default function ChangePlanScreen({ route, navigation }) {
           id: planoSelecionado.id,
           valor: planoSelecionado.valor,
           nivel: planoSelecionado.nivel,
-        }
+        },
       };
 
       await alterarPlano(payload);
@@ -197,7 +233,10 @@ export default function ChangePlanScreen({ route, navigation }) {
       setConfirmVisible(false);
       setSuccess(true);
     } catch (err) {
-      setConfirmError(err.friendlyMessage || 'Não foi possível alterar seu plano. Tente novamente.');
+      setConfirmError(
+        err.friendlyMessage ||
+          'Não foi possível alterar seu plano. Tente novamente.'
+      );
     } finally {
       setConfirming(false);
     }
@@ -206,7 +245,10 @@ export default function ChangePlanScreen({ route, navigation }) {
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Alterar plano</Text>
@@ -236,23 +278,19 @@ export default function ChangePlanScreen({ route, navigation }) {
               style={styles.successButton}
               onPress={() => navigation.goBack()}
             >
-              <Text style={styles.successButtonText}>
-                Fechar
-              </Text>
+              <Text style={styles.successButtonText}>Fechar</Text>
             </TouchableOpacity>
           </View>
         ) : (
           <>
             <Text style={styles.intro}>
-              Compare os planos disponíveis e escolha o que melhor se encaixa no seu uso.
+              Compare os planos disponíveis e escolha o que melhor se encaixa no
+              seu uso.
             </Text>
 
             {loading && (
               <View style={styles.stateBox}>
-                <ActivityIndicator
-                  size="small"
-                  color={colors.blue}
-                />
+                <ActivityIndicator size="small" color={colors.blue} />
               </View>
             )}
 
@@ -264,17 +302,13 @@ export default function ChangePlanScreen({ route, navigation }) {
                   color="#DC2626"
                 />
 
-                <Text style={styles.stateText}>
-                  {error}
-                </Text>
+                <Text style={styles.stateText}>{error}</Text>
 
                 <TouchableOpacity
                   style={styles.stateButton}
                   onPress={buscarPlanos}
                 >
-                  <Text style={styles.stateButtonText}>
-                    Tentar novamente
-                  </Text>
+                  <Text style={styles.stateButtonText}>Tentar novamente</Text>
                 </TouchableOpacity>
               </View>
             )}
@@ -300,7 +334,12 @@ export default function ChangePlanScreen({ route, navigation }) {
       </ScrollView>
 
       {/* Confirmação da troca */}
-      <Modal visible={confirmVisible} animationType="slide" transparent onRequestClose={() => setConfirmVisible(false)}>
+      <Modal
+        visible={confirmVisible}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setConfirmVisible(false)}
+      >
         <View style={styles.modalOverlay}>
           <View style={styles.modalSheet}>
             <Text style={styles.modalTitle}>Confirmar alteração de plano?</Text>
@@ -308,32 +347,50 @@ export default function ChangePlanScreen({ route, navigation }) {
             {planoSelecionado && (
               <>
                 <Text style={styles.modalText}>
-                  Seu plano será alterado para <Text style={styles.modalBold}>{planoSelecionado.nome}</Text>. A nova
-                  mensalidade será de <Text style={styles.modalBold}>{formatarMoeda(planoSelecionado.valor)}</Text>.
+                  Seu plano será alterado para{' '}
+                  <Text style={styles.modalBold}>{planoSelecionado.nome}</Text>.
+                  A nova mensalidade será de{' '}
+                  <Text style={styles.modalBold}>
+                    {formatarMoeda(planoSelecionado.valor)}
+                  </Text>
+                  .
                 </Text>
 
                 <View style={styles.compareBox}>
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Plano atual</Text>
-                    <Text style={styles.compareValue}>{planoAtual?.nome ?? '—'}</Text>
+                    <Text style={styles.compareValue}>
+                      {planoAtual?.nome ?? '—'}
+                    </Text>
                   </View>
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Novo plano</Text>
-                    <Text style={styles.compareValue}>{planoSelecionado.nome}</Text>
+                    <Text style={styles.compareValue}>
+                      {planoSelecionado.nome}
+                    </Text>
                   </View>
                   <View style={styles.compareDivider} />
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Valor atual</Text>
-                    <Text style={styles.compareValue}>{planoAtual ? formatarMoeda(planoAtual.valor) : '—'}</Text>
+                    <Text style={styles.compareValue}>
+                      {planoAtual ? formatarMoeda(planoAtual.valor) : '—'}
+                    </Text>
                   </View>
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Novo valor</Text>
-                    <Text style={styles.compareValue}>{formatarMoeda(planoSelecionado.valor)}</Text>
+                    <Text style={styles.compareValue}>
+                      {formatarMoeda(planoSelecionado.valor)}
+                    </Text>
                   </View>
                   {!!planoAtual && (
                     <View style={styles.compareRow}>
                       <Text style={styles.compareLabel}>Diferença</Text>
-                      <Text style={[styles.compareValue, diferenca > 0 ? styles.compareUp : styles.compareDown]}>
+                      <Text
+                        style={[
+                          styles.compareValue,
+                          diferenca > 0 ? styles.compareUp : styles.compareDown,
+                        ]}
+                      >
                         {diferenca > 0 ? '+' : ''}
                         {formatarMoeda(diferenca)}
                       </Text>
@@ -342,12 +399,16 @@ export default function ChangePlanScreen({ route, navigation }) {
                   <View style={styles.compareDivider} />
                   <View style={styles.compareRow}>
                     <Text style={styles.compareLabel}>Entra em vigor</Text>
-                    <Text style={styles.compareValue}>{planoAtual ? 'Próximo ciclo' : 'Imediatamente'}</Text>
+                    <Text style={styles.compareValue}>
+                      {planoAtual ? 'Próximo ciclo' : 'Imediatamente'}
+                    </Text>
                   </View>
                   {!!planoAtual?.proximaCobranca?.data && (
                     <View style={styles.compareRow}>
                       <Text style={styles.compareLabel}>Próxima cobrança</Text>
-                      <Text style={styles.compareValue}>{formatarData(planoAtual.proximaCobranca.data)}</Text>
+                      <Text style={styles.compareValue}>
+                        {formatarData(planoAtual.proximaCobranca.data)}
+                      </Text>
                     </View>
                   )}
                 </View>
@@ -372,11 +433,17 @@ export default function ChangePlanScreen({ route, navigation }) {
               >
                 <Text style={styles.modalCancelText}>Voltar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.modalConfirmButton} onPress={handleConfirmar} disabled={confirming}>
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={handleConfirmar}
+                disabled={confirming}
+              >
                 {confirming ? (
                   <ActivityIndicator color="#fff" />
                 ) : (
-                  <Text style={styles.modalConfirmText}>Confirmar alteração</Text>
+                  <Text style={styles.modalConfirmText}>
+                    Confirmar alteração
+                  </Text>
                 )}
               </TouchableOpacity>
             </View>
@@ -408,10 +475,25 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
-  intro: { fontSize: 13, color: colors.textMuted, lineHeight: 18, marginBottom: 18 },
+  intro: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 18,
+    marginBottom: 18,
+  },
 
-  stateBox: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 40 },
-  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 40,
+  },
+  stateText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   stateButton: {
     backgroundColor: colors.blue,
     paddingHorizontal: 18,
@@ -448,20 +530,54 @@ const styles = StyleSheet.create({
     backgroundColor: '#F59E0B',
     paddingVertical: 6,
   },
-  recommendedRibbonText: { color: '#fff', fontSize: 11.5, fontWeight: '800', letterSpacing: 0.3 },
+  recommendedRibbonText: {
+    color: '#fff',
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
 
-  planCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 10 },
-  planCardName: { fontSize: 18, fontWeight: '800', color: colors.text, flex: 1 },
-  currentTag: { backgroundColor: colors.blue, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  planCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 10,
+  },
+  planCardName: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flex: 1,
+  },
+  currentTag: {
+    backgroundColor: colors.blue,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
   currentTagText: { fontSize: 10.5, fontWeight: '700', color: '#fff' },
-  discountTag: { backgroundColor: '#FEE2E2', paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  discountTag: {
+    backgroundColor: '#FEE2E2',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
   discountTagText: { fontSize: 11, fontWeight: '800', color: '#DC2626' },
 
   priceRow: { marginBottom: 12 },
-  priceOriginal: { fontSize: 13, color: colors.textLight, textDecorationLine: 'line-through', marginBottom: 2 },
+  priceOriginal: {
+    fontSize: 13,
+    color: colors.textLight,
+    textDecorationLine: 'line-through',
+    marginBottom: 2,
+  },
   priceValue: { fontSize: 13, color: colors.textMuted },
   priceValueNumber: { fontSize: 26, fontWeight: '800', color: colors.text },
-  priceValueSuffix: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
+  priceValueSuffix: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
 
   checkinRow: {
     flexDirection: 'row',
@@ -491,19 +607,51 @@ const styles = StyleSheet.create({
   selectButtonText: { color: '#fff', fontWeight: '700', fontSize: 14.5 },
   selectButtonTextAtual: { color: colors.blue },
 
-  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
-  modalSheet: { backgroundColor: '#fff', borderTopLeftRadius: radius.lg, borderTopRightRadius: radius.lg, padding: 20 },
-  modalTitle: { fontSize: 16.5, fontWeight: '800', color: colors.text, marginBottom: 8 },
-  modalText: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginBottom: 16 },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  modalSheet: {
+    backgroundColor: '#fff',
+    borderTopLeftRadius: radius.lg,
+    borderTopRightRadius: radius.lg,
+    padding: 20,
+  },
+  modalTitle: {
+    fontSize: 16.5,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 8,
+  },
+  modalText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 19,
+    marginBottom: 16,
+  },
   modalBold: { fontWeight: '800', color: colors.text },
 
-  compareBox: { backgroundColor: colors.chipBg, borderRadius: radius.md, padding: 14, marginBottom: 8 },
-  compareRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 },
+  compareBox: {
+    backgroundColor: colors.chipBg,
+    borderRadius: radius.md,
+    padding: 14,
+    marginBottom: 8,
+  },
+  compareRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 6,
+  },
   compareLabel: { fontSize: 12.5, color: colors.textMuted },
   compareValue: { fontSize: 13, fontWeight: '700', color: colors.text },
   compareUp: { color: '#DC2626' },
   compareDown: { color: colors.success },
-  compareDivider: { height: 1, backgroundColor: colors.border, marginVertical: 6 },
+  compareDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 6,
+  },
 
   errorBox: {
     flexDirection: 'row',

@@ -1,8 +1,20 @@
 import { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Switch,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
-import { getNotificationPreferences, updateNotificationPreferences } from '../../../services/notificacaoService';
+import {
+  getNotificationPreferences,
+  updateNotificationPreferences,
+} from '../../../services/notificacaoService';
 
 /**
  * Item de notificação com Switch.
@@ -10,12 +22,23 @@ import { getNotificationPreferences, updateNotificationPreferences } from '../..
  *   "futura", ainda sem suporte no backend) — mostra "Em breve" no lugar
  *   da ação real.
  */
-function NotificationItem({ label, description, value, onValueChange, disabled, isLast }) {
+function NotificationItem({
+  label,
+  description,
+  value,
+  onValueChange,
+  disabled,
+  isLast,
+}) {
   return (
     <View style={[styles.item, !isLast && styles.itemDivider]}>
       <View style={{ flex: 1 }}>
-        <Text style={[styles.itemLabel, disabled && styles.itemLabelDisabled]}>{label}</Text>
-        {!!description && <Text style={styles.itemDescription}>{description}</Text>}
+        <Text style={[styles.itemLabel, disabled && styles.itemLabelDisabled]}>
+          {label}
+        </Text>
+        {!!description && (
+          <Text style={styles.itemDescription}>{description}</Text>
+        )}
       </View>
       <Switch
         value={value}
@@ -55,7 +78,9 @@ export default function NotificationScreen({ navigation }) {
         const preferencias = await getNotificationPreferences();
         setConexpassInfo(preferencias?.conexpassInfo ?? true);
       } catch (err) {
-        setLoadError(err.friendlyMessage || 'Não foi possível carregar suas preferências.');
+        setLoadError(
+          err.friendlyMessage || 'Não foi possível carregar suas preferências.'
+        );
       } finally {
         setLoading(false);
       }
@@ -72,7 +97,10 @@ export default function NotificationScreen({ navigation }) {
     } catch (err) {
       // reverte se a chamada falhar
       setConexpassInfo(valorAnterior);
-      Alert.alert('Não foi possível salvar', err.friendlyMessage || 'Tente novamente em instantes.');
+      Alert.alert(
+        'Não foi possível salvar',
+        err.friendlyMessage || 'Tente novamente em instantes.'
+      );
     } finally {
       setSavingConexpassInfo(false);
     }
@@ -81,7 +109,10 @@ export default function NotificationScreen({ navigation }) {
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notificações</Text>
@@ -200,5 +231,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 40,
   },
-  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });

@@ -1,6 +1,13 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Easing,
+  Alert,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
 import { getStatus, cancelar } from '../../services/checkinService';
@@ -80,7 +87,6 @@ export default function CheckInPendingScreen({ route, navigation }) {
 
   useEffect(() => {
     if (!checkinId) {
-
       setStatus('erro');
       setErro('Não foi possível identificar o check-in.');
       return;
@@ -111,46 +117,59 @@ export default function CheckInPendingScreen({ route, navigation }) {
   };
 
   const handleCancelar = () => {
-    Alert.alert('Cancelar check-in', 'Deseja cancelar essa solicitação de check-in?', [
-      { text: 'Não', style: 'cancel' },
-      {
-        text: 'Sim, cancelar',
-        style: 'destructive',
-        onPress: async () => {
-          pararPolling();
-          setCancelando(true);
-          try {
-            const payload = {
-              id: checkinId,
-              observacao: 'Check-in cancelado pelo Usuário'
-            };
-            
-            await cancelar(payload);
-          } catch (err) {
-            // mesmo se falhar o cancelamento no backend, deixa o usuário sair da tela
-          } finally {
-            setCancelando(false);
-            navigation.goBack();
-          }
+    Alert.alert(
+      'Cancelar check-in',
+      'Deseja cancelar essa solicitação de check-in?',
+      [
+        { text: 'Não', style: 'cancel' },
+        {
+          text: 'Sim, cancelar',
+          style: 'destructive',
+          onPress: async () => {
+            pararPolling();
+            setCancelando(true);
+            try {
+              const payload = {
+                id: checkinId,
+                observacao: 'Check-in cancelado pelo Usuário',
+              };
+
+              await cancelar(payload);
+            } catch (_err) {
+              // mesmo se falhar o cancelamento no backend, deixa o usuário sair da tela
+            } finally {
+              setCancelando(false);
+              navigation.goBack();
+            }
+          },
         },
-      },
-    ]);
+      ]
+    );
   };
 
-  const rotateInterpolate = rotate.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '360deg'] });
+  const rotateInterpolate = rotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
 
   return (
     <View style={styles.safe}>
       <View style={styles.content}>
         {status === 'aguardando' && (
           <>
-            <Animated.View style={[styles.iconCircle, { transform: [{ rotate: rotateInterpolate }] }]}>
+            <Animated.View
+              style={[
+                styles.iconCircle,
+                { transform: [{ rotate: rotateInterpolate }] },
+              ]}
+            >
               <Ionicons name="time-outline" size={40} color="#fff" />
             </Animated.View>
             <Text style={styles.title}>Aguardando confirmação</Text>
             <Text style={styles.subtitle}>
-              Enviamos sua solicitação para a recepção{!!estabelecimento?.name && ` de ${estabelecimento.name}`}.
-              Assim que for aprovada, você segue automaticamente.
+              Enviamos sua solicitação para a recepção
+              {!!estabelecimento?.name && ` de ${estabelecimento.name}`}. Assim
+              que for aprovada, você segue automaticamente.
             </Text>
           </>
         )}
@@ -162,7 +181,8 @@ export default function CheckInPendingScreen({ route, navigation }) {
             </View>
             <Text style={styles.title}>Check-in não aprovado</Text>
             <Text style={styles.subtitle}>
-              A recepção não confirmou sua solicitação. Verifique com o estabelecimento ou tente novamente.
+              A recepção não confirmou sua solicitação. Verifique com o
+              estabelecimento ou tente novamente.
             </Text>
           </>
         )}
@@ -174,7 +194,8 @@ export default function CheckInPendingScreen({ route, navigation }) {
             </View>
             <Text style={styles.title}>Ainda sem resposta</Text>
             <Text style={styles.subtitle}>
-              A recepção ainda não confirmou sua solicitação. Você pode continuar aguardando ou cancelar.
+              A recepção ainda não confirmou sua solicitação. Você pode
+              continuar aguardando ou cancelar.
             </Text>
           </>
         )}
@@ -192,24 +213,42 @@ export default function CheckInPendingScreen({ route, navigation }) {
 
       <View style={styles.footer}>
         {status === 'aguardando' && (
-          <TouchableOpacity style={styles.secondaryButton} onPress={handleCancelar} disabled={cancelando}>
-            <Text style={styles.secondaryButtonText}>{cancelando ? 'Cancelando...' : 'Cancelar solicitação'}</Text>
+          <TouchableOpacity
+            style={styles.secondaryButton}
+            onPress={handleCancelar}
+            disabled={cancelando}
+          >
+            <Text style={styles.secondaryButtonText}>
+              {cancelando ? 'Cancelando...' : 'Cancelar solicitação'}
+            </Text>
           </TouchableOpacity>
         )}
 
         {status === 'expirado' && (
           <>
-            <TouchableOpacity style={styles.primaryButton} onPress={handleContinuarAguardando}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handleContinuarAguardando}
+            >
               <Text style={styles.primaryButtonText}>Continuar aguardando</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.secondaryButton} onPress={handleCancelar} disabled={cancelando}>
-              <Text style={styles.secondaryButtonText}>{cancelando ? 'Cancelando...' : 'Cancelar'}</Text>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleCancelar}
+              disabled={cancelando}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {cancelando ? 'Cancelando...' : 'Cancelar'}
+              </Text>
             </TouchableOpacity>
           </>
         )}
 
         {(status === 'recusado' || status === 'erro') && (
-          <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity
+            style={styles.primaryButton}
+            onPress={() => navigation.goBack()}
+          >
             <Text style={styles.primaryButtonText}>Voltar</Text>
           </TouchableOpacity>
         )}
@@ -220,7 +259,12 @@ export default function CheckInPendingScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
   iconCircle: {
     width: 92,
     height: 92,
@@ -233,8 +277,19 @@ const styles = StyleSheet.create({
   },
   iconCircleError: { backgroundColor: '#DC2626' },
   iconCircleWarning: { backgroundColor: '#B45309' },
-  title: { fontSize: 20, fontWeight: '800', color: colors.text, textAlign: 'center' },
-  subtitle: { fontSize: 13.5, color: colors.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 19 },
+  title: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 13.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 19,
+  },
   footer: { padding: 20, paddingBottom: 30, gap: 10 },
   primaryButton: {
     backgroundColor: colors.blue,
@@ -244,6 +299,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  secondaryButton: { height: 46, alignItems: 'center', justifyContent: 'center' },
+  secondaryButton: {
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   secondaryButtonText: { color: '#DC2626', fontWeight: '700', fontSize: 14 },
 });

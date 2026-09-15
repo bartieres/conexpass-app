@@ -1,5 +1,11 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
@@ -31,7 +37,10 @@ export default function PaymentDetailScreen({ route, navigation }) {
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detalhes da cobrança</Text>
@@ -40,24 +49,37 @@ export default function PaymentDetailScreen({ route, navigation }) {
 
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.summaryCard}>
-          <View style={[styles.statusIconWrap, !pago && styles.statusIconWrapError]}>
+          <View
+            style={[styles.statusIconWrap, !pago && styles.statusIconWrapError]}
+          >
             <Ionicons
               name={pago ? 'checkmark-circle' : 'close-circle'}
               size={26}
               color={pago ? colors.success : '#DC2626'}
             />
           </View>
-          <Text style={styles.summaryValue}>{formatarMoeda(cobranca.valor)}</Text>
-          <Text style={styles.summaryStatus}>{pago ? 'Pagamento confirmado' : 'Pagamento não realizado'}</Text>
+          <Text style={styles.summaryValue}>
+            {formatarMoeda(cobranca.valor)}
+          </Text>
+          <Text style={styles.summaryStatus}>
+            {pago ? 'Pagamento confirmado' : 'Pagamento não realizado'}
+          </Text>
         </View>
 
         <View style={styles.card}>
           <DetailRow label="Data" value={formatarData(cobranca.data)} />
           <DetailRow label="Valor" value={formatarMoeda(cobranca.valor)} />
           <DetailRow label="Plano" value={cobranca.plano || '—'} />
-          <DetailRow label="Forma de pagamento" value={cobranca.formaPagamento || '—'} />
+          <DetailRow
+            label="Forma de pagamento"
+            value={cobranca.formaPagamento || '—'}
+          />
           <DetailRow label="Status" value={pago ? 'Pago' : 'Falhou'} />
-          <DetailRow label="Identificador" value={cobranca.transacaoId || '—'} isLast />
+          <DetailRow
+            label="Identificador"
+            value={cobranca.transacaoId || '—'}
+            isLast
+          />
         </View>
 
         {/* TODO: quando houver emissão de comprovante no backend, reativar botão abaixo */}
@@ -106,8 +128,17 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 26, fontWeight: '800', color: colors.text },
   summaryStatus: { fontSize: 13, color: colors.textMuted, marginTop: 4 },
 
-  card: { backgroundColor: '#fff', borderRadius: radius.lg, padding: 16, ...shadow },
-  row: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 12 },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: radius.lg,
+    padding: 16,
+    ...shadow,
+  },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 12,
+  },
   rowDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
   rowLabel: { fontSize: 13, color: colors.textMuted },
   rowValue: { fontSize: 13.5, fontWeight: '700', color: colors.text },

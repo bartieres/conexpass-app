@@ -8,7 +8,10 @@ export const solicitar = async (data) => {
 };
 
 export const cancelar = async (data) => {
-  const response = await axiosPrivate.patch(`${BASE_URL}/${data.id}/cancelar`, data);
+  const response = await axiosPrivate.patch(
+    `${BASE_URL}/${data.id}/cancelar`,
+    data
+  );
   return response.data;
 };
 

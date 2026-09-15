@@ -1,6 +1,12 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated, Easing } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useEffect, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Animated,
+  Easing,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
 
@@ -76,7 +82,9 @@ export default function CheckInSuccessScreen({ route, navigation }) {
         <Animated.View style={{ opacity }}>
           <Text style={styles.title}>Check-in confirmado!</Text>
           {!!estabelecimento?.name && (
-            <Text style={styles.subtitle}>Você acabou de fazer check-in em {estabelecimento.name}.</Text>
+            <Text style={styles.subtitle}>
+              Você acabou de fazer check-in em {estabelecimento.name}.
+            </Text>
           )}
         </Animated.View>
       </View>
@@ -104,8 +112,17 @@ export default function CheckInSuccessScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
-  iconWrap: { alignItems: 'center', justifyContent: 'center', marginBottom: 26 },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
+  iconWrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 26,
+  },
   ring: {
     position: 'absolute',
     width: 92,
@@ -122,8 +139,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow,
   },
-  title: { fontSize: 21, fontWeight: '800', color: colors.text, textAlign: 'center' },
-  subtitle: { fontSize: 13.5, color: colors.textMuted, textAlign: 'center', marginTop: 8, lineHeight: 19 },
+  title: {
+    fontSize: 21,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: 13.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 8,
+    lineHeight: 19,
+  },
   footer: { padding: 20, paddingBottom: 30, gap: 10 },
   primaryButton: {
     backgroundColor: colors.blue,
@@ -133,6 +161,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
-  secondaryButton: { height: 46, alignItems: 'center', justifyContent: 'center' },
+  secondaryButton: {
+    height: 46,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   secondaryButtonText: { color: colors.blue, fontWeight: '700', fontSize: 14 },
 });

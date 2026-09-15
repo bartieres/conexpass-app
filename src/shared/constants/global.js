@@ -1,6 +1,6 @@
 export const DIRECAO = {
   asc: 'asc',
-  desc: 'desc'
+  desc: 'desc',
 };
 
 export const ROWS_PER_PAGE_INITIAL = 10;

@@ -1,9 +1,17 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking, Share } from 'react-native';
+import {
+  View,
+  Text,
+  Image,
+  TouchableOpacity,
+  StyleSheet,
+  ScrollView,
+  ActivityIndicator,
+  Linking,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../../theme/theme';
+import { colors, radius, typography } from '../../theme/theme';
 import ReportProblemModal from './ReportProblemModal';
-import CommentsSection from './CommentsSection';
+//import CommentsSection from './CommentsSection';
 
 // Ordem de exibição do horário semanal — códigos batem com o cadastro no
 // painel web (EstabelecimentoFormPage): 1 = Domingo ... 7 = Sábado.
@@ -26,10 +34,14 @@ function formatarPeriodos(horario) {
   if (!horario) return 'Fechado';
   const periodos = [];
   if (horario.horaAbertura1 && horario.horaFechamento1) {
-    periodos.push(`${formatarHora(horario.horaAbertura1)} - ${formatarHora(horario.horaFechamento1)}`);
+    periodos.push(
+      `${formatarHora(horario.horaAbertura1)} - ${formatarHora(horario.horaFechamento1)}`
+    );
   }
   if (horario.horaAbertura2 && horario.horaFechamento2) {
-    periodos.push(`${formatarHora(horario.horaAbertura2)} - ${formatarHora(horario.horaFechamento2)}`);
+    periodos.push(
+      `${formatarHora(horario.horaAbertura2)} - ${formatarHora(horario.horaFechamento2)}`
+    );
   }
   return periodos.length > 0 ? periodos.join(' / ') : 'Fechado';
 }
@@ -40,7 +52,7 @@ function formatarDataExcecao(dataISO) {
   return `${dia}/${mes}/${ano}`;
 }
 
-const handleShare = async (gym) => {
+/*const handleShare = async (gym) => {
   const link = `conexpass://estabelecimento/${gym.id}`;
   try {
     await Share.share({
@@ -49,7 +61,7 @@ const handleShare = async (gym) => {
   } catch (err) {
     console.warn('Erro ao compartilhar:', err);
   }
-};
+};*/
 
 export default function EstablishmentDetail({
   navigation,
@@ -73,13 +85,13 @@ export default function EstablishmentDetail({
   enviandoComentario,
 }) {
   const gym = estabelecimento;
-  const [favorite, setFavorite] = useState(false);
+  //const [favorite, setFavorite] = useState(false);
 
   const handleCheckin = () => {
     navigation.navigate('ConfirmCheckIn', { estabelecimento: gym });
   };
 
-  const temAvaliacao = gym.rating != null;
+  //const temAvaliacao = gym.rating != null;
   const ehParceiro = gym.parceiro !== false;
 
   const abrirLink = (url) => {
@@ -101,12 +113,12 @@ export default function EstablishmentDetail({
     gym.parceiro === false
       ? 'Estabelecimento não parceiro'
       : gym.inclusoPlanoUsuario === false
-      ? 'Não incluso no seu plano'
-      : fechado
-      ? 'Fechado no momento'
-      : checkinHojeUtilizado
-      ? 'Check-in diário utilizado'
-      : 'Fazer Check-in';
+        ? 'Não incluso no seu plano'
+        : fechado
+          ? 'Fechado no momento'
+          : checkinHojeUtilizado
+            ? 'Check-in diário utilizado'
+            : 'Fazer Check-in';
 
   return (
     <View style={styles.container}>
@@ -114,7 +126,10 @@ export default function EstablishmentDetail({
         <View style={styles.imageWrap}>
           <Image source={{ uri: gym.image }} style={styles.image} />
           <View style={styles.topBar}>
-            <TouchableOpacity style={styles.roundButton} onPress={() => navigation.goBack()}>
+            <TouchableOpacity
+              style={styles.roundButton}
+              onPress={() => navigation.goBack()}
+            >
               <Ionicons name="arrow-back" size={20} color={colors.text} />
             </TouchableOpacity>
             {/*<View style={{ flexDirection: 'row', gap: 10 }}>
@@ -127,7 +142,12 @@ export default function EstablishmentDetail({
             </View>*/}
           </View>
           {!!gym.hours && ehParceiro && (
-            <View style={[styles.openBadge, !gym.horarioFuncionamento?.aberto && styles.closedBadge]}>
+            <View
+              style={[
+                styles.openBadge,
+                !gym.horarioFuncionamento?.aberto && styles.closedBadge,
+              ]}
+            >
               <Text style={styles.openBadgeText}>{gym.hours}</Text>
             </View>
           )}
@@ -138,12 +158,16 @@ export default function EstablishmentDetail({
           {!ehParceiro && (
             <View style={styles.notPartnerBanner}>
               <Ionicons name="alert-circle-outline" size={18} color="#B45309" />
-              <Text style={styles.notPartnerText}>Estabelecimento não parceiro</Text>
+              <Text style={styles.notPartnerText}>
+                Estabelecimento não parceiro
+              </Text>
             </View>
           )}
 
           <Text style={styles.name}>{gym.name}</Text>
-          {!!gym.category && <Text style={styles.category}>{gym.category}</Text>}
+          {!!gym.category && (
+            <Text style={styles.category}>{gym.category}</Text>
+          )}
 
           <View style={styles.ratingRow}>
             {/*{temAvaliacao ? (
@@ -161,7 +185,9 @@ export default function EstablishmentDetail({
             {!!gym.distance && (
               <>
                 {/*<Text style={styles.dot}>•</Text>*/}
-                <Text style={styles.distanceText}>Distância {gym.distance}</Text>
+                <Text style={styles.distanceText}>
+                  Distância {gym.distance}
+                </Text>
               </>
             )}
           </View>
@@ -171,25 +197,33 @@ export default function EstablishmentDetail({
             <View
               style={[
                 styles.coverageBanner,
-                gym.inclusoPlanoUsuario ? styles.coverageBannerOk : styles.coverageBannerWarning,
+                gym.inclusoPlanoUsuario
+                  ? styles.coverageBannerOk
+                  : styles.coverageBannerWarning,
               ]}
             >
               <Ionicons
-                name={gym.inclusoPlanoUsuario ? 'checkmark-circle' : 'information-circle-outline'}
+                name={
+                  gym.inclusoPlanoUsuario
+                    ? 'checkmark-circle'
+                    : 'information-circle-outline'
+                }
                 size={18}
                 color={gym.inclusoPlanoUsuario ? colors.success : '#B45309'}
               />
               <Text
                 style={[
                   styles.coverageText,
-                  { color: gym.inclusoPlanoUsuario ? colors.success : '#92400E' },
+                  {
+                    color: gym.inclusoPlanoUsuario ? colors.success : '#92400E',
+                  },
                 ]}
               >
                 {gym.inclusoPlanoUsuario
                   ? 'Incluso no seu plano atual'
                   : gym.plano
-                  ? `Disponível no plano ${gym.plano.nome}`
-                  : 'Não incluso no seu plano atual'}
+                    ? `Disponível no plano ${gym.plano.nome}`
+                    : 'Não incluso no seu plano atual'}
               </Text>
             </View>
           )}
@@ -207,7 +241,9 @@ export default function EstablishmentDetail({
           {loadingDetalhes && !detalhesError && (
             <View style={styles.loadingDetailsBox}>
               <ActivityIndicator size="small" color={colors.blue} />
-              <Text style={styles.loadingDetailsText}>Carregando mais informações...</Text>
+              <Text style={styles.loadingDetailsText}>
+                Carregando mais informações...
+              </Text>
             </View>
           )}
 
@@ -228,8 +264,15 @@ export default function EstablishmentDetail({
           {!loadingDetalhes && (!!gym.website || !!gym.instagram) && (
             <View style={styles.linksRow}>
               {!!gym.website && (
-                <TouchableOpacity style={styles.linkChip} onPress={() => abrirLink(gym.website)}>
-                  <Ionicons name="globe-outline" size={15} color={colors.blue} />
+                <TouchableOpacity
+                  style={styles.linkChip}
+                  onPress={() => abrirLink(gym.website)}
+                >
+                  <Ionicons
+                    name="globe-outline"
+                    size={15}
+                    color={colors.blue}
+                  />
                   <Text style={styles.linkChipText} numberOfLines={1}>
                     Site
                   </Text>
@@ -238,9 +281,17 @@ export default function EstablishmentDetail({
               {!!gym.instagram && (
                 <TouchableOpacity
                   style={styles.linkChip}
-                  onPress={() => abrirLink(`https://instagram.com/${gym.instagram.replace('@', '')}`)}
+                  onPress={() =>
+                    abrirLink(
+                      `https://instagram.com/${gym.instagram.replace('@', '')}`
+                    )
+                  }
                 >
-                  <Ionicons name="logo-instagram" size={15} color={colors.blue} />
+                  <Ionicons
+                    name="logo-instagram"
+                    size={15}
+                    color={colors.blue}
+                  />
                   <Text style={styles.linkChipText} numberOfLines={1}>
                     {gym.instagram}
                   </Text>
@@ -261,7 +312,11 @@ export default function EstablishmentDetail({
               <Text style={styles.sectionTitle}>Endereço</Text>
               <View style={styles.addressRow}>
                 <Text style={styles.addressText}>{gym.address}</Text>
-                <Ionicons name="navigate-circle-outline" size={22} color={colors.blue} />
+                <Ionicons
+                  name="navigate-circle-outline"
+                  size={22}
+                  color={colors.blue}
+                />
               </View>
             </>
           )}
@@ -272,15 +327,24 @@ export default function EstablishmentDetail({
               <Text style={styles.sectionTitle}>Horário de atendimento</Text>
               <View style={styles.scheduleCard}>
                 {DIAS_SEMANA_ORDEM.map((dia, index) => {
-                  const horarioDoDia = gym.horarios.find((h) => h.diaSemana.codigo === dia.codigo);
+                  const horarioDoDia = gym.horarios.find(
+                    (h) => h.diaSemana.codigo === dia.codigo
+                  );
                   return (
                     <View
                       key={dia.value}
-                      style={[styles.scheduleRow, index < DIAS_SEMANA_ORDEM.length - 1 && styles.scheduleRowDivider]}
+                      style={[
+                        styles.scheduleRow,
+                        index < DIAS_SEMANA_ORDEM.length - 1 &&
+                          styles.scheduleRowDivider,
+                      ]}
                     >
                       <Text style={styles.scheduleDay}>{dia.label}</Text>
                       <Text
-                        style={[styles.scheduleHours, !horarioDoDia && styles.scheduleHoursClosed]}
+                        style={[
+                          styles.scheduleHours,
+                          !horarioDoDia && styles.scheduleHoursClosed,
+                        ]}
                       >
                         {formatarPeriodos(horarioDoDia)}
                       </Text>
@@ -301,14 +365,27 @@ export default function EstablishmentDetail({
                     key={`${excecao.data}-${index}`}
                     style={[
                       styles.exceptionRow,
-                      index < gym.horariosExcecao.length - 1 && styles.scheduleRowDivider,
+                      index < gym.horariosExcecao.length - 1 &&
+                        styles.scheduleRowDivider,
                     ]}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.exceptionDate}>{formatarDataExcecao(excecao.data)}</Text>
-                      {!!excecao.descricao && <Text style={styles.exceptionDescription}>{excecao.descricao}</Text>}
+                      <Text style={styles.exceptionDate}>
+                        {formatarDataExcecao(excecao.data)}
+                      </Text>
+                      {!!excecao.descricao && (
+                        <Text style={styles.exceptionDescription}>
+                          {excecao.descricao}
+                        </Text>
+                      )}
                     </View>
-                    <Text style={[styles.scheduleHours, !formatarPeriodos(excecao) && styles.scheduleHoursClosed]}>
+                    <Text
+                      style={[
+                        styles.scheduleHours,
+                        !formatarPeriodos(excecao) &&
+                          styles.scheduleHoursClosed,
+                      ]}
+                    >
                       {formatarPeriodos(excecao)}
                     </Text>
                   </View>
@@ -361,7 +438,10 @@ export default function EstablishmentDetail({
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.checkinButton, checkinDesabilitado && styles.checkinButtonDisabled]}
+          style={[
+            styles.checkinButton,
+            checkinDesabilitado && styles.checkinButtonDisabled,
+          ]}
           activeOpacity={0.85}
           onPress={handleCheckin}
           disabled={checkinDesabilitado}
@@ -432,7 +512,13 @@ const styles = StyleSheet.create({
 
   name: { ...typography.h1, fontSize: 22 },
   category: { ...typography.muted, marginTop: 2 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 10, minHeight: 20 },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 10,
+    minHeight: 20,
+  },
   ratingText: { fontSize: 13.5, fontWeight: '600', color: colors.text },
   dot: { color: colors.textLight },
   distanceText: { fontSize: 13, color: colors.textMuted },
@@ -460,9 +546,19 @@ const styles = StyleSheet.create({
     marginTop: 14,
   },
   errorText: { color: '#DC2626', fontSize: 12, flex: 1 },
-  retryText: { color: '#DC2626', fontSize: 12, fontWeight: '700', textDecorationLine: 'underline' },
+  retryText: {
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '700',
+    textDecorationLine: 'underline',
+  },
 
-  loadingDetailsBox: { flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 16 },
+  loadingDetailsBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginTop: 16,
+  },
   loadingDetailsText: { fontSize: 12.5, color: colors.textMuted },
 
   amenitiesRow: {
@@ -495,7 +591,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: radius.pill,
   },
-  linkChipText: { fontSize: 12.5, fontWeight: '600', color: colors.blue, maxWidth: 140 },
+  linkChipText: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: colors.blue,
+    maxWidth: 140,
+  },
 
   sectionTitle: { ...typography.h3, marginTop: 20, marginBottom: 8 },
   aboutText: { ...typography.body, color: colors.textMuted, lineHeight: 20 },
@@ -507,15 +608,38 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     padding: 14,
   },
-  addressText: { flex: 1, fontSize: 13, color: colors.text, marginRight: 10, lineHeight: 18 },
+  addressText: {
+    flex: 1,
+    fontSize: 13,
+    color: colors.text,
+    marginRight: 10,
+    lineHeight: 18,
+  },
 
-  scheduleCard: { backgroundColor: colors.bg, borderRadius: radius.md, paddingHorizontal: 14 },
-  scheduleRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 11 },
-  scheduleRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
+  scheduleCard: {
+    backgroundColor: colors.bg,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+  },
+  scheduleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 11,
+  },
+  scheduleRowDivider: {
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   scheduleDay: { fontSize: 13, color: colors.text, fontWeight: '600' },
   scheduleHours: { fontSize: 13, color: colors.textMuted },
   scheduleHoursClosed: { color: colors.textLight },
-  exceptionRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 11, gap: 10 },
+  exceptionRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 11,
+    gap: 10,
+  },
   exceptionDate: { fontSize: 13, fontWeight: '700', color: colors.text },
   exceptionDescription: { fontSize: 12, color: colors.textMuted, marginTop: 2 },
 
@@ -533,8 +657,18 @@ const styles = StyleSheet.create({
   interestButtonText: { color: colors.blue, fontWeight: '700', fontSize: 14 },
   interestButtonTextDone: { color: colors.success },
 
-  reportRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 20, alignSelf: 'flex-start' },
-  reportText: { fontSize: 12.5, color: colors.textMuted, textDecorationLine: 'underline' },
+  reportRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginTop: 20,
+    alignSelf: 'flex-start',
+  },
+  reportText: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    textDecorationLine: 'underline',
+  },
 
   footer: {
     padding: 20,

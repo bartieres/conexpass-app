@@ -5,17 +5,23 @@ import Logo from '../assets/logo.png';
 export default function SplashLoadingScreen() {
   return (
     <View style={styles.container}>
-      <Image
-        source={Logo}
-        style={{ height: 130, resizeMode: 'contain' }}
+      <Image source={Logo} style={{ height: 130, resizeMode: 'contain' }} />
+      <ActivityIndicator
+        size="small"
+        color={colors.blue}
+        style={{ marginTop: 18 }}
       />
-      <ActivityIndicator size="small" color={colors.blue} style={{ marginTop: 18 }} />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.bg },
+  container: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: colors.bg,
+  },
   logoBox: {
     width: 72,
     height: 72,

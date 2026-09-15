@@ -9,7 +9,7 @@ import {
   KeyboardAvoidingView,
   Platform,
   ActivityIndicator,
-  Image
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../../theme/theme';
@@ -48,12 +48,12 @@ export default function LoginScreen({ navigation }) {
       style={{ flex: 1, backgroundColor: colors.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.container}
+        keyboardShouldPersistTaps="handled"
+      >
         <View style={styles.logoWrap}>
-          <Image
-            source={Logo}
-            style={{ height: 120, resizeMode: 'contain' }}
-          />
+          <Image source={Logo} style={{ height: 120, resizeMode: 'contain' }} />
           <Text style={styles.tagline}>Treine onde e quando quiser</Text>
         </View>
 
@@ -62,7 +62,12 @@ export default function LoginScreen({ navigation }) {
           <Text style={styles.subtitle}>Faça login para continuar</Text>
 
           <View style={styles.inputGroup}>
-            <Ionicons name="mail-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+            <Ionicons
+              name="mail-outline"
+              size={18}
+              color={colors.textLight}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="E-mail"
@@ -74,7 +79,12 @@ export default function LoginScreen({ navigation }) {
           </View>
 
           <View style={styles.inputGroup}>
-            <Ionicons name="lock-closed-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+            <Ionicons
+              name="lock-closed-outline"
+              size={18}
+              color={colors.textLight}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               placeholder="Senha"
@@ -84,11 +94,18 @@ export default function LoginScreen({ navigation }) {
               onChangeText={setPassword}
             />
             <TouchableOpacity onPress={() => setShowPassword((s) => !s)}>
-              <Ionicons name={showPassword ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textLight} />
+              <Ionicons
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'}
+                size={18}
+                color={colors.textLight}
+              />
             </TouchableOpacity>
           </View>
 
-          <TouchableOpacity style={styles.forgotLink} onPress={() => navigation.navigate('ForgotPassword')}>
+          <TouchableOpacity
+            style={styles.forgotLink}
+            onPress={() => navigation.navigate('ForgotPassword')}
+          >
             <Text style={styles.forgotText}>Esqueci minha senha</Text>
           </TouchableOpacity>
 
@@ -100,12 +117,19 @@ export default function LoginScreen({ navigation }) {
           )}
 
           <TouchableOpacity
-            style={[styles.primaryButton, loading && styles.primaryButtonDisabled]}
+            style={[
+              styles.primaryButton,
+              loading && styles.primaryButtonDisabled,
+            ]}
             onPress={handleLogin}
             activeOpacity={0.85}
             disabled={loading}
           >
-            {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Entrar</Text>}
+            {loading ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.primaryButtonText}>Entrar</Text>
+            )}
           </TouchableOpacity>
 
           {/*<View style={styles.dividerRow}>
@@ -196,7 +220,12 @@ const styles = StyleSheet.create({
   dividerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   divider: { flex: 1, height: 1, backgroundColor: colors.border },
   dividerText: { marginHorizontal: 10, color: colors.textLight, fontSize: 12 },
-  socialRow: { flexDirection: 'row', justifyContent: 'center', gap: 14, marginBottom: 20 },
+  socialRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 14,
+    marginBottom: 20,
+  },
   socialButton: {
     width: 48,
     height: 48,

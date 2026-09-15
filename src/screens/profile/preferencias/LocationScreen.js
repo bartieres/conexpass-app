@@ -1,5 +1,12 @@
 import { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Linking,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
@@ -58,7 +65,10 @@ export default function LocationScreen({ navigation }) {
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Localização</Text>
@@ -67,7 +77,8 @@ export default function LocationScreen({ navigation }) {
 
       <View style={styles.body}>
         <Text style={styles.description}>
-          Sua localização é utilizada para encontrar estabelecimentos próximos a você.
+          Sua localização é utilizada para encontrar estabelecimentos próximos a
+          você.
         </Text>
 
         {status === 'checking' && (
@@ -84,25 +95,41 @@ export default function LocationScreen({ navigation }) {
               <Text style={styles.statusText}>Permitida</Text>
             </View>
 
-            <TouchableOpacity style={styles.secondaryButton} onPress={handleGerenciar}>
-              <Text style={styles.secondaryButtonText}>Gerenciar permissão</Text>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleGerenciar}
+            >
+              <Text style={styles.secondaryButtonText}>
+                Gerenciar permissão
+              </Text>
             </TouchableOpacity>
           </View>
         )}
 
         {status === 'denied' && (
           <View style={styles.deniedCard}>
-            <Ionicons name="location-outline" size={36} color={colors.textLight} />
+            <Ionicons
+              name="location-outline"
+              size={36}
+              color={colors.textLight}
+            />
             <Text style={styles.deniedTitle}>Localização desativada</Text>
             <Text style={styles.deniedText}>
-              Para encontrar estabelecimentos próximos, permita o acesso à sua localização.
+              Para encontrar estabelecimentos próximos, permita o acesso à sua
+              localização.
             </Text>
 
-            <TouchableOpacity style={styles.primaryButton} onPress={handlePermitir} disabled={requesting}>
+            <TouchableOpacity
+              style={styles.primaryButton}
+              onPress={handlePermitir}
+              disabled={requesting}
+            >
               {requesting ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryButtonText}>Permitir localização</Text>
+                <Text style={styles.primaryButtonText}>
+                  Permitir localização
+                </Text>
               )}
             </TouchableOpacity>
           </View>
@@ -133,7 +160,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
-  description: { fontSize: 13.5, color: colors.textMuted, lineHeight: 19, marginBottom: 20 },
+  description: {
+    fontSize: 13.5,
+    color: colors.textMuted,
+    lineHeight: 19,
+    marginBottom: 20,
+  },
   stateBox: { alignItems: 'center', paddingVertical: 30 },
   card: {
     backgroundColor: '#fff',
@@ -141,9 +173,24 @@ const styles = StyleSheet.create({
     padding: 18,
     ...shadow,
   },
-  cardLabel: { fontSize: 12.5, fontWeight: '700', color: colors.textMuted, marginBottom: 10 },
-  statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 18 },
-  statusDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.success },
+  cardLabel: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colors.textMuted,
+    marginBottom: 10,
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 18,
+  },
+  statusDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: colors.success,
+  },
   statusText: { fontSize: 14.5, fontWeight: '700', color: colors.text },
   secondaryButton: {
     backgroundColor: colors.chipBg,
@@ -161,8 +208,18 @@ const styles = StyleSheet.create({
     gap: 10,
     ...shadow,
   },
-  deniedTitle: { fontSize: 15.5, fontWeight: '800', color: colors.text, marginTop: 4 },
-  deniedText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  deniedTitle: {
+    fontSize: 15.5,
+    fontWeight: '800',
+    color: colors.text,
+    marginTop: 4,
+  },
+  deniedText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   primaryButton: {
     backgroundColor: colors.blue,
     height: 50,

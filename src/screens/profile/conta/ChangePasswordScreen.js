@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import {
   View,
   Text,
@@ -44,12 +44,24 @@ function buildRules(newPassword, confirmPassword) {
   ];
 }
 
-function PasswordField({ label, value, onChangeText, visible, onToggleVisible, placeholder }) {
+function PasswordField({
+  label,
+  value,
+  onChangeText,
+  visible,
+  onToggleVisible,
+  placeholder,
+}) {
   return (
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputBox}>
-        <Ionicons name="lock-closed-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+        <Ionicons
+          name="lock-closed-outline"
+          size={18}
+          color={colors.textLight}
+          style={styles.inputIcon}
+        />
         <TextInput
           style={styles.input}
           value={value}
@@ -58,8 +70,15 @@ function PasswordField({ label, value, onChangeText, visible, onToggleVisible, p
           secureTextEntry={!visible}
           autoCapitalize="none"
         />
-        <TouchableOpacity onPress={onToggleVisible} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-          <Ionicons name={visible ? 'eye-off-outline' : 'eye-outline'} size={18} color={colors.textLight} />
+        <TouchableOpacity
+          onPress={onToggleVisible}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Ionicons
+            name={visible ? 'eye-off-outline' : 'eye-outline'}
+            size={18}
+            color={colors.textLight}
+          />
         </TouchableOpacity>
       </View>
     </View>
@@ -76,7 +95,9 @@ function RuleChecklist({ rules }) {
             size={16}
             color={rule.valid ? colors.success : colors.textLight}
           />
-          <Text style={[styles.ruleText, rule.valid && styles.ruleTextValid]}>{rule.label}</Text>
+          <Text style={[styles.ruleText, rule.valid && styles.ruleTextValid]}>
+            {rule.label}
+          </Text>
         </View>
       ))}
     </View>
@@ -96,7 +117,10 @@ export default function ChangePasswordScreen({ navigation }) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const rules = useMemo(() => buildRules(newPassword, confirmPassword), [newPassword, confirmPassword]);
+  const rules = useMemo(
+    () => buildRules(newPassword, confirmPassword),
+    [newPassword, confirmPassword]
+  );
   const allRulesValid = rules.every((rule) => rule.valid);
   const canSave = currentPassword.length > 0 && allRulesValid && !saving;
 
@@ -116,30 +140,44 @@ export default function ChangePasswordScreen({ navigation }) {
     try {
       // TODO: confirmar o nome/formato exato do endpoint no backend
       // (ex: PATCH /users/me/password)
-      await changePassword({ senhaAtual: currentPassword, novaSenha: newPassword });
+      await changePassword({
+        senhaAtual: currentPassword,
+        novaSenha: newPassword,
+      });
 
       setSuccessMessage('Senha alterada com sucesso!');
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
     } catch (err) {
-      setErrorMessage(err.friendlyMessage || 'Não foi possível alterar sua senha.');
+      setErrorMessage(
+        err.friendlyMessage || 'Não foi possível alterar sua senha.'
+      );
     } finally {
       setSaving(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.safe} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.safe}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Alterar senha</Text>
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+      >
         <PasswordField
           label="Senha atual"
           value={currentPassword}
@@ -177,7 +215,11 @@ export default function ChangePasswordScreen({ navigation }) {
         )}
         {!!successMessage && (
           <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={colors.success}
+            />
             <Text style={styles.successText}>{successMessage}</Text>
           </View>
         )}
@@ -187,7 +229,11 @@ export default function ChangePasswordScreen({ navigation }) {
           onPress={handleSave}
           disabled={!canSave}
         >
-          {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Salvar nova senha</Text>}
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>Salvar nova senha</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -216,7 +262,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted, marginBottom: 6 },
+  label: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginBottom: 6,
+  },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -259,7 +310,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 14,
   },
-  successText: { color: colors.success, fontSize: 12.5, flex: 1, fontWeight: '600' },
+  successText: {
+    color: colors.success,
+    fontSize: 12.5,
+    flex: 1,
+    fontWeight: '600',
+  },
   saveButton: {
     backgroundColor: colors.blue,
     height: 52,

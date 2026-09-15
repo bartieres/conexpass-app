@@ -14,7 +14,10 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
 
 // Habilita animação de layout no Android (iOS já tem por padrão)
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
@@ -272,9 +275,17 @@ function normalizar(texto) {
 function FaqItem({ item, expanded, onToggle }) {
   return (
     <View style={[styles.faqItem, expanded && styles.faqItemExpanded]}>
-      <TouchableOpacity style={styles.faqQuestionRow} onPress={onToggle} activeOpacity={0.7}>
+      <TouchableOpacity
+        style={styles.faqQuestionRow}
+        onPress={onToggle}
+        activeOpacity={0.7}
+      >
         <Text style={styles.faqQuestion}>{item.question}</Text>
-        <Ionicons name={expanded ? 'chevron-up' : 'chevron-down'} size={18} color={colors.textLight} />
+        <Ionicons
+          name={expanded ? 'chevron-up' : 'chevron-down'}
+          size={18}
+          color={colors.textLight}
+        />
       </TouchableOpacity>
 
       {expanded && (
@@ -294,7 +305,9 @@ export default function HelpCenterScreen({ navigation }) {
     const termo = normalizar(search.trim());
     if (!termo) return FAQS;
     return FAQS.filter(
-      (faq) => normalizar(faq.question).includes(termo) || normalizar(faq.answer).includes(termo)
+      (faq) =>
+        normalizar(faq.question).includes(termo) ||
+        normalizar(faq.answer).includes(termo)
     );
   }, [search]);
 
@@ -306,14 +319,20 @@ export default function HelpCenterScreen({ navigation }) {
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Central de ajuda</Text>
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.heroTitle}>Como podemos ajudar?</Text>
 
         <View style={styles.searchBox}>
@@ -326,8 +345,15 @@ export default function HelpCenterScreen({ navigation }) {
             onChangeText={setSearch}
           />
           {search.length > 0 && (
-            <TouchableOpacity onPress={() => setSearch('')} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
-              <Ionicons name="close-circle" size={18} color={colors.textLight} />
+            <TouchableOpacity
+              onPress={() => setSearch('')}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Ionicons
+                name="close-circle"
+                size={18}
+                color={colors.textLight}
+              />
             </TouchableOpacity>
           )}
         </View>
@@ -338,8 +364,14 @@ export default function HelpCenterScreen({ navigation }) {
 
         {faqsFiltradas.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Ionicons name="help-circle-outline" size={32} color={colors.textLight} />
-            <Text style={styles.emptyText}>Nenhum resultado para "{search}"</Text>
+            <Ionicons
+              name="help-circle-outline"
+              size={32}
+              color={colors.textLight}
+            />
+            <Text style={styles.emptyText}>
+              Nenhum resultado para "{search}"
+            </Text>
           </View>
         ) : (
           <View style={styles.faqList}>
@@ -379,7 +411,12 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
-  heroTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 16 },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 16,
+  },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -424,7 +461,12 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: colors.border,
   },
-  faqAnswer: { fontSize: 13, color: colors.textMuted, lineHeight: 19, marginTop: 10 },
+  faqAnswer: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 19,
+    marginTop: 10,
+  },
   emptyBox: { alignItems: 'center', gap: 10, paddingVertical: 40 },
   emptyText: { fontSize: 13, color: colors.textLight, textAlign: 'center' },
 });

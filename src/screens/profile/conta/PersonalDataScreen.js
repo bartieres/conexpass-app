@@ -65,7 +65,12 @@ function ReadOnlyField({ icon, label, value }) {
     <View style={styles.inputGroup}>
       <Text style={styles.label}>{label}</Text>
       <View style={[styles.inputBox, styles.inputBoxDisabled]}>
-        <Ionicons name={icon} size={18} color={colors.textLight} style={styles.inputIcon} />
+        <Ionicons
+          name={icon}
+          size={18}
+          color={colors.textLight}
+          style={styles.inputIcon}
+        />
         <TextInput style={styles.input} value={value} editable={false} />
       </View>
     </View>
@@ -78,7 +83,9 @@ export default function PersonalDataScreen({ navigation }) {
   const { user, updateUser } = useAuth();
 
   // Único campo editável nessa tela
-  const [phone, setPhone] = useState(user?.telefone ? maskPhone(user.telefone) : '');
+  const [phone, setPhone] = useState(
+    user?.telefone ? maskPhone(user.telefone) : ''
+  );
 
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -97,7 +104,9 @@ export default function PersonalDataScreen({ navigation }) {
 
       setSuccessMessage('Telefone atualizado com sucesso!');
     } catch (err) {
-      setErrorMessage(err.friendlyMessage || 'Não foi possível salvar suas alterações.');
+      setErrorMessage(
+        err.friendlyMessage || 'Não foi possível salvar suas alterações.'
+      );
     } finally {
       setSaving(false);
     }
@@ -112,26 +121,48 @@ export default function PersonalDataScreen({ navigation }) {
   }
 
   return (
-    <KeyboardAvoidingView style={styles.safe} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.safe}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Dados pessoais</Text>
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
-        <ReadOnlyField icon="person-outline" label="Nome completo" value={user.nome} />
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+      >
+        <ReadOnlyField
+          icon="person-outline"
+          label="Nome completo"
+          value={user.nome}
+        />
         <ReadOnlyField icon="mail-outline" label="E-mail" value={user.email} />
         <ReadOnlyField icon="card-outline" label="CPF" value={user.documento} />
         {/* <ReadOnlyField icon="calendar-outline" label="Data de nascimento" value={formatBirthDate(user.birthDate)} /> */}
-        <ReadOnlyField icon="body-outline" label="Sexo" value={formatSexo(user.sexo)} />
+        <ReadOnlyField
+          icon="body-outline"
+          label="Sexo"
+          value={formatSexo(user.sexo)}
+        />
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Telefone</Text>
           <View style={styles.inputBox}>
-            <Ionicons name="call-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+            <Ionicons
+              name="call-outline"
+              size={18}
+              color={colors.textLight}
+              style={styles.inputIcon}
+            />
             <TextInput
               style={styles.input}
               value={phone}
@@ -151,13 +182,25 @@ export default function PersonalDataScreen({ navigation }) {
         )}
         {!!successMessage && (
           <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={colors.success}
+            />
             <Text style={styles.successText}>{successMessage}</Text>
           </View>
         )}
 
-        <TouchableOpacity style={[styles.saveButton, saving && styles.saveButtonDisabled]} onPress={handleSave} disabled={saving}>
-          {saving ? <ActivityIndicator color="#fff" /> : <Text style={styles.saveButtonText}>Salvar alterações</Text>}
+        <TouchableOpacity
+          style={[styles.saveButton, saving && styles.saveButtonDisabled]}
+          onPress={handleSave}
+          disabled={saving}
+        >
+          {saving ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.saveButtonText}>Salvar alterações</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -187,7 +230,12 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted, marginBottom: 6 },
+  label: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginBottom: 6,
+  },
   inputBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -221,7 +269,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 14,
   },
-  successText: { color: colors.success, fontSize: 12.5, flex: 1, fontWeight: '600' },
+  successText: {
+    color: colors.success,
+    fontSize: 12.5,
+    flex: 1,
+    fontWeight: '600',
+  },
   saveButton: {
     backgroundColor: colors.blue,
     height: 52,

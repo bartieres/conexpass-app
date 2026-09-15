@@ -17,9 +17,16 @@ import SuggestEstablishmentModal from './SuggestEstablishmentModal';
 
 function EstabelecimentoCard({ estabelecimento, onPress }) {
   return (
-    <TouchableOpacity style={styles.gymCard} onPress={onPress} activeOpacity={0.85}>
+    <TouchableOpacity
+      style={styles.gymCard}
+      onPress={onPress}
+      activeOpacity={0.85}
+    >
       <View style={styles.gymImageWrap}>
-        <Image source={{ uri: estabelecimento.image }} style={styles.gymImage} />
+        <Image
+          source={{ uri: estabelecimento.image }}
+          style={styles.gymImage}
+        />
         {/* Destaque de check-in já feito hoje nesse estabelecimento */}
         {estabelecimento.checkinHoje && (
           <View style={styles.checkinBadge}>
@@ -82,7 +89,10 @@ export default function Explore({
 }) {
   // "Todos" fica ativo quando não há nenhuma categoria selecionada; qualquer
   // outra categoria fica ativa se estiver dentro do array (multi-seleção).
-  const isCategoriaAtiva = (id) => (id === 'todos' ? categoriasSelecionadas.length === 0 : categoriasSelecionadas.includes(id));
+  const isCategoriaAtiva = (id) =>
+    id === 'todos'
+      ? categoriasSelecionadas.length === 0
+      : categoriasSelecionadas.includes(id);
 
   // view de mapa desativada por enquanto (ver bloco comentado no fim do arquivo)
   // const [view, setView] = React.useState('lista');
@@ -154,11 +164,19 @@ export default function Explore({
 
       {permissionDenied && (
         <View style={styles.stateBox}>
-          <Ionicons name="location-outline" size={28} color={colors.textLight} />
+          <Ionicons
+            name="location-outline"
+            size={28}
+            color={colors.textLight}
+          />
           <Text style={styles.stateText}>
-            Permita o acesso à localização para ver estabelecimentos perto de você.
+            Permita o acesso à localização para ver estabelecimentos perto de
+            você.
           </Text>
-          <TouchableOpacity style={styles.stateButton} onPress={onRetryLocation}>
+          <TouchableOpacity
+            style={styles.stateButton}
+            onPress={onRetryLocation}
+          >
             <Text style={styles.stateButtonText}>Permitir localização</Text>
           </TouchableOpacity>
         </View>
@@ -167,7 +185,9 @@ export default function Explore({
       {!permissionDenied && isLoadingAnything && (
         <View style={styles.stateBox}>
           <ActivityIndicator size="small" color={colors.blue} />
-          <Text style={styles.stateText}>Buscando estabelecimentos próximos de você...</Text>
+          <Text style={styles.stateText}>
+            Buscando estabelecimentos próximos de você...
+          </Text>
         </View>
       )}
 
@@ -175,7 +195,10 @@ export default function Explore({
         <View style={styles.stateBox}>
           <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
           <Text style={styles.stateText}>{estabelecimentosError}</Text>
-          <TouchableOpacity style={styles.stateButton} onPress={onRetryEstabelecimentos}>
+          <TouchableOpacity
+            style={styles.stateButton}
+            onPress={onRetryEstabelecimentos}
+          >
             <Text style={styles.stateButtonText}>Tentar novamente</Text>
           </TouchableOpacity>
         </View>
@@ -197,8 +220,16 @@ export default function Explore({
                     style={[styles.chip, active && styles.chipActive]}
                     onPress={() => onSelectCategory(item.id)}
                   >
-                    <Ionicons name={item.icon} size={15} color={active ? '#fff' : colors.blue} />
-                    <Text style={[styles.chipText, active && styles.chipTextActive]}>{item.label}</Text>
+                    <Ionicons
+                      name={item.icon}
+                      size={15}
+                      color={active ? '#fff' : colors.blue}
+                    />
+                    <Text
+                      style={[styles.chipText, active && styles.chipTextActive]}
+                    >
+                      {item.label}
+                    </Text>
                   </TouchableOpacity>
                 );
               }}
@@ -209,14 +240,23 @@ export default function Explore({
             data={estabelecimentos}
             keyExtractor={(item) => item.id}
             contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 12 }}
-            ListHeaderComponent={<Text style={styles.sectionTitle}>Próximos de você</Text>}
+            ListHeaderComponent={
+              <Text style={styles.sectionTitle}>Próximos de você</Text>
+            }
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} colors={[colors.blue]} tintColor={colors.blue} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={onRefresh}
+                colors={[colors.blue]}
+                tintColor={colors.blue}
+              />
             }
             renderItem={({ item }) => (
               <EstabelecimentoCard
                 estabelecimento={item}
-                onPress={() => navigation.navigate('EstablishmentDetail', { gym: item })}
+                onPress={() =>
+                  navigation.navigate('EstablishmentDetail', { gym: item })
+                }
               />
             )}
             // Infinite scroll: dispara a busca da próxima página quando o
@@ -228,7 +268,9 @@ export default function Explore({
                 {loadingMore && (
                   <View style={styles.loadingMoreBox}>
                     <ActivityIndicator size="small" color={colors.blue} />
-                    <Text style={styles.loadingMoreText}>Carregando mais estabelecimentos...</Text>
+                    <Text style={styles.loadingMoreText}>
+                      Carregando mais estabelecimentos...
+                    </Text>
                   </View>
                 )}
 
@@ -236,15 +278,31 @@ export default function Explore({
                     carregar (não só quando "acaba", já que é útil mesmo com
                     poucos resultados) */}
                 {!loadingMore && (
-                  <TouchableOpacity style={styles.suggestBanner} activeOpacity={0.85} onPress={onOpenSuggestModal}>
+                  <TouchableOpacity
+                    style={styles.suggestBanner}
+                    activeOpacity={0.85}
+                    onPress={onOpenSuggestModal}
+                  >
                     <View style={styles.suggestIcon}>
-                      <Ionicons name="add-circle-outline" size={18} color={colors.blue} />
+                      <Ionicons
+                        name="add-circle-outline"
+                        size={18}
+                        color={colors.blue}
+                      />
                     </View>
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.suggestTitle}>Não encontrou o estabelecimento que procura?</Text>
-                      <Text style={styles.suggestSubtitle}>Indique agora e avaliamos a parceria.</Text>
+                      <Text style={styles.suggestTitle}>
+                        Não encontrou o estabelecimento que procura?
+                      </Text>
+                      <Text style={styles.suggestSubtitle}>
+                        Indique agora e avaliamos a parceria.
+                      </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={18} color={colors.blue} />
+                    <Ionicons
+                      name="chevron-forward"
+                      size={18}
+                      color={colors.blue}
+                    />
                   </TouchableOpacity>
                 )}
 
@@ -338,7 +396,12 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   headerTitle: { ...typography.h1 },
-  locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
   locationText: { color: colors.blue, fontWeight: '700', fontSize: 13 },
   iconButton: {
     width: 40,
@@ -349,7 +412,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow,
   },
-  searchRow: { flexDirection: 'row', gap: 10, paddingHorizontal: 20, marginTop: 14 },
+  searchRow: {
+    flexDirection: 'row',
+    gap: 10,
+    paddingHorizontal: 20,
+    marginTop: 14,
+  },
   searchBox: {
     flex: 1,
     flexDirection: 'row',
@@ -379,7 +447,12 @@ const styles = StyleSheet.create({
     marginTop: 14,
     padding: 4,
   },
-  toggleBtn: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: radius.pill },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: radius.pill,
+  },
   toggleBtnActive: { backgroundColor: colors.blue },
   toggleText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
   toggleTextActive: { color: '#fff' },
@@ -390,7 +463,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 30,
     paddingVertical: 30,
   },
-  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   stateButton: {
     backgroundColor: colors.blue,
     paddingHorizontal: 18,
@@ -447,11 +525,26 @@ const styles = StyleSheet.create({
   },
   gymInfo: { flex: 1, gap: 2 },
   gymNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  gymName: { fontSize: 14.5, fontWeight: '700', color: colors.text, flexShrink: 1 },
-  checkinPill: { backgroundColor: colors.successLight, paddingHorizontal: 7, paddingVertical: 2, borderRadius: radius.pill },
+  gymName: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: colors.text,
+    flexShrink: 1,
+  },
+  checkinPill: {
+    backgroundColor: colors.successLight,
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
   checkinPillText: { fontSize: 10, fontWeight: '700', color: colors.success },
   gymMeta: { fontSize: 12, color: colors.textMuted },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 2 },
+  ratingRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
   ratingText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
   suggestBanner: {
     flexDirection: 'row',
@@ -490,7 +583,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   premiumTitle: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  premiumSubtitle: { color: 'rgba(255,255,255,0.85)', fontSize: 12, marginTop: 2 },
+  premiumSubtitle: {
+    color: 'rgba(255,255,255,0.85)',
+    fontSize: 12,
+    marginTop: 2,
+  },
   mapWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 16 },
   mapArea: {
     flex: 1,

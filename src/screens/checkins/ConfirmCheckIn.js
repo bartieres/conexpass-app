@@ -1,11 +1,22 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../../theme/theme';
+import { colors, radius, shadow } from '../../theme/theme';
 
 const TYPE_META = {
   Plano: { color: colors.blue, bg: '#E8EEFC', icon: 'calendar-outline' },
   Avulso: { color: '#B45309', bg: '#FEF3C7', icon: 'cart-outline' },
-  Bônus: { color: colors.success, bg: colors.successLight, icon: 'gift-outline' },
+  Bônus: {
+    color: colors.success,
+    bg: colors.successLight,
+    icon: 'gift-outline',
+  },
 };
 
 function DisponibilidadeRow({ label, value, meta, isLast }) {
@@ -38,14 +49,23 @@ export default function ConfirmCheckIn({
   onSolicitar,
 }) {
   const meta = TYPE_META[tipoUtilizado?.nome] || TYPE_META.Plano;
-  const semCheckinsDisponiveis = !loadingResumo && !resumoError && !tipoUtilizado;
+  const semCheckinsDisponiveis =
+    !loadingResumo && !resumoError && !tipoUtilizado;
   const podeConfirmar =
-    !!tipoUtilizado && !loadingLocation && !permissionDenied && !confirming && !loadingResumo && !resumoError;
+    !!tipoUtilizado &&
+    !loadingLocation &&
+    !permissionDenied &&
+    !confirming &&
+    !loadingResumo &&
+    !resumoError;
 
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Confirmar check-in</Text>
@@ -61,7 +81,11 @@ export default function ConfirmCheckIn({
             <Text style={styles.gymName}>{estabelecimento?.name}</Text>
             {!!estabelecimento?.address && (
               <View style={styles.gymInfoRow}>
-                <Ionicons name="location-outline" size={13} color={colors.textLight} />
+                <Ionicons
+                  name="location-outline"
+                  size={13}
+                  color={colors.textLight}
+                />
                 <Text style={styles.gymInfoText} numberOfLines={1}>
                   {estabelecimento.address}
                 </Text>
@@ -69,7 +93,11 @@ export default function ConfirmCheckIn({
             )}
             {!!estabelecimento?.hours && (
               <View style={styles.gymInfoRow}>
-                <Ionicons name="time-outline" size={13} color={colors.textLight} />
+                <Ionicons
+                  name="time-outline"
+                  size={13}
+                  color={colors.textLight}
+                />
                 <Text style={styles.gymInfoText}>{estabelecimento.hours}</Text>
               </View>
             )}
@@ -86,7 +114,10 @@ export default function ConfirmCheckIn({
           <View style={styles.stateBox}>
             <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
             <Text style={styles.stateText}>{resumoError}</Text>
-            <TouchableOpacity style={styles.stateButton} onPress={onRetryResumo}>
+            <TouchableOpacity
+              style={styles.stateButton}
+              onPress={onRetryResumo}
+            >
               <Text style={styles.stateButtonText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
@@ -97,13 +128,19 @@ export default function ConfirmCheckIn({
             <Text style={styles.usoTitle}>Será utilizado:</Text>
             <View style={styles.usoRow}>
               <View style={styles.usoLeft}>
-                <View style={[styles.usoIconWrap, { backgroundColor: meta.bg }]}>
+                <View
+                  style={[styles.usoIconWrap, { backgroundColor: meta.bg }]}
+                >
                   <Ionicons name={meta.icon} size={17} color={meta.color} />
                 </View>
-                <Text style={styles.usoLabel}>Check-in do {tipoUtilizado.nome.toLowerCase()}</Text>
+                <Text style={styles.usoLabel}>
+                  Check-in do {tipoUtilizado.nome.toLowerCase()}
+                </Text>
               </View>
               <View style={[styles.typePill, { backgroundColor: meta.bg }]}>
-                <Text style={[styles.typePillText, { color: meta.color }]}>{tipoUtilizado.nome}</Text>
+                <Text style={[styles.typePillText, { color: meta.color }]}>
+                  {tipoUtilizado.nome}
+                </Text>
               </View>
             </View>
           </View>
@@ -113,7 +150,8 @@ export default function ConfirmCheckIn({
           <View style={styles.stateBox}>
             <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
             <Text style={styles.stateText}>
-              Você não tem check-ins disponíveis no momento. Verifique seu plano ou adquira um check-in avulso.
+              Você não tem check-ins disponíveis no momento. Verifique seu plano
+              ou adquira um check-in avulso.
             </Text>
           </View>
         )}
@@ -122,9 +160,22 @@ export default function ConfirmCheckIn({
           <>
             <Text style={styles.disponiveisTitle}>Você tem disponíveis:</Text>
             <View style={styles.dispCard}>
-              <DisponibilidadeRow label="Check-ins do plano" value={resumo.plano} meta={TYPE_META.Plano} />
-              <DisponibilidadeRow label="Check-ins avulsos" value={resumo.avulso} meta={TYPE_META.Avulso} />
-              <DisponibilidadeRow label="Check-ins bônus" value={resumo.bonus} meta={TYPE_META.Bônus} isLast />
+              <DisponibilidadeRow
+                label="Check-ins do plano"
+                value={resumo.plano}
+                meta={TYPE_META.Plano}
+              />
+              <DisponibilidadeRow
+                label="Check-ins avulsos"
+                value={resumo.avulso}
+                meta={TYPE_META.Avulso}
+              />
+              <DisponibilidadeRow
+                label="Check-ins bônus"
+                value={resumo.bonus}
+                meta={TYPE_META.Bônus}
+                isLast
+              />
             </View>
           </>
         )}
@@ -133,7 +184,8 @@ export default function ConfirmCheckIn({
           <View style={styles.warningBox}>
             <Ionicons name="location-outline" size={16} color="#B45309" />
             <Text style={styles.warningText}>
-              Precisamos da sua localização para confirmar que você está no estabelecimento.
+              Precisamos da sua localização para confirmar que você está no
+              estabelecimento.
             </Text>
             <TouchableOpacity onPress={onRetryLocation}>
               <Text style={styles.warningLink}>Permitir localização</Text>
@@ -143,10 +195,14 @@ export default function ConfirmCheckIn({
 
         {!permissionDenied && (
           <View style={styles.infoBox}>
-            <Ionicons name="information-circle-outline" size={18} color={colors.blue} />
+            <Ionicons
+              name="information-circle-outline"
+              size={18}
+              color={colors.blue}
+            />
             <Text style={styles.infoText}>
-              O check-in será confirmado com base na sua localização, garantindo que você esteja próximo ao
-              estabelecimento.
+              O check-in será confirmado com base na sua localização, garantindo
+              que você esteja próximo ao estabelecimento.
             </Text>
           </View>
         )}
@@ -161,7 +217,10 @@ export default function ConfirmCheckIn({
 
       <View style={styles.footer}>
         <TouchableOpacity
-          style={[styles.confirmButton, !podeConfirmar && styles.confirmButtonDisabled]}
+          style={[
+            styles.confirmButton,
+            !podeConfirmar && styles.confirmButtonDisabled,
+          ]}
           onPress={onSolicitar}
           disabled={!podeConfirmar}
         >
@@ -217,11 +276,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   gymName: { fontSize: 16, fontWeight: '800', color: colors.text },
-  gymInfoRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 3 },
+  gymInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 3,
+  },
   gymInfoText: { fontSize: 12.5, color: colors.textMuted, flexShrink: 1 },
 
-  stateBox: { alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 24 },
-  stateText: { fontSize: 12.5, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    paddingVertical: 24,
+  },
+  stateText: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   stateButton: {
     backgroundColor: colors.blue,
     paddingHorizontal: 16,
@@ -237,7 +311,12 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 20,
   },
-  usoTitle: { fontSize: 14, fontWeight: '800', color: colors.blue, marginBottom: 10 },
+  usoTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.blue,
+    marginBottom: 10,
+  },
   usoRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -248,12 +327,32 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
   },
   usoLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  usoIconWrap: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  usoLabel: { fontSize: 13.5, fontWeight: '700', color: colors.text, flexShrink: 1 },
-  typePill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  usoIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  usoLabel: {
+    fontSize: 13.5,
+    fontWeight: '700',
+    color: colors.text,
+    flexShrink: 1,
+  },
+  typePill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
   typePillText: { fontSize: 11.5, fontWeight: '700' },
 
-  disponiveisTitle: { fontSize: 14, fontWeight: '800', color: colors.text, marginBottom: 10 },
+  disponiveisTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 10,
+  },
   dispCard: {
     backgroundColor: '#fff',
     borderRadius: radius.lg,
@@ -261,10 +360,21 @@ const styles = StyleSheet.create({
     marginBottom: 18,
     ...shadow,
   },
-  dispRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 13 },
+  dispRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 13,
+  },
   dispRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
   dispLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dispIconWrap: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  dispIconWrap: {
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   dispLabel: { fontSize: 13.5, color: colors.text },
   dispValue: { fontSize: 15, fontWeight: '800', color: colors.text },
 
@@ -286,7 +396,12 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   warningText: { fontSize: 12, color: '#92400E', lineHeight: 17 },
-  warningLink: { fontSize: 12.5, fontWeight: '700', color: '#B45309', textDecorationLine: 'underline' },
+  warningLink: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: '#B45309',
+    textDecorationLine: 'underline',
+  },
 
   errorBox: {
     flexDirection: 'row',
@@ -299,7 +414,13 @@ const styles = StyleSheet.create({
   },
   errorText: { color: '#DC2626', fontSize: 12.5, flex: 1 },
 
-  footer: { padding: 20, paddingTop: 12, borderTopWidth: 1, borderTopColor: colors.border, backgroundColor: colors.bg },
+  footer: {
+    padding: 20,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    backgroundColor: colors.bg,
+  },
   confirmButton: {
     backgroundColor: colors.blue,
     height: 52,

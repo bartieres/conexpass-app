@@ -84,10 +84,16 @@ export default function PlanScreen({ navigation }) {
             try {
               // TODO: confirmar nome/formato exato do endpoint no backend
               await cancelarPlano();
-              Alert.alert('Plano cancelado', 'Sua assinatura foi cancelada com sucesso.');
+              Alert.alert(
+                'Plano cancelado',
+                'Sua assinatura foi cancelada com sucesso.'
+              );
               buscarPlano();
             } catch (err) {
-              Alert.alert('Não foi possível cancelar', err.friendlyMessage || 'Tente novamente mais tarde.');
+              Alert.alert(
+                'Não foi possível cancelar',
+                err.friendlyMessage || 'Tente novamente mais tarde.'
+              );
             }
           },
         },
@@ -103,9 +109,12 @@ export default function PlanScreen({ navigation }) {
       loading={loading}
       error={error}
       onRetry={buscarPlano}
-      onAlterarPlano={() => navigation.navigate('ChangePlan', { planoAtual: plano })}
-      onEscolherPlano={() => navigation.navigate('ChangePlan', { planoAtual: null })}
-      onPagamentos={() => navigation.navigate('Payment')}
+      onAlterarPlano={() =>
+        navigation.navigate('ChangePlan', { planoAtual: plano })
+      }
+      onEscolherPlano={() =>
+        navigation.navigate('ChangePlan', { planoAtual: null })
+      }
       onHistorico={() => navigation.navigate('PlanHistory')}
       onCancelarPlano={handleCancelarPlano}
     />

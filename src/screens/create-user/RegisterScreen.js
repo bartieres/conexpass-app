@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Platform,
   ActivityIndicator,
   Linking,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
@@ -45,12 +46,19 @@ export default function RegisterScreen({ navigation }) {
   const [errorMessage, setErrorMessage] = useState('');
 
   const handleRegister = async () => {
-    if (!name.trim() || !email.trim() || documento.replace(/\D/g, '').length !== 11 || !password) {
+    if (
+      !name.trim() ||
+      !email.trim() ||
+      documento.replace(/\D/g, '').length !== 11 ||
+      !password
+    ) {
       setErrorMessage('Preencha todos os campos corretamente.');
       return;
     }
     if (!isValidPassword(password)) {
-      setErrorMessage('A senha deve ter pelo menos 8 caracteres, incluindo letras e números.');
+      setErrorMessage(
+        'A senha deve ter pelo menos 8 caracteres, incluindo letras e números.'
+      );
       return;
     }
     if (password !== confirmPassword) {
@@ -71,7 +79,10 @@ export default function RegisterScreen({ navigation }) {
       navigation.navigate('RegisterSuccess', { email });
       // AuthContext atualiza isAuthenticated e o app troca para MainTabs sozinho
     } catch (err) {
-      setErrorMessage(err.friendlyMessage || 'Não foi possível criar sua conta. Tente novamente.');
+      setErrorMessage(
+        err.friendlyMessage ||
+          'Não foi possível criar sua conta. Tente novamente.'
+      );
     } finally {
       setLoading(false);
     }
@@ -82,27 +93,46 @@ export default function RegisterScreen({ navigation }) {
     if (supported) {
       await Linking.openURL(url);
     } else {
-      Alert.alert('Não foi possível abrir o link', 'Tente novamente mais tarde.');
+      Alert.alert(
+        'Não foi possível abrir o link',
+        'Tente novamente mais tarde.'
+      );
     }
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: colors.bg }} edges={['top', 'left', 'right']}>
+    <SafeAreaView
+      style={{ flex: 1, backgroundColor: colors.bg }}
+      edges={['top', 'left', 'right']}
+    >
       <KeyboardAvoidingView
         style={{ flex: 1, backgroundColor: colors.bg }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <ScrollView
+          contentContainerStyle={styles.container}
+          keyboardShouldPersistTaps="handled"
+        >
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
             <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
 
           <View style={styles.card}>
             <Text style={styles.title}>Criar conta</Text>
-            <Text style={styles.subtitle}>Preencha seus dados para criar sua conta</Text>
+            <Text style={styles.subtitle}>
+              Preencha seus dados para criar sua conta
+            </Text>
 
             <View style={styles.inputGroup}>
-              <Ionicons name="person-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+              <Ionicons
+                name="person-outline"
+                size={18}
+                color={colors.textLight}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Nome completo"
@@ -113,7 +143,12 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.inputGroup}>
-              <Ionicons name="mail-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+              <Ionicons
+                name="mail-outline"
+                size={18}
+                color={colors.textLight}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="E-mail"
@@ -126,7 +161,12 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.inputGroup}>
-              <Ionicons name="card-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+              <Ionicons
+                name="card-outline"
+                size={18}
+                color={colors.textLight}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="CPF"
@@ -139,7 +179,12 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.inputGroup}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+              <Ionicons
+                name="lock-closed-outline"
+                size={18}
+                color={colors.textLight}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Senha"
@@ -156,7 +201,12 @@ export default function RegisterScreen({ navigation }) {
             )}
 
             <View style={styles.inputGroup}>
-              <Ionicons name="lock-closed-outline" size={18} color={colors.textLight} style={styles.inputIcon} />
+              <Ionicons
+                name="lock-closed-outline"
+                size={18}
+                color={colors.textLight}
+                style={styles.inputIcon}
+              />
               <TextInput
                 style={styles.input}
                 placeholder="Confirmar senha"
@@ -168,30 +218,55 @@ export default function RegisterScreen({ navigation }) {
             </View>
 
             <View style={styles.checkboxRow}>
-              <TouchableOpacity onPress={() => setAgreed((a) => !a)} activeOpacity={0.8}>
-                <View style={[styles.checkbox, agreed && styles.checkboxChecked]}>
-                  {agreed && <Ionicons name="checkmark" size={13} color="#fff" />}
+              <TouchableOpacity
+                onPress={() => setAgreed((a) => !a)}
+                activeOpacity={0.8}
+              >
+                <View
+                  style={[styles.checkbox, agreed && styles.checkboxChecked]}
+                >
+                  {agreed && (
+                    <Ionicons name="checkmark" size={13} color="#fff" />
+                  )}
                 </View>
               </TouchableOpacity>
               <Text style={styles.checkboxText}>
                 Li e concordo com os{' '}
-                <Text style={styles.linkText} onPress={() => openLink('https://conexpass.com.br/termos-uso')}>
+                <Text
+                  style={styles.linkText}
+                  onPress={() =>
+                    openLink('https://conexpass.com.br/termos-uso')
+                  }
+                >
                   Termos de Uso
                 </Text>{' '}
                 e{' '}
-                <Text style={styles.linkText} onPress={() => openLink('https://conexpass.com.br/politica-privacidade')}>
+                <Text
+                  style={styles.linkText}
+                  onPress={() =>
+                    openLink('https://conexpass.com.br/politica-privacidade')
+                  }
+                >
                   Política de Privacidade
                 </Text>
               </Text>
             </View>
 
             <TouchableOpacity
-              style={[styles.primaryButton, (!agreed || loading || !isValidPassword(password)) && styles.primaryButtonDisabled]}
+              style={[
+                styles.primaryButton,
+                (!agreed || loading || !isValidPassword(password)) &&
+                  styles.primaryButtonDisabled,
+              ]}
               disabled={!agreed || loading || !isValidPassword(password)}
               onPress={handleRegister}
               activeOpacity={0.85}
             >
-              {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Cadastrar</Text>}
+              {loading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={styles.primaryButtonText}>Cadastrar</Text>
+              )}
             </TouchableOpacity>
 
             {!!errorMessage && (
@@ -247,7 +322,13 @@ const styles = StyleSheet.create({
   },
   inputIcon: { marginRight: 8 },
   input: { flex: 1, fontSize: 14, color: colors.text },
-  checkboxRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 20, marginTop: 4 },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 20,
+    marginTop: 4,
+  },
   checkbox: {
     width: 20,
     height: 20,
@@ -259,7 +340,12 @@ const styles = StyleSheet.create({
     marginTop: 1,
   },
   checkboxChecked: { backgroundColor: colors.blue, borderColor: colors.blue },
-  checkboxText: { flex: 1, fontSize: 12.5, color: colors.textMuted, lineHeight: 18 },
+  checkboxText: {
+    flex: 1,
+    fontSize: 12.5,
+    color: colors.textMuted,
+    lineHeight: 18,
+  },
   linkText: { color: colors.blue, fontWeight: '600' },
   primaryButton: {
     backgroundColor: colors.blue,

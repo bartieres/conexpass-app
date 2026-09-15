@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+} from 'react';
 import { authService } from '../services/authService';
 import { setOnUnauthorized } from '../config/api';
 
@@ -20,7 +26,7 @@ export function AuthProvider({ children }) {
         }
         const freshUser = await authService.getMe();
         setUser(freshUser);
-      } catch (err) {
+      } catch (_err) {
         await authService.logout();
         setUser(null);
       } finally {
@@ -71,6 +77,7 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error('useAuth precisa ser usado dentro de <AuthProvider>');
+  if (!ctx)
+    throw new Error('useAuth precisa ser usado dentro de <AuthProvider>');
   return ctx;
 }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import {
   View,
   Text,
@@ -20,12 +20,18 @@ const MAX_MENSAGEM = 500;
 const ASSUNTOS = [
   { id: 'checkin-recusado', label: 'Meu check-in foi recusado.' },
   { id: 'checkin-problema', label: 'Estou com um problema no check-in.' },
-  { id: 'cobranca-sem-uso', label: 'Fui cobrado e não consegui utilizar o plano.' },
+  {
+    id: 'cobranca-sem-uso',
+    label: 'Fui cobrado e não consegui utilizar o plano.',
+  },
   { id: 'pagamento', label: 'Problema com pagamento ou cobrança.' },
   { id: 'plano', label: 'Dúvidas sobre meu plano ou assinatura.' },
   { id: 'cancelamento', label: 'Quero cancelar minha assinatura.' },
   { id: 'conta', label: 'Problema com minha conta ou cadastro.' },
-  { id: 'sugestao-estabelecimento', label: 'Quero sugerir um estabelecimento.' },
+  {
+    id: 'sugestao-estabelecimento',
+    label: 'Quero sugerir um estabelecimento.',
+  },
   { id: 'problema-estabelecimento', label: 'Problema com um estabelecimento.' },
   { id: 'problema-tecnico', label: 'Problema técnico no aplicativo.' },
   { id: 'sugestao', label: 'Quero enviar uma sugestão ou ideia.' },
@@ -34,12 +40,24 @@ const ASSUNTOS = [
 
 function SubjectPickerModal({ visible, selectedId, onSelect, onClose }) {
   return (
-    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
-      <TouchableOpacity style={styles.modalOverlay} activeOpacity={1} onPress={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      transparent
+      onRequestClose={onClose}
+    >
+      <TouchableOpacity
+        style={styles.modalOverlay}
+        activeOpacity={1}
+        onPress={onClose}
+      >
         <TouchableOpacity activeOpacity={1} style={styles.modalSheet}>
           <View style={styles.modalHeader}>
             <Text style={styles.modalTitle}>Selecione o assunto</Text>
-            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
+            <TouchableOpacity
+              onPress={onClose}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Ionicons name="close" size={22} color={colors.text} />
             </TouchableOpacity>
           </View>
@@ -90,7 +108,9 @@ export default function ContactScreen({ navigation }) {
       return;
     }
     if (mensagem.trim().length < 10) {
-      setErrorMessage('Conte um pouco mais sobre o que aconteceu (mínimo de 10 caracteres).');
+      setErrorMessage(
+        'Conte um pouco mais sobre o que aconteceu (mínimo de 10 caracteres).'
+      );
       return;
     }
 
@@ -101,34 +121,58 @@ export default function ContactScreen({ navigation }) {
       // TODO: confirmar o formato exato esperado pelo endpoint de suporte
       await sendMessage({ assunto: assuntoId, mensagem: mensagem.trim() });
 
-      setSuccessMessage('Mensagem enviada! Nossa equipe vai te responder em breve.');
+      setSuccessMessage(
+        'Mensagem enviada! Nossa equipe vai te responder em breve.'
+      );
       setAssuntoId(null);
       setMensagem('');
     } catch (err) {
-      setErrorMessage(err.friendlyMessage || 'Não foi possível enviar sua mensagem.');
+      setErrorMessage(
+        err.friendlyMessage || 'Não foi possível enviar sua mensagem.'
+      );
     } finally {
       setSending(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView style={styles.safe} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    <KeyboardAvoidingView
+      style={styles.safe}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Fale conosco</Text>
         <View style={{ width: 38 }} />
       </View>
 
-      <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
+      <ScrollView
+        contentContainerStyle={styles.body}
+        keyboardShouldPersistTaps="handled"
+      >
         <Text style={styles.heroTitle}>Precisa de ajuda?</Text>
 
         <View style={styles.inputGroup}>
           <Text style={styles.label}>Assunto</Text>
-          <TouchableOpacity style={styles.selectBox} onPress={() => setModalVisible(true)}>
-            <Text style={[styles.selectText, !assuntoSelecionado && styles.selectPlaceholder]} numberOfLines={1}>
-              {assuntoSelecionado ? assuntoSelecionado.label : 'Selecione o assunto'}
+          <TouchableOpacity
+            style={styles.selectBox}
+            onPress={() => setModalVisible(true)}
+          >
+            <Text
+              style={[
+                styles.selectText,
+                !assuntoSelecionado && styles.selectPlaceholder,
+              ]}
+              numberOfLines={1}
+            >
+              {assuntoSelecionado
+                ? assuntoSelecionado.label
+                : 'Selecione o assunto'}
             </Text>
             <Ionicons name="chevron-down" size={18} color={colors.textLight} />
           </TouchableOpacity>
@@ -162,7 +206,11 @@ export default function ContactScreen({ navigation }) {
         )}
         {!!successMessage && (
           <View style={styles.successBox}>
-            <Ionicons name="checkmark-circle" size={16} color={colors.success} />
+            <Ionicons
+              name="checkmark-circle"
+              size={16}
+              color={colors.success}
+            />
             <Text style={styles.successText}>{successMessage}</Text>
           </View>
         )}
@@ -172,7 +220,11 @@ export default function ContactScreen({ navigation }) {
           onPress={handleSend}
           disabled={!canSend}
         >
-          {sending ? <ActivityIndicator color="#fff" /> : <Text style={styles.sendButtonText}>Enviar mensagem</Text>}
+          {sending ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <Text style={styles.sendButtonText}>Enviar mensagem</Text>
+          )}
         </TouchableOpacity>
       </ScrollView>
 
@@ -207,9 +259,19 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   body: { padding: 20, paddingTop: 4 },
-  heroTitle: { fontSize: 20, fontWeight: '800', color: colors.text, marginBottom: 20 },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 20,
+  },
   inputGroup: { marginBottom: 18 },
-  label: { fontSize: 12.5, fontWeight: '600', color: colors.textMuted, marginBottom: 6 },
+  label: {
+    fontSize: 12.5,
+    fontWeight: '600',
+    color: colors.textMuted,
+    marginBottom: 6,
+  },
   selectBox: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -223,7 +285,11 @@ const styles = StyleSheet.create({
   },
   selectText: { flex: 1, fontSize: 14, color: colors.text, marginRight: 8 },
   selectPlaceholder: { color: colors.textLight },
-  messageLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  messageLabelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   counterText: { fontSize: 11.5, color: colors.textLight },
   textArea: {
     backgroundColor: '#fff',
@@ -254,7 +320,12 @@ const styles = StyleSheet.create({
     padding: 10,
     marginBottom: 14,
   },
-  successText: { color: colors.success, fontSize: 12.5, flex: 1, fontWeight: '600' },
+  successText: {
+    color: colors.success,
+    fontSize: 12.5,
+    flex: 1,
+    fontWeight: '600',
+  },
   sendButton: {
     backgroundColor: colors.blue,
     height: 52,
@@ -307,5 +378,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioActive: { borderColor: colors.blue },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.blue },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.blue,
+  },
 });

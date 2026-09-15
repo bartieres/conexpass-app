@@ -19,12 +19,17 @@ export const listarPorEstabelecimento = async (params) => {
       autorNome: 'Andre',
       texto: 'Teste',
       dataFormatada: '2026-09-10 11:00:00',
-    }
-  ]
+    },
+  ];
 };
 
 export const getTotal = async () => {
   const response = await axiosPrivate.get(`${BASE_URL}/totalizador`);
+  return response.data;
+};
+
+export const adicionar = async (data) => {
+  const response = await axiosPrivate.post(`${BASE_URL}/solicitar`, data);
   return response.data;
 };
 

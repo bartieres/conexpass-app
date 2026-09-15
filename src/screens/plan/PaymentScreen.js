@@ -1,8 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, ActivityIndicator, RefreshControl } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  FlatList,
+  ActivityIndicator,
+  RefreshControl,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../theme/theme';
-import { getResumo } from '../../services/pagamentoService';
+import { getResumo, findAllByCondition } from '../../services/pagamentoService';
 
 const TAMANHO_PAGINA = 15;
 
@@ -20,8 +28,18 @@ function formatarData(dataISO) {
 function StatusPill({ status }) {
   const pago = status === 'PAGO';
   return (
-    <View style={[styles.statusPill, pago ? styles.statusPillOk : styles.statusPillError]}>
-      <Text style={[styles.statusPillText, pago ? styles.statusPillTextOk : styles.statusPillTextError]}>
+    <View
+      style={[
+        styles.statusPill,
+        pago ? styles.statusPillOk : styles.statusPillError,
+      ]}
+    >
+      <Text
+        style={[
+          styles.statusPillText,
+          pago ? styles.statusPillTextOk : styles.statusPillTextError,
+        ]}
+      >
         {pago ? 'Pago' : 'Falhou'}
       </Text>
     </View>
@@ -30,13 +48,22 @@ function StatusPill({ status }) {
 
 function ChargeRow({ item, onPress }) {
   return (
-    <TouchableOpacity style={styles.chargeRow} onPress={() => onPress(item)} activeOpacity={0.7}>
+    <TouchableOpacity
+      style={styles.chargeRow}
+      onPress={() => onPress(item)}
+      activeOpacity={0.7}
+    >
       <View style={{ flex: 1 }}>
         <Text style={styles.chargeDate}>{formatarData(item.data)}</Text>
         <Text style={styles.chargeValue}>{formatarMoeda(item.valor)}</Text>
       </View>
       <StatusPill status={item.status} />
-      <Ionicons name="chevron-forward" size={16} color={colors.textLight} style={{ marginLeft: 8 }} />
+      <Ionicons
+        name="chevron-forward"
+        size={16}
+        color={colors.textLight}
+        style={{ marginLeft: 8 }}
+      />
     </TouchableOpacity>
   );
 }
@@ -62,7 +89,10 @@ export default function PaymentScreen({ navigation }) {
       const data = await getResumo();
       setResumo(data);
     } catch (err) {
-      setResumoError(err.friendlyMessage || 'Não foi possível carregar o status do pagamento.');
+      setResumoError(
+        err.friendlyMessage ||
+          'Não foi possível carregar o status do pagamento.'
+      );
     } finally {
       setLoadingResumo(false);
     }
@@ -81,14 +111,20 @@ export default function PaymentScreen({ navigation }) {
       setError('');
 
       try {
-        const data = await pagamentoService.findAllByCondition({ page: paginaAtual, size: TAMANHO_PAGINA });
+        const data = await findAllByCondition({
+          page: paginaAtual,
+          size: TAMANHO_PAGINA,
+        });
         const { content, last } = data.response;
 
         setPagina(paginaAtual);
         setHasMore(last === false);
         setCobrancas((atual) => (reset ? content : [...atual, ...content]));
       } catch (err) {
-        setError(err.friendlyMessage || 'Não foi possível carregar o histórico de pagamentos.');
+        setError(
+          err.friendlyMessage ||
+            'Não foi possível carregar o histórico de pagamentos.'
+        );
       } finally {
         if (reset) {
           isRefresh ? setRefreshing(false) : setLoading(false);
@@ -118,7 +154,10 @@ export default function PaymentScreen({ navigation }) {
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Pagamentos</Text>
@@ -130,7 +169,12 @@ export default function PaymentScreen({ navigation }) {
         keyExtractor={(item) => item.id}
         contentContainerStyle={{ padding: 20, paddingTop: 4, flexGrow: 1 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[colors.blue]} tintColor={colors.blue} />
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={handleRefresh}
+            colors={[colors.blue]}
+            tintColor={colors.blue}
+          />
         }
         onEndReached={handleLoadMore}
         onEndReachedThreshold={0.4}
@@ -144,7 +188,11 @@ export default function PaymentScreen({ navigation }) {
 
             {!loadingResumo && !!resumoError && (
               <View style={[styles.card, styles.stateBoxInline]}>
-                <Ionicons name="alert-circle-outline" size={22} color="#DC2626" />
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={22}
+                  color="#DC2626"
+                />
                 <Text style={styles.stateText}>{resumoError}</Text>
               </View>
             )}
@@ -152,7 +200,12 @@ export default function PaymentScreen({ navigation }) {
             {!loadingResumo && !resumoError && resumo && (
               <View style={styles.card}>
                 <View style={styles.statusRow}>
-                  <View style={[styles.statusDot, !resumo.emDia && styles.statusDotError]} />
+                  <View
+                    style={[
+                      styles.statusDot,
+                      !resumo.emDia && styles.statusDotError,
+                    ]}
+                  />
                   <Text style={styles.statusText}>
                     {resumo.emDia ? 'Pagamento em dia' : 'Pagamento pendente'}
                   </Text>
@@ -161,8 +214,12 @@ export default function PaymentScreen({ navigation }) {
                 <View style={styles.cardDivider} />
 
                 <Text style={styles.cardLabel}>Próxima cobrança</Text>
-                <Text style={styles.nextChargeDate}>{formatarData(resumo.proximaCobranca?.data)}</Text>
-                <Text style={styles.nextChargeValue}>{formatarMoeda(resumo.proximaCobranca?.valor)}</Text>
+                <Text style={styles.nextChargeDate}>
+                  {formatarData(resumo.proximaCobranca?.data)}
+                </Text>
+                <Text style={styles.nextChargeValue}>
+                  {formatarMoeda(resumo.proximaCobranca?.valor)}
+                </Text>
               </View>
             )}
 
@@ -177,9 +234,16 @@ export default function PaymentScreen({ navigation }) {
 
             {!loading && !!error && (
               <View style={styles.stateBox}>
-                <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={26}
+                  color="#DC2626"
+                />
                 <Text style={styles.stateText}>{error}</Text>
-                <TouchableOpacity style={styles.stateButton} onPress={() => buscarCobrancas({ reset: true })}>
+                <TouchableOpacity
+                  style={styles.stateButton}
+                  onPress={() => buscarCobrancas({ reset: true })}
+                >
                   <Text style={styles.stateButtonText}>Tentar novamente</Text>
                 </TouchableOpacity>
               </View>
@@ -188,15 +252,26 @@ export default function PaymentScreen({ navigation }) {
         }
         renderItem={({ item }) =>
           !loading && !error ? (
-            <ChargeRow item={item} onPress={(cobranca) => navigation.navigate('PaymentDetail', { cobranca })} />
+            <ChargeRow
+              item={item}
+              onPress={(cobranca) =>
+                navigation.navigate('PaymentDetail', { cobranca })
+              }
+            />
           ) : null
         }
         ItemSeparatorComponent={() => <View style={{ height: 10 }} />}
         ListEmptyComponent={
           !loading && !error ? (
             <View style={styles.emptyWrap}>
-              <Ionicons name="receipt-outline" size={32} color={colors.textLight} />
-              <Text style={styles.emptyText}>Nenhum pagamento registrado ainda</Text>
+              <Ionicons
+                name="receipt-outline"
+                size={32}
+                color={colors.textLight}
+              />
+              <Text style={styles.emptyText}>
+                Nenhum pagamento registrado ainda
+              </Text>
             </View>
           ) : null
         }
@@ -233,13 +308,28 @@ const styles = StyleSheet.create({
   },
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
 
-  card: { backgroundColor: '#fff', borderRadius: radius.lg, padding: 18, marginBottom: 20, ...shadow },
+  card: {
+    backgroundColor: '#fff',
+    borderRadius: radius.lg,
+    padding: 18,
+    marginBottom: 20,
+    ...shadow,
+  },
   stateBoxInline: { alignItems: 'center', gap: 8 },
   statusRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  statusDot: { width: 9, height: 9, borderRadius: 4.5, backgroundColor: colors.success },
+  statusDot: {
+    width: 9,
+    height: 9,
+    borderRadius: 4.5,
+    backgroundColor: colors.success,
+  },
   statusDotError: { backgroundColor: '#DC2626' },
   statusText: { fontSize: 14.5, fontWeight: '700', color: colors.text },
-  cardDivider: { height: 1, backgroundColor: colors.border, marginVertical: 14 },
+  cardDivider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginVertical: 14,
+  },
   cardLabel: { fontSize: 12, color: colors.textMuted, marginBottom: 2 },
   nextChargeDate: { fontSize: 15, fontWeight: '700', color: colors.text },
   nextChargeValue: { fontSize: 13, color: colors.textMuted, marginTop: 2 },
@@ -254,8 +344,18 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
 
-  stateBox: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 30 },
-  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 30,
+  },
+  stateText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   stateButton: {
     backgroundColor: colors.blue,
     paddingHorizontal: 18,
@@ -274,8 +374,17 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   chargeDate: { fontSize: 13, color: colors.textMuted },
-  chargeValue: { fontSize: 15, fontWeight: '700', color: colors.text, marginTop: 2 },
-  statusPill: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill },
+  chargeValue: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: colors.text,
+    marginTop: 2,
+  },
+  statusPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
   statusPillOk: { backgroundColor: colors.successLight },
   statusPillError: { backgroundColor: '#FEE2E2' },
   statusPillText: { fontSize: 11.5, fontWeight: '700' },

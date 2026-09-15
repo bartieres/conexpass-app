@@ -7,7 +7,22 @@ const BASE_URL = '/payment-methods';
   return response.data;
 };*/
 
-export const getCartaoAtual = async () => {
-  const response = await axiosPrivate.get(`${BASE_URL}/user`);
+export const getFormaPagamento = async () => {
+  const response = await axiosPrivate.get(BASE_URL);
+  return response.data;
+};
+
+export const save = async (payload) => {
+  const response = await axiosPrivate.post(BASE_URL, payload);
+  return response.data;
+};
+
+export const deleteFormaPagamento = async (id) => {
+  const response = await axiosPrivate.delete(`${BASE_URL}/${id}`);
+  return response.data;
+};
+
+export const updatePrincipal = async (id) => {
+  const response = await axiosPrivate.patch(`${BASE_URL}/${id}/principal`);
   return response.data;
 };

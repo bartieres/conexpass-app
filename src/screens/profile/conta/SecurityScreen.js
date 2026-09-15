@@ -1,4 +1,10 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
 
@@ -6,7 +12,10 @@ export default function SecurityScreen({ navigation }) {
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Segurança</Text>
@@ -31,7 +40,11 @@ export default function SecurityScreen({ navigation }) {
                   <Text style={styles.menuSubLabel}>Alterar senha</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.textLight}
+              />
             </TouchableOpacity>
           </View>
         </View>
@@ -45,17 +58,31 @@ export default function SecurityScreen({ navigation }) {
               desabilitado — sem navegação e com aparência esmaecida —
               até a tela ser implementada.
             */}
-            <TouchableOpacity style={[styles.menuItem, styles.menuItemDisabled]} disabled activeOpacity={1}>
+            <TouchableOpacity
+              style={[styles.menuItem, styles.menuItemDisabled]}
+              disabled
+              activeOpacity={1}
+            >
               <View style={styles.menuLeft}>
                 <View style={styles.menuIconWrap}>
-                  <Ionicons name="phone-portrait-outline" size={19} color={colors.textLight} />
+                  <Ionicons
+                    name="phone-portrait-outline"
+                    size={19}
+                    color={colors.textLight}
+                  />
                 </View>
                 <View>
-                  <Text style={[styles.menuLabel, styles.menuLabelDisabled]}>Dispositivos conectados</Text>
+                  <Text style={[styles.menuLabel, styles.menuLabelDisabled]}>
+                    Dispositivos conectados
+                  </Text>
                   <Text style={styles.menuSubLabel}>Em breve</Text>
                 </View>
               </View>
-              <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.textLight}
+              />
             </TouchableOpacity>
           </View>
         </View>

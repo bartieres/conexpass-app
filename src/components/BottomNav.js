@@ -4,11 +4,26 @@ import { Ionicons } from '@expo/vector-icons';
 import { colors } from '../theme/theme';
 
 const TABS = [
-  { key: 'Explorar', label: 'Explorar', icon: 'search-outline', iconActive: 'search' },
+  {
+    key: 'Explorar',
+    label: 'Explorar',
+    icon: 'search-outline',
+    iconActive: 'search',
+  },
   //{ key: 'Historico', label: 'Histórico', icon: 'time-outline', iconActive: 'time' },
-  { key: 'CheckIn', label: 'Check-ins', icon: 'qr-code-outline', iconActive: 'qr-code' },
+  {
+    key: 'CheckIn',
+    label: 'Check-ins',
+    icon: 'qr-code-outline',
+    iconActive: 'qr-code',
+  },
   { key: 'Plano', label: 'Planos', icon: 'card-outline', iconActive: 'card' },
-  { key: 'Perfil', label: 'Perfil', icon: 'person-outline', iconActive: 'person' },
+  {
+    key: 'Perfil',
+    label: 'Perfil',
+    icon: 'person-outline',
+    iconActive: 'person',
+  },
 ];
 
 export default function BottomNav({ state, navigation }) {
@@ -26,10 +41,21 @@ export default function BottomNav({ state, navigation }) {
               onPress={() => navigation.navigate(tab.key)}
               activeOpacity={0.85}
             >
-              <View style={[styles.centerCircle, isActive && styles.centerCircleActive]}>
-                <Ionicons name={isActive ? tab.iconActive : tab.icon} size={24} color="#fff" />
+              <View
+                style={[
+                  styles.centerCircle,
+                  isActive && styles.centerCircleActive,
+                ]}
+              >
+                <Ionicons
+                  name={isActive ? tab.iconActive : tab.icon}
+                  size={24}
+                  color="#fff"
+                />
               </View>
-              <Text style={[styles.label, isActive && styles.labelActive]}>{tab.label}</Text>
+              <Text style={[styles.label, isActive && styles.labelActive]}>
+                {tab.label}
+              </Text>
             </TouchableOpacity>
           );
         }
@@ -45,7 +71,9 @@ export default function BottomNav({ state, navigation }) {
               size={22}
               color={isActive ? colors.blue : colors.textLight}
             />
-            <Text style={[styles.label, isActive && styles.labelActive]}>{tab.label}</Text>
+            <Text style={[styles.label, isActive && styles.labelActive]}>
+              {tab.label}
+            </Text>
           </TouchableOpacity>
         );
       })}

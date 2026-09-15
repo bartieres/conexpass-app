@@ -1,4 +1,12 @@
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert,
+  Linking,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../../theme/theme';
@@ -11,42 +19,84 @@ function buildMenuSections({ onLogout, onDeleteAccount }) {
     {
       title: 'Conta',
       items: [
-        { icon: 'person-outline', label: 'Dados pessoais', screen: 'PersonalData' },
-        { icon: 'shield-checkmark-outline', label: 'Segurança', screen: 'Security' },
+        {
+          icon: 'person-outline',
+          label: 'Dados pessoais',
+          screen: 'PersonalData',
+        },
+        {
+          icon: 'shield-checkmark-outline',
+          label: 'Segurança',
+          screen: 'Security',
+        },
       ],
     },
     {
       title: 'Preferências',
       items: [
-        { icon: 'notifications-outline', label: 'Notificações', screen: 'Notification' },
+        {
+          icon: 'notifications-outline',
+          label: 'Notificações',
+          screen: 'Notification',
+        },
         { icon: 'location-outline', label: 'Localização', screen: 'Location' },
       ],
     },
     {
       title: 'Assinatura',
       items: [
-        { icon: 'card-outline', label: 'Forma de Pagamento', screen: 'PaymentMethod' }
+        {
+          icon: 'card-outline',
+          label: 'Forma de Pagamento',
+          screen: 'PaymentMethod',
+        },
+        {
+          icon: 'receipt-outline',
+          label: 'Pagamentos',
+          screen: 'Payment',
+        },
       ],
     },
     {
       title: 'Suporte',
       items: [
-        { icon: 'help-circle-outline', label: 'Central de ajuda', screen: 'Help' },
-        { icon: 'chatbubble-ellipses-outline', label: 'Fale conosco', screen: 'Contact' },
+        {
+          icon: 'help-circle-outline',
+          label: 'Central de ajuda',
+          screen: 'Help',
+        },
+        {
+          icon: 'chatbubble-ellipses-outline',
+          label: 'Fale conosco',
+          screen: 'Contact',
+        },
       ],
     },
     {
       title: 'Legal',
       items: [
-        { icon: 'document-text-outline', label: 'Termos de uso', url: 'https://conexpass.com.br/termos-uso' },
-        { icon: 'lock-closed-outline', label: 'Política de privacidade', url: 'https://conexpass.com.br/politica-privacidade' },
+        {
+          icon: 'document-text-outline',
+          label: 'Termos de uso',
+          url: 'https://conexpass.com.br/termos-uso',
+        },
+        {
+          icon: 'lock-closed-outline',
+          label: 'Política de privacidade',
+          url: 'https://conexpass.com.br/politica-privacidade',
+        },
       ],
     },
     {
       title: 'Conta',
       items: [
         //uir conta', danger: true, action: onDeleteAccount },
-        { icon: 'log-out-outline', label: 'Sair', danger: true, action: onLogout },
+        {
+          icon: 'log-out-outline',
+          label: 'Sair',
+          danger: true,
+          action: onLogout,
+        },
       ],
     },
   ];
@@ -68,7 +118,7 @@ export default function ProfileScreen({ navigation }) {
   // no payload do usuário — troque assim que /users/me trouxer o plano.
   const name = user?.nome || 'Usuário';
   const email = user?.email || '';
-  const plan = user?.plano?.nome || "";
+  const plan = user?.plano?.nome || '';
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -88,7 +138,10 @@ export default function ProfileScreen({ navigation }) {
     );
   };
 
-  const menuSections = buildMenuSections({ onLogout: logout, onDeleteAccount: handleDeleteAccount });
+  const menuSections = buildMenuSections({
+    onLogout: logout,
+    onDeleteAccount: handleDeleteAccount,
+  });
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -108,7 +161,10 @@ export default function ProfileScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.body}>
         {menuSections.map((section) => (
-          <View key={section.title + section.items[0].label} style={styles.section}>
+          <View
+            key={section.title + section.items[0].label}
+            style={styles.section}
+          >
             <Text style={styles.sectionTitle}>{section.title}</Text>
             <View style={styles.sectionCard}>
               {section.items.map((item, index) => {
@@ -120,7 +176,10 @@ export default function ProfileScreen({ navigation }) {
                     // Abre no navegador do celular (Safari/Chrome), em vez
                     // de navegar para uma tela dentro do app.
                     Linking.openURL(item.url).catch(() => {
-                      Alert.alert('Não foi possível abrir o link', 'Tente novamente em instantes.');
+                      Alert.alert(
+                        'Não foi possível abrir o link',
+                        'Tente novamente em instantes.'
+                      );
                     });
                   } else if (item.screen) {
                     navigation.navigate(item.screen);
@@ -135,15 +194,41 @@ export default function ProfileScreen({ navigation }) {
                     activeOpacity={0.7}
                   >
                     <View style={styles.menuLeft}>
-                      <View style={[styles.menuIconWrap, item.danger && styles.menuIconWrapDanger]}>
-                        <Ionicons name={item.icon} size={19} color={item.danger ? '#EF4444' : colors.blue} />
+                      <View
+                        style={[
+                          styles.menuIconWrap,
+                          item.danger && styles.menuIconWrapDanger,
+                        ]}
+                      >
+                        <Ionicons
+                          name={item.icon}
+                          size={19}
+                          color={item.danger ? '#EF4444' : colors.blue}
+                        />
                       </View>
-                      <Text style={[styles.menuLabel, item.danger && styles.menuLabelDanger]}>{item.label}</Text>
+                      <Text
+                        style={[
+                          styles.menuLabel,
+                          item.danger && styles.menuLabelDanger,
+                        ]}
+                      >
+                        {item.label}
+                      </Text>
                     </View>
                     {item.url ? (
-                      <Ionicons name="open-outline" size={18} color={colors.textLight} />
+                      <Ionicons
+                        name="open-outline"
+                        size={18}
+                        color={colors.textLight}
+                      />
                     ) : (
-                      !item.danger && <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+                      !item.danger && (
+                        <Ionicons
+                          name="chevron-forward"
+                          size={18}
+                          color={colors.textLight}
+                        />
+                      )
                     )}
                   </TouchableOpacity>
                 );

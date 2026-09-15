@@ -8,7 +8,10 @@ export default function RegisterSuccessScreen({ route, navigation }) {
   const email = route.params?.email || '';
 
   return (
-    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right', 'bottom']}>
+    <SafeAreaView
+      style={styles.safe}
+      edges={['top', 'left', 'right', 'bottom']}
+    >
       <View style={styles.content}>
         <View style={styles.iconCircle}>
           <Ionicons name="mail-open-outline" size={44} color="#fff" />
@@ -26,8 +29,13 @@ export default function RegisterSuccessScreen({ route, navigation }) {
       </View>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={() => navigation.navigate('Login')}>
-          <Text style={styles.primaryButtonText}>Já confirmei, ir para login</Text>
+        <TouchableOpacity
+          style={styles.primaryButton}
+          onPress={() => navigation.navigate('Login')}
+        >
+          <Text style={styles.primaryButtonText}>
+            Já confirmei, ir para login
+          </Text>
         </TouchableOpacity>
       </View>
     </SafeAreaView>
@@ -36,7 +44,12 @@ export default function RegisterSuccessScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: '#fff' },
-  content: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30 },
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 30,
+  },
   iconCircle: {
     width: 92,
     height: 92,
@@ -46,10 +59,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 24,
   },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, marginBottom: 10 },
-  subtitle: { fontSize: 14, color: colors.textMuted, textAlign: 'center', lineHeight: 20, marginBottom: 14 },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 10,
+  },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 14,
+  },
   emailText: { fontWeight: '700', color: colors.text },
-  helper: { fontSize: 12.5, color: colors.textLight, textAlign: 'center', lineHeight: 18 },
+  helper: {
+    fontSize: 12.5,
+    color: colors.textLight,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
   footer: { padding: 24 },
   primaryButton: {
     backgroundColor: colors.blue,

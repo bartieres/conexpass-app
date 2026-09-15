@@ -1,9 +1,24 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import React, { useState, useCallback } from 'react';
+
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  FlatList,
+} from 'react-native';
+
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
+
 import { colors, radius, shadow } from '../../../theme/theme';
-import { getCartaoAtual } from '../../../services/formaPagamentoService';
+import {
+  getFormaPagamento,
+  updatePrincipal,
+  deleteFormaPagamento,
+} from '../../../services/formaPagamentoService';
 
 const BANDEIRA_ICON = {
   MASTERCARD: 'card',
@@ -12,39 +27,154 @@ const BANDEIRA_ICON = {
 };
 
 export default function PaymentMethodScreen({ navigation }) {
-  const [cartao, setCartao] = useState(null);
+  const [cartoes, setCartoes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const buscarCartao = useCallback(async () => {
+  const buscarCartoes = useCallback(async () => {
     setLoading(true);
     setError('');
+
     try {
-      const data = await getCartaoAtual();
+      const data = await getFormaPagamento();
+
       const { response } = data;
-      setCartao(response);
+
+      setCartoes(response || []);
     } catch (err) {
-      setError(err.friendlyMessage || 'Não foi possível carregar sua forma de pagamento.');
+      setError(
+        err.friendlyMessage || 'Não foi possível carregar seus cartões.'
+      );
     } finally {
       setLoading(false);
     }
   }, []);
 
-  useEffect(() => {
-    buscarCartao();
-  }, [buscarCartao]);
+  useFocusEffect(
+    useCallback(() => {
+      buscarCartoes();
+    }, [buscarCartoes])
+  );
 
-  const handleAlterarCartao = () => {
+  const handleAdicionarCartao = () => {
     navigation.navigate('RegisterCard');
+  };
+
+  const handleDefinirPadrao = (cartao) => {
+    if (cartao.principal) {
+      return;
+    }
+
+    Alert.alert(
+      'Definir cartão padrão',
+      `Deseja utilizar o cartão •••• ${cartao.cartao.ultimosDigitos} como padrão para as próximas cobranças?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirmar',
+          onPress: async () => {
+            await updatePrincipal(cartao.id);
+            await buscarCartoes();
+          },
+        },
+      ]
+    );
+  };
+
+  const handleExcluirCartao = (cartao) => {
+    if (cartao.principal && cartoes.length === 1) {
+      Alert.alert(
+        'Não é possível excluir',
+        'Cadastre outro cartão antes de excluir o cartão utilizado atualmente nas cobranças.'
+      );
+
+      return;
+    }
+
+    Alert.alert(
+      'Excluir cartão',
+      `Deseja realmente excluir o cartão •••• ${cartao.cartao.ultimosDigitos}?`,
+      [
+        {
+          text: 'Cancelar',
+          style: 'cancel',
+        },
+        {
+          text: 'Excluir',
+          style: 'destructive',
+          onPress: async () => {
+            await deleteFormaPagamento(cartao.id);
+            await buscarCartoes();
+          },
+        },
+      ]
+    );
+  };
+
+  const renderCartao = ({ item }) => {
+    const codigoBandeira = item.cartao?.bandeira?.codigo;
+
+    return (
+      <View style={styles.cardBox}>
+        <View style={styles.cardIconWrap}>
+          <Ionicons
+            name={BANDEIRA_ICON[codigoBandeira] || 'card'}
+            size={22}
+            color={colors.blue}
+          />
+        </View>
+
+        <View style={styles.cardContent}>
+          <View style={styles.cardHeader}>
+            <Text style={styles.cardBrand}>
+              {item.cartao?.bandeira?.descricao ||
+                item.cartao?.bandeira ||
+                'Cartão'}{' '}
+              •••• {item.cartao?.ultimosDigitos}
+            </Text>
+
+            {item.principal && (
+              <View style={styles.defaultBadge}>
+                <Text style={styles.defaultBadgeText}>Padrão</Text>
+              </View>
+            )}
+          </View>
+
+          <Text style={styles.cardExpiry}>
+            Vencimento {item.cartao?.validade}
+          </Text>
+
+          <View style={styles.cardActions}>
+            {!item.principal && (
+              <TouchableOpacity onPress={() => handleDefinirPadrao(item)}>
+                <Text style={styles.actionText}>Usar como padrão</Text>
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity onPress={() => handleExcluirCartao(item)}>
+              <Text style={styles.deleteText}>Excluir</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
   };
 
   return (
     <View style={styles.safe}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
+
         <Text style={styles.headerTitle}>Forma de pagamento</Text>
+
         <View style={{ width: 38 }} />
       </View>
 
@@ -58,46 +188,62 @@ export default function PaymentMethodScreen({ navigation }) {
         {!loading && !!error && (
           <View style={styles.stateBox}>
             <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
+
             <Text style={styles.stateText}>{error}</Text>
-            <TouchableOpacity style={styles.stateButton} onPress={buscarCartao}>
+
+            <TouchableOpacity
+              style={styles.stateButton}
+              onPress={buscarCartoes}
+            >
               <Text style={styles.stateButtonText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {!loading && !error && cartao && (
+        {!loading && !error && (
           <>
-            <Text style={styles.sectionTitle}>Cartão cadastrado</Text>
-            <View style={styles.cardBox}>
-              <View style={styles.cardIconWrap}>
-                <Ionicons name={BANDEIRA_ICON[cartao.bandeira] || 'card'} size={22} color={colors.blue} />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.cardBrand}>
-                  {cartao.bandeira} •••• {cartao.ultimosDigitos}
+            {cartoes.length > 0 ? (
+              <>
+                <Text style={styles.sectionTitle}>Meus cartões</Text>
+
+                <FlatList
+                  data={cartoes}
+                  keyExtractor={(item) => String(item.id)}
+                  renderItem={renderCartao}
+                  showsVerticalScrollIndicator={false}
+                  contentContainerStyle={styles.listContent}
+                />
+              </>
+            ) : (
+              <View style={styles.stateBox}>
+                <Ionicons
+                  name="card-outline"
+                  size={30}
+                  color={colors.textLight}
+                />
+
+                <Text style={styles.stateText}>
+                  Nenhum cartão cadastrado ainda.
                 </Text>
-                <Text style={styles.cardExpiry}>Vencimento {cartao.validade}</Text>
               </View>
-            </View>
+            )}
 
-            <TouchableOpacity style={styles.changeButton} onPress={handleAlterarCartao}>
-              <Text style={styles.changeButtonText}>Alterar cartão</Text>
+            <TouchableOpacity
+              style={styles.addButton}
+              onPress={handleAdicionarCartao}
+            >
+              <Ionicons name="add" size={20} color={colors.blue} />
+
+              <Text style={styles.addButtonText}>Adicionar cartão</Text>
             </TouchableOpacity>
 
-            <Text style={styles.footerNote}>
-              Seu cartão será utilizado para as próximas cobranças da assinatura.
-            </Text>
+            {cartoes.length > 0 && (
+              <Text style={styles.footerNote}>
+                O cartão padrão será utilizado nas próximas cobranças da
+                assinatura.
+              </Text>
+            )}
           </>
-        )}
-
-        {!loading && !error && !cartao && (
-          <View style={styles.stateBox}>
-            <Ionicons name="card-outline" size={30} color={colors.textLight} />
-            <Text style={styles.stateText}>Nenhum cartão cadastrado ainda.</Text>
-            <TouchableOpacity style={styles.stateButton} onPress={handleAlterarCartao}>
-              <Text style={styles.stateButtonText}>Cadastrar cartão</Text>
-            </TouchableOpacity>
-          </View>
         )}
       </View>
     </View>
@@ -105,7 +251,11 @@ export default function PaymentMethodScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: {
+    flex: 1,
+    backgroundColor: colors.bg,
+  },
+
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -114,6 +264,7 @@ const styles = StyleSheet.create({
     paddingTop: 54,
     paddingBottom: 14,
   },
+
   backButton: {
     width: 38,
     height: 38,
@@ -123,11 +274,33 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 20, paddingTop: 4 },
 
-  stateBox: { alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 40 },
-  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  headerTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.text,
+  },
+
+  body: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingTop: 4,
+  },
+
+  stateBox: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 40,
+  },
+
+  stateText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
+
   stateButton: {
     backgroundColor: colors.blue,
     paddingHorizontal: 18,
@@ -135,7 +308,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     marginTop: 4,
   },
-  stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
+
+  stateButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 13,
+  },
 
   sectionTitle: {
     fontSize: 12.5,
@@ -146,16 +324,21 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     marginLeft: 4,
   },
+
+  listContent: {
+    paddingBottom: 8,
+  },
+
   cardBox: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 14,
+    alignItems: 'flex-start',
     backgroundColor: '#fff',
     borderRadius: radius.lg,
-    padding: 18,
-    marginBottom: 16,
+    padding: 16,
+    marginBottom: 12,
     ...shadow,
   },
+
   cardIconWrap: {
     width: 46,
     height: 46,
@@ -163,18 +346,88 @@ const styles = StyleSheet.create({
     backgroundColor: colors.chipBg,
     alignItems: 'center',
     justifyContent: 'center',
+    marginRight: 14,
   },
-  cardBrand: { fontSize: 15, fontWeight: '700', color: colors.text },
-  cardExpiry: { fontSize: 12.5, color: colors.textMuted, marginTop: 2 },
 
-  changeButton: {
+  cardContent: {
+    flex: 1,
+  },
+
+  cardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+
+  cardBrand: {
+    flex: 1,
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: colors.text,
+  },
+
+  defaultBadge: {
     backgroundColor: colors.chipBg,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+
+  defaultBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.blue,
+  },
+
+  cardExpiry: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    marginTop: 4,
+  },
+
+  cardActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 18,
+    marginTop: 12,
+  },
+
+  actionText: {
+    color: colors.blue,
+    fontWeight: '700',
+    fontSize: 12.5,
+  },
+
+  deleteText: {
+    color: '#DC2626',
+    fontWeight: '600',
+    fontSize: 12.5,
+  },
+
+  addButton: {
     height: 48,
     borderRadius: radius.md,
+    backgroundColor: colors.chipBg,
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 7,
+    marginTop: 4,
   },
-  changeButtonText: { color: colors.blue, fontWeight: '700', fontSize: 14 },
 
-  footerNote: { fontSize: 12, color: colors.textLight, textAlign: 'center', marginTop: 16, lineHeight: 17 },
+  addButtonText: {
+    color: colors.blue,
+    fontWeight: '700',
+    fontSize: 14,
+  },
+
+  footerNote: {
+    fontSize: 12,
+    color: colors.textLight,
+    textAlign: 'center',
+    marginTop: 16,
+    lineHeight: 17,
+    paddingHorizontal: 10,
+    paddingBottom: 10,
+  },
 });

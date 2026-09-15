@@ -25,7 +25,7 @@ export function useCurrentLocation() {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
-    } catch (err) {
+    } catch (_err) {
       setErrorMessage('Não foi possível obter sua localização.');
     } finally {
       setLoading(false);
@@ -36,5 +36,11 @@ export function useCurrentLocation() {
     fetchLocation();
   }, [fetchLocation]);
 
-  return { coords, loading, permissionDenied, errorMessage, refetch: fetchLocation };
+  return {
+    coords,
+    loading,
+    permissionDenied,
+    errorMessage,
+    refetch: fetchLocation,
+  };
 }

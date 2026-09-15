@@ -14,7 +14,7 @@ export function formatarDistancia(distanciaMetros) {
 
   return `${(distanciaMetros / 1000).toLocaleString('pt-BR', {
     minimumFractionDigits: 1,
-    maximumFractionDigits: 1
+    maximumFractionDigits: 1,
   })} km`;
 }
 
@@ -48,7 +48,6 @@ export default function ExploreScreen({ navigation, route }) {
     coords,
     loading: loadingLocation,
     permissionDenied,
-    errorMessage: locationError,
     refetch: refetchLocation,
   } = useCurrentLocation();
 
@@ -85,7 +84,9 @@ export default function ExploreScreen({ navigation, route }) {
 
       const termo = termoOverride ?? search;
       const categoriasAtuais = categoriasOverride ?? categorias;
-      const categoriasFiltradas = categoriasAtuais.includes('TODOS') ? undefined : categoriasAtuais;
+      const categoriasFiltradas = categoriasAtuais.includes('TODOS')
+        ? undefined
+        : categoriasAtuais;
       const raio = raioOverride ?? raioKm;
       const estrelas = estrelasMinOverride ?? estrelasMin;
       const ordenacao = ordenarPorOverride ?? ordenarPor;
@@ -103,15 +104,18 @@ export default function ExploreScreen({ navigation, route }) {
           ...coords,
           termo: termo || undefined,
           raioKm: raio * 1000,
-          tipos: categoriasFiltradas && categoriasFiltradas.length > 0 ? categoriasFiltradas : undefined,
+          tipos:
+            categoriasFiltradas && categoriasFiltradas.length > 0
+              ? categoriasFiltradas
+              : undefined,
           estrelasMin: estrelas > 0 ? estrelas : undefined,
           ordenarPor: ordenacao,
         };
 
         const pages = {
           page: pagina,
-          size: TAMANHO_PAGINA
-        }
+          size: TAMANHO_PAGINA,
+        };
 
         const data = await findAllByCondition({ ...filtros, ...pages });
         const { content, last } = data.response;
@@ -127,23 +131,29 @@ export default function ExploreScreen({ navigation, route }) {
               ? horarioFuncionamento.aberto
                 ? `Aberto até as ${formatarHora(horarioFuncionamento.horarioFechamento)}`
                 : horarioFuncionamento.diaAbertura
-                ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
-                : 'Fechado'
+                  ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
+                  : 'Fechado'
               : null,
             checkinHoje: e.checkinRealizadoHoje ?? false, // implementar flag que indica se fez checkin hoje
             //reviews: 120,
-            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
+            image:
+              'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
             //coord: { top: '46%', left: '46%' },
-          }
+          };
         });
 
         paginaRef.current = pagina;
         setHasMore(last === false);
-        setEstabelecimentos((atual) => (reset ? formatted : [...atual, ...formatted]));
+        setEstabelecimentos((atual) =>
+          reset ? formatted : [...atual, ...formatted]
+        );
 
         if (reset) {
           setSelectedEstabelecimento((atualSelecionado) => {
-            if (atualSelecionado && formatted.some((item) => item.id === atualSelecionado.id)) {
+            if (
+              atualSelecionado &&
+              formatted.some((item) => item.id === atualSelecionado.id)
+            ) {
               return atualSelecionado;
             }
             return formatted[0] ?? null;
@@ -151,7 +161,8 @@ export default function ExploreScreen({ navigation, route }) {
         }
       } catch (err) {
         setEstabelecimentosError(
-          err.friendlyMessage || 'Não foi possível carregar os estabelecimentos próximos.'
+          err.friendlyMessage ||
+            'Não foi possível carregar os estabelecimentos próximos.'
         );
       } finally {
         if (reset) {
@@ -161,7 +172,16 @@ export default function ExploreScreen({ navigation, route }) {
         }
       }
     },
-    [coords, search, categorias, raioKm, estrelasMin, ordenarPor, loadingMore, hasMore]
+    [
+      coords,
+      search,
+      categorias,
+      raioKm,
+      estrelasMin,
+      ordenarPor,
+      loadingMore,
+      hasMore,
+    ]
   );
 
   // Busca inicial / toda vez que a localização mudar
@@ -225,7 +245,10 @@ export default function ExploreScreen({ navigation, route }) {
       }
 
       setCategorias(novasCategorias);
-      buscarEstabelecimentos({ reset: true, categoriasOverride: novasCategorias });
+      buscarEstabelecimentos({
+        reset: true,
+        categoriasOverride: novasCategorias,
+      });
     },
     [categorias, buscarEstabelecimentos]
   );
@@ -256,7 +279,10 @@ export default function ExploreScreen({ navigation, route }) {
       await sugerirEstabelecimento(dados);
       setSuggestionSuccess(true);
     } catch (err) {
-      setSuggestionError(err.friendlyMessage || 'Não foi possível enviar sua indicação. Tente novamente.');
+      setSuggestionError(
+        err.friendlyMessage ||
+          'Não foi possível enviar sua indicação. Tente novamente.'
+      );
     } finally {
       setSendingSuggestion(false);
     }

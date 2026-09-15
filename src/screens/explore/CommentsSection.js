@@ -1,7 +1,14 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ActivityIndicator } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../../theme/theme';
+import { colors, radius, typography } from '../../theme/theme';
 
 function getInitials(nome = '') {
   const partes = nome.trim().split(/\s+/).filter(Boolean);
@@ -14,7 +21,9 @@ function CommentItem({ comentario }) {
   return (
     <View style={styles.commentItem}>
       <View style={styles.avatar}>
-        <Text style={styles.avatarText}>{getInitials(comentario.autorNome)}</Text>
+        <Text style={styles.avatarText}>
+          {getInitials(comentario.autorNome)}
+        </Text>
       </View>
       <View style={{ flex: 1 }}>
         <View style={styles.commentHeaderRow}>
@@ -27,7 +36,14 @@ function CommentItem({ comentario }) {
   );
 }
 
-export default function CommentsSection({ comentarios, loading, error, onRetry, onSubmit, sending }) {
+export default function CommentsSection({
+  comentarios,
+  loading,
+  error,
+  onRetry,
+  onSubmit,
+  sending,
+}) {
   const [texto, setTexto] = useState('');
 
   const handleEnviar = () => {
@@ -50,11 +66,18 @@ export default function CommentsSection({ comentarios, loading, error, onRetry, 
           multiline
         />
         <TouchableOpacity
-          style={[styles.sendButton, (!texto.trim() || sending) && styles.sendButtonDisabled]}
+          style={[
+            styles.sendButton,
+            (!texto.trim() || sending) && styles.sendButtonDisabled,
+          ]}
           onPress={handleEnviar}
           disabled={!texto.trim() || sending}
         >
-          {sending ? <ActivityIndicator size="small" color="#fff" /> : <Ionicons name="send" size={16} color="#fff" />}
+          {sending ? (
+            <ActivityIndicator size="small" color="#fff" />
+          ) : (
+            <Ionicons name="send" size={16} color="#fff" />
+          )}
         </TouchableOpacity>
       </View>
 
@@ -75,12 +98,16 @@ export default function CommentsSection({ comentarios, loading, error, onRetry, 
       )}
 
       {!loading && !error && comentarios.length === 0 && (
-        <Text style={styles.emptyText}>Seja o primeiro a comentar sobre esse estabelecimento.</Text>
+        <Text style={styles.emptyText}>
+          Seja o primeiro a comentar sobre esse estabelecimento.
+        </Text>
       )}
 
       {!loading &&
         !error &&
-        comentarios.map((comentario) => <CommentItem key={comentario.id} comentario={comentario} />)}
+        comentarios.map((comentario) => (
+          <CommentItem key={comentario.id} comentario={comentario} />
+        ))}
     </View>
   );
 }
@@ -97,7 +124,14 @@ const styles = StyleSheet.create({
     padding: 8,
     marginBottom: 16,
   },
-  input: { flex: 1, fontSize: 13.5, color: colors.text, maxHeight: 90, paddingHorizontal: 6, paddingVertical: 4 },
+  input: {
+    flex: 1,
+    fontSize: 13.5,
+    color: colors.text,
+    maxHeight: 90,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+  },
   sendButton: {
     width: 36,
     height: 36,
@@ -110,7 +144,12 @@ const styles = StyleSheet.create({
   stateBox: { alignItems: 'center', gap: 6, paddingVertical: 16 },
   stateText: { fontSize: 12.5, color: colors.textMuted, textAlign: 'center' },
   retryText: { fontSize: 12.5, color: colors.blue, fontWeight: '700' },
-  emptyText: { fontSize: 12.5, color: colors.textLight, textAlign: 'center', paddingVertical: 12 },
+  emptyText: {
+    fontSize: 12.5,
+    color: colors.textLight,
+    textAlign: 'center',
+    paddingVertical: 12,
+  },
   commentItem: { flexDirection: 'row', gap: 10, marginBottom: 16 },
   avatar: {
     width: 34,
@@ -121,8 +160,17 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: { fontSize: 12, fontWeight: '800', color: colors.blue },
-  commentHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  commentHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   commentAuthor: { fontSize: 13, fontWeight: '700', color: colors.text },
   commentDate: { fontSize: 11, color: colors.textLight },
-  commentText: { fontSize: 13, color: colors.textMuted, marginTop: 3, lineHeight: 18 },
+  commentText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: 3,
+    lineHeight: 18,
+  },
 });

@@ -1,9 +1,15 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { useState } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors, radius, shadow, typography } from '../../theme/theme';
+import { colors, radius } from '../../theme/theme';
 import { CATEGORIES } from '../../data/mock';
 
 // Chaves enviadas ao backend para cada opção de ordenação exibida na tela.
@@ -38,10 +44,14 @@ export default function FiltersScreen({ navigation, route }) {
   const [selected, setSelected] = useState(initialFiltros.categorias ?? []);
   const [distance, setDistance] = useState(initialFiltros.raioKm ?? 5);
   const [minRating, setMinRating] = useState(initialFiltros.estrelasMin ?? 0);
-  const [sort, setSort] = useState(initialFiltros.ordenarPor ?? SORT_OPTIONS[0].value);
+  const [sort, setSort] = useState(
+    initialFiltros.ordenarPor ?? SORT_OPTIONS[0].value
+  );
 
   const toggleCategory = (id) => {
-    setSelected((prev) => (prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]));
+    setSelected((prev) =>
+      prev.includes(id) ? prev.filter((c) => c !== id) : [...prev, id]
+    );
   };
 
   const handleClear = () => {
@@ -89,7 +99,11 @@ export default function FiltersScreen({ navigation, route }) {
                 style={[styles.chip, active && styles.chipActive]}
                 onPress={() => toggleCategory(c.id)}
               >
-                <Text style={[styles.chipText, active && styles.chipTextActive]}>{c.label}</Text>
+                <Text
+                  style={[styles.chipText, active && styles.chipTextActive]}
+                >
+                  {c.label}
+                </Text>
               </TouchableOpacity>
             );
           })}
@@ -144,7 +158,11 @@ export default function FiltersScreen({ navigation, route }) {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.applyButton} onPress={handleApply} activeOpacity={0.85}>
+        <TouchableOpacity
+          style={styles.applyButton}
+          onPress={handleApply}
+          activeOpacity={0.85}
+        >
           <Text style={styles.applyButtonText}>Aplicar filtros</Text>
         </TouchableOpacity>
       </View>
@@ -167,8 +185,18 @@ const styles = StyleSheet.create({
   headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
   clearText: { color: colors.blue, fontWeight: '600', fontSize: 13 },
   body: { padding: 20 },
-  sectionTitle: { fontSize: 14, fontWeight: '700', color: colors.text, marginBottom: 12 },
-  chipsWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24 },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: colors.text,
+    marginBottom: 12,
+  },
+  chipsWrap: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 24,
+  },
   chip: {
     paddingHorizontal: 14,
     height: 36,
@@ -180,7 +208,11 @@ const styles = StyleSheet.create({
   chipActive: { backgroundColor: colors.blue },
   chipText: { fontSize: 13, fontWeight: '600', color: colors.blue },
   chipTextActive: { color: '#fff' },
-  rowBetween: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  rowBetween: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
   valueText: { fontSize: 13, fontWeight: '700', color: colors.blue },
   starsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   ouMaisText: { marginLeft: 8, fontSize: 12.5, color: colors.textMuted },
@@ -204,8 +236,19 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioActive: { borderColor: colors.blue },
-  radioDot: { width: 10, height: 10, borderRadius: 5, backgroundColor: colors.blue },
+  radioDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: colors.blue,
+  },
   footer: { padding: 20, borderTopWidth: 1, borderTopColor: colors.border },
-  applyButton: { backgroundColor: colors.blue, height: 50, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
+  applyButton: {
+    backgroundColor: colors.blue,
+    height: 50,
+    borderRadius: radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   applyButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
 });

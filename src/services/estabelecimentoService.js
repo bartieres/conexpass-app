@@ -26,3 +26,13 @@ export const updateSituacao = async (id) => {
   const response = await axiosPrivate.patch(`${BASE_URL}/situacao/${id}`);
   return response.data;
 };
+
+export const registrarInteresse = async (data) => {
+  const response = await axiosPrivate.post(BASE_URL, data);
+  return response.data;
+};
+
+export const reportarProblema = async (data) => {
+  const response = await axiosPrivate.post(BASE_URL, data);
+  return response.data;
+};

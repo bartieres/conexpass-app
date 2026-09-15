@@ -18,10 +18,7 @@ export const getProfile = async () => {
   return data;
 };
 
-// PUT /users/me { name, email, phone, birthDate } -> user atualizado
-// OBS: CPF normalmente não é editável depois do cadastro (regra comum),
-// por isso não é enviado aqui. Se seu backend permitir, é só incluir.
-export const  updateProfile = async ({ name, email, phone, birthDate }) => {
+export const updateProfile = async ({ name, email, phone, birthDate }) => {
   const { data } = await api.put(BASE_URL, {
     name: name.trim(),
     email: email.trim(),

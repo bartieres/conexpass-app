@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { getTotal, findAllByCondition } from '../../services/checkinService';
 import { dateTimeToDateMasked } from '../../utils/date';
 import CheckIns from './CheckIn';
@@ -96,7 +96,10 @@ export default function CheckInsScreen() {
         bonus: qtdBonus ?? 0,
       });
     } catch (err) {
-      setResumoError(err.friendlyMessage || 'Não foi possível carregar seu resumo de check-ins.');
+      setResumoError(
+        err.friendlyMessage ||
+          'Não foi possível carregar seu resumo de check-ins.'
+      );
     } finally {
       setLoadingResumo(false);
     }
@@ -114,7 +117,9 @@ export default function CheckInsScreen() {
     async ({ reset = true, isRefresh = false, periodoIdOverride } = {}) => {
       if (!reset && (loadingMore || !hasMore)) return;
 
-      const periodoAtual = PERIODOS.find((p) => p.id === (periodoIdOverride ?? periodoId)) ?? PERIODO_INICIAL;
+      const periodoAtual =
+        PERIODOS.find((p) => p.id === (periodoIdOverride ?? periodoId)) ??
+        PERIODO_INICIAL;
       const { dataInicio, dataFim } = calcularIntervalo(periodoAtual.dias);
       const pagina = reset ? 0 : paginaRef.current + 1;
 
@@ -149,7 +154,10 @@ export default function CheckInsScreen() {
         setHasMore(last === false);
         setHistorico((atual) => (reset ? formatted : [...atual, ...formatted]));
       } catch (err) {
-        setHistoricoError(err.friendlyMessage || 'Não foi possível carregar seu histórico de check-ins.');
+        setHistoricoError(
+          err.friendlyMessage ||
+            'Não foi possível carregar seu histórico de check-ins.'
+        );
       } finally {
         if (reset) {
           isRefresh ? setRefreshing(false) : setLoading(false);

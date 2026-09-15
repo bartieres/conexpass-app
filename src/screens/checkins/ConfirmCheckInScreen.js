@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { getTotal, solicitar } from '../../services/checkinService';
 import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import ConfirmCheckIn from './ConfirmCheckIn';
@@ -10,7 +10,7 @@ function definirTipoUtilizado(resumo) {
   if (!resumo) return null;
   if (resumo.disponiveis > 0) return { codigo: 'PLANO', nome: 'Plano' };
   if (resumo.avulso > 0) return { codigo: 'AVULSO', nome: 'Avulso' };
-  if (resumo.bonus > 0) return  { codigo: 'BONUS', nome: 'Bônus' };
+  if (resumo.bonus > 0) return { codigo: 'BONUS', nome: 'Bônus' };
   return null;
 }
 
@@ -34,7 +34,12 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
 
   // Localização atual — enviada junto na confirmação pra o backend validar
   // que o usuário está de fato próximo ao estabelecimento.
-  const { coords, loading: loadingLocation, permissionDenied, refetch: refetchLocation } = useCurrentLocation();
+  const {
+    coords,
+    loading: loadingLocation,
+    permissionDenied,
+    refetch: refetchLocation,
+  } = useCurrentLocation();
 
   const buscarResumo = useCallback(async () => {
     setLoadingResumo(true);
@@ -50,7 +55,10 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
         bonus: qtdBonus ?? 0,
       });
     } catch (err) {
-      setResumoError(err.friendlyMessage || 'Não foi possível carregar seus check-ins disponíveis.');
+      setResumoError(
+        err.friendlyMessage ||
+          'Não foi possível carregar seus check-ins disponíveis.'
+      );
     } finally {
       setLoadingResumo(false);
     }
@@ -70,12 +78,12 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
     try {
       var payload = {
         estabelecimento: {
-          id: estabelecimento.id
+          id: estabelecimento.id,
         },
         tipo: tipoUtilizado.codigo,
         latitude: coords.latitude,
         longitude: coords.longitude,
-      }
+      };
       const data = await solicitar(payload);
 
       navigation.replace('CheckInPending', {
@@ -83,7 +91,10 @@ export default function ConfirmCheckInScreen({ route, navigation }) {
         estabelecimento,
       });
     } catch (err) {
-      setConfirmError(err.friendlyMessage || 'Não foi possível solicitar seu check-in. Tente novamente.');
+      setConfirmError(
+        err.friendlyMessage ||
+          'Não foi possível solicitar seu check-in. Tente novamente.'
+      );
     } finally {
       setConfirming(false);
     }

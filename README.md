@@ -54,6 +54,7 @@ src/screens/SplashLoadingScreen.js -> tela exibida enquanto valida o token salvo
 ```
 
 **Fluxo:**
+
 1. Ao abrir o app, o `AuthContext` verifica se há um token salvo no
    `expo-secure-store`. Se houver, chama `GET /users/me` para validar; se o
    backend confirmar, o usuário entra direto (sem precisar logar de novo).
@@ -68,6 +69,7 @@ src/screens/SplashLoadingScreen.js -> tela exibida enquanto valida o token salvo
    automaticamente (interceptor em `services/api.js`).
 
 **Antes de rodar, ajuste `src/config/api.js`:**
+
 - Emulador Android → `http://10.0.2.2:8080/api`
 - Dispositivo físico (Expo Go) → IP da sua máquina na mesma Wi-Fi, ex:
   `http://192.168.0.15:8080/api`
@@ -76,20 +78,18 @@ src/screens/SplashLoadingScreen.js -> tela exibida enquanto valida o token salvo
 **Contrato REST assumido** (ajuste no backend Spring Boot se os campos forem
 diferentes):
 
-| Endpoint | Método | Body | Retorno |
-|---|---|---|---|
-| `/auth/login` | POST | `{ email\|cpf, password }` | `{ token, user }` |
-| `/auth/register` | POST | `{ name, email, cpf, password }` | `{ token, user }` |
-| `/auth/forgot-password` | POST | `{ email }` | `{ message }` |
-| `/users/me` | GET (Bearer token) | — | `user` |
+| Endpoint                | Método             | Body                             | Retorno           |
+| ----------------------- | ------------------ | -------------------------------- | ----------------- |
+| `/auth/login`           | POST               | `{ email\|cpf, password }`       | `{ token, user }` |
+| `/auth/register`        | POST               | `{ name, email, cpf, password }` | `{ token, user }` |
+| `/auth/forgot-password` | POST               | `{ email }`                      | `{ message }`     |
+| `/users/me`             | GET (Bearer token) | —                                | `user`            |
 
 As demais telas (Explorar, Histórico, Planos, Check-in) **continuam usando
 dados mock** (`src/data/mock.js`) — é o próximo passo natural: trocar cada
 mock pelas chamadas reais em `/gyms`, `/checkins`, `/plans`, etc., seguindo o
 mesmo padrão de `services/authService.js` (um arquivo de serviço por
 domínio, chamando a instância `api` já configurada com o token).
-
-
 
 - **Mapa**: a tela "Mapa" usa uma área estilizada com pins posicionados (sem
   dependência de `react-native-maps`/chave de API), para funcionar direto no

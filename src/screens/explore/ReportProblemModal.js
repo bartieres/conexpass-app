@@ -1,5 +1,13 @@
 import { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, TextInput, ActivityIndicator } from 'react-native';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  ActivityIndicator,
+} from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../../theme/theme';
 
@@ -8,16 +16,28 @@ import { colors, radius } from '../../theme/theme';
 const MOTIVOS = [
   { value: 'NAO_ACEITA_MAIS', label: 'Não aceita mais o ConexPass' },
   { value: 'TAXA_EXTRA', label: 'Me cobraram uma taxa extra' },
-  { value: 'INFO_INCORRETA', label: 'As informações no aplicativo estão incorretas' },
+  {
+    value: 'INFO_INCORRETA',
+    label: 'As informações no aplicativo estão incorretas',
+  },
   { value: 'OUTRO', label: 'Outro' },
 ];
 
-export default function ReportProblemModal({ visible, onClose, onSubmit, sending, error }) {
+export default function ReportProblemModal({
+  visible,
+  onClose,
+  onSubmit,
+  sending,
+  error,
+}) {
   const [motivoSelecionado, setMotivoSelecionado] = useState(null);
   const [descricao, setDescricao] = useState('');
 
   const mostrarCampoTexto = motivoSelecionado === 'OUTRO';
-  const podeEnviar = !!motivoSelecionado && (!mostrarCampoTexto || descricao.trim().length > 0) && !sending;
+  const podeEnviar =
+    !!motivoSelecionado &&
+    (!mostrarCampoTexto || descricao.trim().length > 0) &&
+    !sending;
 
   const handleClose = () => {
     setMotivoSelecionado(null);
@@ -26,7 +46,10 @@ export default function ReportProblemModal({ visible, onClose, onSubmit, sending
   };
 
   const handleEnviar = () => {
-    onSubmit({ motivo: motivoSelecionado, descricao: descricao.trim() || undefined });
+    onSubmit({
+      motivo: motivoSelecionado,
+      descricao: descricao.trim() || undefined,
+    });
   };
 
   return (
@@ -41,7 +64,9 @@ export default function ReportProblemModal({ visible, onClose, onSubmit, sending
 
         <View style={styles.body}>
           <Text style={styles.title}>Por favor, conte-nos o que aconteceu</Text>
-          <Text style={styles.subtitle}>Não compartilharemos essa informação com o estabelecimento.</Text>
+          <Text style={styles.subtitle}>
+            Não compartilharemos essa informação com o estabelecimento.
+          </Text>
 
           <View style={styles.optionsList}>
             {MOTIVOS.map((motivo) => {
@@ -53,7 +78,9 @@ export default function ReportProblemModal({ visible, onClose, onSubmit, sending
                   onPress={() => setMotivoSelecionado(motivo.value)}
                   activeOpacity={0.7}
                 >
-                  <View style={[styles.radio, selecionado && styles.radioActive]}>
+                  <View
+                    style={[styles.radio, selecionado && styles.radioActive]}
+                  >
                     {selecionado && <View style={styles.radioDot} />}
                   </View>
                   <Text style={styles.optionLabel}>{motivo.label}</Text>
@@ -85,11 +112,18 @@ export default function ReportProblemModal({ visible, onClose, onSubmit, sending
 
         <View style={styles.footer}>
           <TouchableOpacity
-            style={[styles.submitButton, !podeEnviar && styles.submitButtonDisabled]}
+            style={[
+              styles.submitButton,
+              !podeEnviar && styles.submitButtonDisabled,
+            ]}
             onPress={handleEnviar}
             disabled={!podeEnviar}
           >
-            {sending ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Enviar</Text>}
+            {sending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.submitButtonText}>Enviar</Text>
+            )}
           </TouchableOpacity>
         </View>
       </View>
@@ -120,8 +154,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: { flex: 1, paddingHorizontal: 24 },
-  title: { fontSize: 22, fontWeight: '800', color: colors.text, textAlign: 'center', lineHeight: 28 },
-  subtitle: { fontSize: 13.5, color: colors.textMuted, textAlign: 'center', marginTop: 14, marginBottom: 30, lineHeight: 19 },
+  title: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: colors.text,
+    textAlign: 'center',
+    lineHeight: 28,
+  },
+  subtitle: {
+    fontSize: 13.5,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 14,
+    marginBottom: 30,
+    lineHeight: 19,
+  },
   optionsList: { gap: 26 },
   optionRow: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   radio: {
@@ -134,7 +181,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   radioActive: { borderColor: colors.blue },
-  radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: colors.blue },
+  radioDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    backgroundColor: colors.blue,
+  },
   optionLabel: { fontSize: 16, color: colors.text, flex: 1 },
   textArea: {
     marginTop: 24,
@@ -155,7 +207,12 @@ const styles = StyleSheet.create({
     marginTop: 16,
   },
   errorText: { color: '#DC2626', fontSize: 12.5, flex: 1 },
-  footer: { padding: 20, paddingBottom: 30, borderTopWidth: 1, borderTopColor: colors.border },
+  footer: {
+    padding: 20,
+    paddingBottom: 30,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
   submitButton: {
     backgroundColor: colors.blue,
     height: 52,
