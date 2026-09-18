@@ -108,8 +108,8 @@ export default function ExploreScreen({ navigation, route }) {
             categoriasFiltradas && categoriasFiltradas.length > 0
               ? categoriasFiltradas
               : undefined,
-          estrelasMin: estrelas > 0 ? estrelas : undefined,
-          ordenarPor: ordenacao,
+          //estrelasMin: estrelas > 0 ? estrelas : undefined,
+          //ordenarPor: ordenacao,
         };
 
         const pages = {
@@ -127,13 +127,21 @@ export default function ExploreScreen({ navigation, route }) {
             name: e.razaoSocial,
             category: e.tipo.descricao,
             distance: formatarDistancia(e.distanciaMetros),
-            hours: horarioFuncionamento
-              ? horarioFuncionamento.aberto
-                ? `Aberto até as ${formatarHora(horarioFuncionamento.horarioFechamento)}`
-                : horarioFuncionamento.diaAbertura
-                  ? `Abre ${horarioFuncionamento.diaAbertura.descricao} às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
-                  : 'Fechado'
-              : null,
+            parceiro: e.parceiro,
+            hours:
+              e.parceiro !== false && horarioFuncionamento
+                ? horarioFuncionamento.aberto
+                  ? `Aberto até as ${formatarHora(
+                      horarioFuncionamento.horarioFechamento
+                    )}`
+                  : horarioFuncionamento.diaAbertura
+                    ? `Abre ${
+                        horarioFuncionamento.diaAbertura.descricao
+                      } às ${formatarHora(
+                        horarioFuncionamento.horarioAbertura
+                      )}`
+                    : 'Fechado'
+                : null,
             checkinHoje: e.checkinRealizadoHoje ?? false, // implementar flag que indica se fez checkin hoje
             //reviews: 120,
             image:

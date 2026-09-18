@@ -13,7 +13,7 @@ export const URL_UAT = {
 export const URL_LOCAL = {
   href: 'http://localhost:3010',
   hostname: 'localhost',
-  api: 'http://192.168.0.11:8082',
+  api: 'http://192.168.0.14:8082',
 };
 
 export const LOCATION = (() => {

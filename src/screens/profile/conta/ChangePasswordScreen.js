@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
-import { changePassword } from '../../../services/userService';
+import { changePassword } from '../../../services/usuarioService';
 
 const MIN_LENGTH = 8;
 

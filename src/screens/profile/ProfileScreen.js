@@ -11,6 +11,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
+import Constants from 'expo-constants';
+
+const appVersion = Constants.expoConfig?.version;
 
 // Seções do menu, agrupadas como uma tela de configurações. Cada item pode
 // navegar para uma tela (screen) ou disparar uma ação especial (action).
@@ -166,15 +169,15 @@ export default function ProfileScreen({ navigation }) {
             style={styles.section}
           >
             <Text style={styles.sectionTitle}>{section.title}</Text>
+
             <View style={styles.sectionCard}>
               {section.items.map((item, index) => {
                 const isLast = index === section.items.length - 1;
+
                 const handlePress = () => {
                   if (typeof item.action === 'function') {
                     item.action();
                   } else if (item.url) {
-                    // Abre no navegador do celular (Safari/Chrome), em vez
-                    // de navegar para uma tela dentro do app.
                     Linking.openURL(item.url).catch(() => {
                       Alert.alert(
                         'Não foi possível abrir o link',
@@ -206,6 +209,7 @@ export default function ProfileScreen({ navigation }) {
                           color={item.danger ? '#EF4444' : colors.blue}
                         />
                       </View>
+
                       <Text
                         style={[
                           styles.menuLabel,
@@ -215,6 +219,7 @@ export default function ProfileScreen({ navigation }) {
                         {item.label}
                       </Text>
                     </View>
+
                     {item.url ? (
                       <Ionicons
                         name="open-outline"
@@ -236,6 +241,11 @@ export default function ProfileScreen({ navigation }) {
             </View>
           </View>
         ))}
+
+        <View style={styles.appVersion}>
+          <Text style={styles.appName}>ConexPass</Text>
+          <Text style={styles.versionText}>Versão {appVersion}</Text>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -318,4 +328,22 @@ const styles = StyleSheet.create({
   menuIconWrapDanger: { backgroundColor: '#FEE2E2' },
   menuLabel: { fontSize: 14, color: colors.text, fontWeight: '500' },
   menuLabelDanger: { color: '#EF4444', fontWeight: '700' },
+  appVersion: {
+    alignItems: 'center',
+    marginTop: -4,
+    paddingTop: 4,
+    paddingBottom: 8,
+  },
+
+  appName: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.textMuted,
+  },
+
+  versionText: {
+    fontSize: 11,
+    color: colors.textLight,
+    marginTop: 2,
+  },
 });

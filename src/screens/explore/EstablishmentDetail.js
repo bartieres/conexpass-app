@@ -247,13 +247,20 @@ export default function EstablishmentDetail({
             </View>
           )}
 
-          {!loadingDetalhes && !detalhesError && !!gym.amenities?.length && (
+          {ehParceiro &&
+          !loadingDetalhes &&
+          !!gym.amenities?.length && (
             <View style={styles.amenitiesRow}>
               {gym.amenities.map((a) => (
                 <View key={a.label} style={styles.amenityItem}>
                   <View style={styles.amenityIconWrap}>
-                    <Ionicons name={a.icon} size={18} color={colors.blue} />
+                    <Ionicons
+                      name={a.icon}
+                      size={18}
+                      color={colors.blue}
+                    />
                   </View>
+
                   <Text style={styles.amenityLabel}>{a.label}</Text>
                 </View>
               ))}
@@ -303,7 +310,10 @@ export default function EstablishmentDetail({
           {!!gym.about && (
             <>
               <Text style={styles.sectionTitle}>Sobre</Text>
-              <Text style={styles.aboutText}>{gym.about}</Text>
+
+              <Text style={styles.aboutText}>
+                {gym.about}
+              </Text>
             </>
           )}
 
@@ -322,107 +332,159 @@ export default function EstablishmentDetail({
           )}
 
           {/* Horário de funcionamento (padrão semanal) */}
-          {!loadingDetalhes && !!gym.horarios?.length && (
-            <>
-              <Text style={styles.sectionTitle}>Horário de atendimento</Text>
-              <View style={styles.scheduleCard}>
-                {DIAS_SEMANA_ORDEM.map((dia, index) => {
-                  const horarioDoDia = gym.horarios.find(
-                    (h) => h.diaSemana.codigo === dia.codigo
-                  );
-                  return (
+          {!loadingDetalhes &&
+            !!gym.horarios?.length && (
+              <>
+                <Text style={styles.sectionTitle}>
+                  Horário de atendimento
+                </Text>
+
+                <View style={styles.scheduleCard}>
+                  {DIAS_SEMANA_ORDEM.map((dia, index) => {
+                    const horarioDoDia = gym.horarios.find(
+                      (h) => h.diaSemana.codigo === dia.codigo
+                    );
+
+                    return (
+                      <View
+                        key={dia.value}
+                        style={[
+                          styles.scheduleRow,
+                          index < DIAS_SEMANA_ORDEM.length - 1 &&
+                            styles.scheduleRowDivider,
+                        ]}
+                      >
+                        <Text style={styles.scheduleDay}>
+                          {dia.label}
+                        </Text>
+
+                        <Text
+                          style={[
+                            styles.scheduleHours,
+                            !horarioDoDia && styles.scheduleHoursClosed,
+                          ]}
+                        >
+                          {formatarPeriodos(horarioDoDia)}
+                        </Text>
+                      </View>
+                    );
+                  })}
+                </View>
+              </>
+            )}
+
+          {/* Horário de exceção (feriados, datas especiais) — separado do padrão semanal */}
+          {!loadingDetalhes &&
+            !!gym.horariosExcecao?.length && (
+              <>
+                <Text style={styles.sectionTitle}>
+                  Horários especiais
+                </Text>
+
+                <View style={styles.scheduleCard}>
+                  {gym.horariosExcecao.map((excecao, index) => (
                     <View
-                      key={dia.value}
+                      key={`${excecao.data}-${index}`}
                       style={[
-                        styles.scheduleRow,
-                        index < DIAS_SEMANA_ORDEM.length - 1 &&
+                        styles.exceptionRow,
+                        index < gym.horariosExcecao.length - 1 &&
                           styles.scheduleRowDivider,
                       ]}
                     >
-                      <Text style={styles.scheduleDay}>{dia.label}</Text>
-                      <Text
-                        style={[
-                          styles.scheduleHours,
-                          !horarioDoDia && styles.scheduleHoursClosed,
-                        ]}
-                      >
-                        {formatarPeriodos(horarioDoDia)}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
-            </>
-          )}
-
-          {/* Horário de exceção (feriados, datas especiais) — separado do padrão semanal */}
-          {!loadingDetalhes && !!gym.horariosExcecao?.length && (
-            <>
-              <Text style={styles.sectionTitle}>Horários especiais</Text>
-              <View style={styles.scheduleCard}>
-                {gym.horariosExcecao.map((excecao, index) => (
-                  <View
-                    key={`${excecao.data}-${index}`}
-                    style={[
-                      styles.exceptionRow,
-                      index < gym.horariosExcecao.length - 1 &&
-                        styles.scheduleRowDivider,
-                    ]}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.exceptionDate}>
-                        {formatarDataExcecao(excecao.data)}
-                      </Text>
-                      {!!excecao.descricao && (
-                        <Text style={styles.exceptionDescription}>
-                          {excecao.descricao}
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.exceptionDate}>
+                          {formatarDataExcecao(excecao.data)}
                         </Text>
-                      )}
+
+                        {!!excecao.descricao && (
+                          <Text style={styles.exceptionDescription}>
+                            {excecao.descricao}
+                          </Text>
+                        )}
+                      </View>
+
+                      <Text style={styles.scheduleHours}>
+                        {formatarPeriodos(excecao)}
+                      </Text>
                     </View>
-                    <Text
-                      style={[
-                        styles.scheduleHours,
-                        !formatarPeriodos(excecao) &&
-                          styles.scheduleHoursClosed,
-                      ]}
-                    >
-                      {formatarPeriodos(excecao)}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            </>
-          )}
+                  ))}
+                </View>
+              </>
+            )}
 
           {/* Interesse em treinar ali (só quando não é parceiro) */}
-          {/*{!ehParceiro && (
-            <TouchableOpacity
-              style={[styles.interestButton, gym.interesseRegistrado && styles.interestButtonDone]}
-              onPress={onRegistrarInteresse}
-              disabled={registrandoInteresse || gym.interesseRegistrado}
-            >
-              {registrandoInteresse ? (
-                <ActivityIndicator size="small" color={colors.blue} />
-              ) : (
-                <>
+          {!ehParceiro && (
+            <>
+              {!!gym.totalInteresses && (
+                <View style={styles.interestCountRow}>
                   <Ionicons
-                    name={gym.interesseRegistrado ? 'checkmark-circle' : 'heart-circle-outline'}
-                    size={18}
-                    color={gym.interesseRegistrado ? colors.success : colors.blue}
+                    name="people-outline"
+                    size={16}
+                    color={colors.textMuted}
                   />
-                  <Text style={[styles.interestButtonText, gym.interesseRegistrado && styles.interestButtonTextDone]}>
-                    {gym.interesseRegistrado ? 'Interesse registrado' : 'Tenho interesse em treinar aqui'}
+
+                  <Text style={styles.interestCountText}>
+                    {gym.totalInteresses === 1
+                      ? '1 pessoa tem interesse em treinar aqui'
+                      : `${gym.totalInteresses} pessoas têm interesse em treinar aqui`}
                   </Text>
-                </>
+                </View>
               )}
-            </TouchableOpacity>
-          )}*/}
+
+              <TouchableOpacity
+                style={[
+                  styles.interestButton,
+                  gym.usuarioPossuiInteresse && styles.interestButtonDone,
+                ]}
+                onPress={onRegistrarInteresse}
+                disabled={
+                  registrandoInteresse ||
+                  gym.usuarioPossuiInteresse
+                }
+              >
+                {registrandoInteresse ? (
+                  <ActivityIndicator
+                    size="small"
+                    color={colors.blue}
+                  />
+                ) : (
+                  <>
+                    <Ionicons
+                      name={
+                        gym.usuarioPossuiInteresse
+                          ? 'checkmark-circle'
+                          : 'heart-circle-outline'
+                      }
+                      size={18}
+                      color={
+                        gym.usuarioPossuiInteresse
+                          ? colors.success
+                          : colors.blue
+                      }
+                    />
+
+                    <Text
+                      style={[
+                        styles.interestButtonText,
+                        gym.usuarioPossuiInteresse &&
+                          styles.interestButtonTextDone,
+                      ]}
+                    >
+                      {gym.usuarioPossuiInteresse
+                        ? 'Interesse registrado'
+                        : 'Tenho interesse em treinar aqui'}
+                    </Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </>
+          )}
 
           {/* Reportar problema */}
-          {/*<TouchableOpacity style={styles.reportRow} onPress={onOpenReportModal}>
+          <TouchableOpacity style={styles.reportRow} onPress={onOpenReportModal}>
             <Ionicons name="flag-outline" size={16} color={colors.textMuted} />
             <Text style={styles.reportText}>Reportar um problema</Text>
-          </TouchableOpacity>*/}
+          </TouchableOpacity>
 
           {/* Comentários */}
           {/*<CommentsSection
@@ -687,4 +749,17 @@ const styles = StyleSheet.create({
   },
   checkinButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
   checkinButtonDisabled: { opacity: 0.5 },
+  interestCountRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 20,
+  },
+
+  interestCountText: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
 });

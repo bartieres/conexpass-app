@@ -6,6 +6,9 @@ const TOKEN_KEY = 'conexpass_token';
 
 export const api = axios.create({
   baseURL: `${constants.URL.LOCATION.api}/api`,
+  paramsSerializer: {
+    indexes: null,
+  },
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });

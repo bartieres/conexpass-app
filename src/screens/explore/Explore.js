@@ -46,10 +46,24 @@ function EstabelecimentoCard({ estabelecimento, onPress }) {
           )}
         </View>
         <Text style={styles.gymMeta}>
-          {estabelecimento.distance} • {estabelecimento.hours}
+          {estabelecimento.distance}
+          {estabelecimento.hours
+            ? ` • ${estabelecimento.hours}`
+            : ''}
         </Text>
+
         <View style={styles.ratingRow}>
-          <Text style={styles.ratingText}>{estabelecimento.category}</Text>
+          <Text style={styles.ratingText}>
+            {estabelecimento.category}
+          </Text>
+
+          {estabelecimento.parceiro === false && (
+            <View style={styles.notPartnerPill}>
+              <Text style={styles.notPartnerPillText}>
+                Não parceiro
+              </Text>
+            </View>
+          )}
         </View>
       </View>
       <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
@@ -616,4 +630,16 @@ const styles = StyleSheet.create({
     ...shadow,
   },
   mapCardImage: { width: 56, height: 56, borderRadius: radius.md },
+  notPartnerPill: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+  },
+
+  notPartnerPillText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#92400E',
+  },
 });
