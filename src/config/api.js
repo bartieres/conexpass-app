@@ -10,7 +10,10 @@ export const api = axios.create({
     indexes: null,
   },
   timeout: 15000,
-  headers: { 'Content-Type': 'application/json' },
+  headers: { 
+    'Content-Type': 'application/json',
+    'X-Client-Type': 'PORTAL'
+   },
 });
 
 // Anexa o token JWT em toda requisição autenticada

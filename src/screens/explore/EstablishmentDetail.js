@@ -102,22 +102,25 @@ export default function EstablishmentDetail({
 
   const fechado = gym.horarioFuncionamento?.aberto === false;
   const checkinHojeUtilizado = gym.checkinHojeAutorizado !== true;
+  const usuarioDentroLimiteDistancia = gym.usuarioDentroLimiteDistancia;
 
   const checkinDesabilitado =
     gym.parceiro === false ||
     gym.inclusoPlanoUsuario === false ||
     fechado ||
-    checkinHojeUtilizado;
+    checkinHojeUtilizado ||
+    usuarioDentroLimiteDistancia === false;
 
-  const textoBotao =
-    gym.parceiro === false
-      ? 'Estabelecimento não parceiro'
-      : gym.inclusoPlanoUsuario === false
-        ? 'Não incluso no seu plano'
-        : fechado
-          ? 'Fechado no momento'
-          : checkinHojeUtilizado
-            ? 'Check-in diário utilizado'
+  const textoBotao = gym.parceiro === false
+    ? 'Estabelecimento não parceiro' 
+    : gym.inclusoPlanoUsuario === false
+      ? 'Não incluso no seu plano'
+      : fechado
+        ? 'Fechado no momento'
+        : checkinHojeUtilizado
+          ? 'Check-in diário utilizado'
+          : usuarioDentroLimiteDistancia === false
+            ? 'Fora do limite permitido'
             : 'Fazer Check-in';
 
   return (

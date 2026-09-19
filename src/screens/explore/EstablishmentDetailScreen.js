@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { Ionicons } from '@expo/vector-icons';
 import {
   View,
   Text,
@@ -6,6 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
+import { useCurrentLocation } from '../../hooks/useCurrentLocation';
 import {
   findById,
   registrarInteresse,
@@ -105,7 +107,6 @@ function montarEstabelecimento(gymResumo, e) {
 
   return {
     ...gymResumo,
-
     id: e.id ?? gymResumo?.id,
 
     name:
@@ -174,6 +175,7 @@ function montarEstabelecimento(gymResumo, e) {
     horariosExcecao: e.horariosExcecao || [],
 
     usuarioPossuiInteresse: e.usuarioPossuiInteresse ?? false,
+    usuarioDentroLimiteDistancia: e.usuarioDentroLimiteDistancia ?? false,
     totalInteresses: e.totalInteresses ?? 0,
     inclusoPlanoUsuario:
       e.inclusoPlanoUsuario,
@@ -196,9 +198,8 @@ export default function EstablishmentDetailScreen({
       id: route.params?.id,
     };
 
-  // IMPORTANTE:
-  // começa null. O resumo da tela anterior NÃO é exibido
-  // como detalhe.
+  const { coords } = useCurrentLocation();
+
   const [estabelecimento, setEstabelecimento] =
     useState(null);
 
@@ -244,23 +245,17 @@ export default function EstablishmentDetailScreen({
     setLoadingDetalhes(true);
     setDetalhesError('');
 
-    // Evita manter dados antigos enquanto faz uma nova busca.
     setEstabelecimento(null);
 
     try {
-      const data = await findById(gymResumo.id);
+      const { latitude, longitude } = coords;
+      const data = await findById(gymResumo.id, latitude, longitude);
 
       const e = data?.response ?? data;
 
-      const estabelecimentoCompleto =
-        montarEstabelecimento(
-          gymResumo,
-          e
-        );
+      const estabelecimentoCompleto = montarEstabelecimento(gymResumo, e);
 
-      setEstabelecimento(
-        estabelecimentoCompleto
-      );
+      setEstabelecimento(estabelecimentoCompleto);
     } catch (err) {
       setDetalhesError(
         err.friendlyMessage ||

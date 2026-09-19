@@ -129,7 +129,7 @@ export default function ExploreScreen({ navigation, route }) {
             distance: formatarDistancia(e.distanciaMetros),
             parceiro: e.parceiro,
             hours:
-              e.parceiro !== false && horarioFuncionamento
+              horarioFuncionamento
                 ? horarioFuncionamento.aberto
                   ? `Aberto até as ${formatarHora(
                       horarioFuncionamento.horarioFechamento

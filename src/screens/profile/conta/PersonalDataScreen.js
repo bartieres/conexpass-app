@@ -13,9 +13,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
 import { colors, radius, shadow } from '../../../theme/theme';
 import { useAuth } from '../../../context/AuthContext';
-import { updateProfile } from '../../../services/usuarioService';
+import { findById, updateProfile } from '../../../services/usuarioService';
 import { findAll as findAllEstados } from '../../../services/estadoService';
 import { findAllByEstadoId } from '../../../services/cidadeService';
 
@@ -119,33 +120,42 @@ function SelectModal({ visible, title, options, onSelect, onClose, getLabel, get
   );
 }
 
-export default function PersonalDataScreen({ navigation }) {
-  // Dados do usuário autenticado vêm direto do AuthContext — sem novo fetch
-  // aqui, já que o login/carregamento inicial da sessão é quem popula isso.
-  const { user, updateUser } = useAuth();
+function valoresVaziosPadrao() {
+  return {
+    telefone: '',
+    cep: '',
+    logradouro: '',
+    numero: '',
+    complemento: '',
+    bairro: '',
+    estadoId: null,
+    cidadeId: null,
+  };
+}
 
-  // Campos editáveis
-  const [telefone, setTelefone] = useState(user?.telefone ? maskPhone(user.telefone) : '');
-  const [cep, setCep] = useState(user?.endereco?.cep ? maskCep(user.endereco.cep) : '');
-  const [logradouro, setLogradouro] = useState(user?.endereco?.logradouro || '');
-  const [numero, setNumero] = useState(user?.endereco?.numero || '');
-  const [complemento, setComplemento] = useState(user?.endereco?.complemento || '');
-  const [bairro, setBairro] = useState(user?.endereco?.bairro || '');
-  const [estadoSelecionado, setEstadoSelecionado] = useState(user?.endereco?.cidade?.estado || null);
-  const [cidadeSelecionada, setCidadeSelecionada] = useState(user?.endereco?.cidade || null);
+export default function PersonalDataScreen({ navigation }) {
+  const { updateUser } = useAuth();
+
+  // Perfil completo vindo do backend — inclui campos que o AuthContext não
+  // tem (ex: endereço). É a fonte de verdade dessa tela, não o AuthContext.
+  const [usuario, setUsuario] = useState(null);
+  const [loadingUsuario, setLoadingUsuario] = useState(true);
+  const [usuarioError, setUsuarioError] = useState('');
+
+  // Campos editáveis — começam vazios e são preenchidos assim que o GET
+  // do perfil completo responde (ver useEffect logo abaixo).
+  const [telefone, setTelefone] = useState('');
+  const [cep, setCep] = useState('');
+  const [logradouro, setLogradouro] = useState('');
+  const [numero, setNumero] = useState('');
+  const [complemento, setComplemento] = useState('');
+  const [bairro, setBairro] = useState('');
+  const [estadoSelecionado, setEstadoSelecionado] = useState(null);
+  const [cidadeSelecionada, setCidadeSelecionada] = useState(null);
 
   // Guarda o "estado inicial" do formulário pra comparar depois e decidir
   // se o botão Salvar deve ficar habilitado (só quando algo mudou de fato).
-  const valoresIniciaisRef = useRef({
-    telefone: user?.telefone ? maskPhone(user.telefone) : '',
-    cep: user?.endereco?.cep ? maskCep(user.endereco.cep) : '',
-    logradouro: user?.endereco?.logradouro || '',
-    numero: user?.endereco?.numero || '',
-    complemento: user?.endereco?.complemento || '',
-    bairro: user?.endereco?.bairro || '',
-    estadoId: user?.endereco?.cidade?.estado?.id ?? null,
-    cidadeId: user?.endereco?.cidade?.id ?? null,
-  });
+  const valoresIniciaisRef = useRef(valoresVaziosPadrao());
 
   const [estados, setEstados] = useState([]);
   const [cidades, setCidades] = useState([]);
@@ -157,6 +167,55 @@ export default function PersonalDataScreen({ navigation }) {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const buscarPerfil = useCallback(async () => {
+    setLoadingUsuario(true);
+    setUsuarioError('');
+    try {
+      const data = await findById();
+      setUsuario(data.response ?? data);
+    } catch (err) {
+      setUsuarioError(err.friendlyMessage || 'Não foi possível carregar seus dados.');
+    } finally {
+      setLoadingUsuario(false);
+    }
+  }, []);
+
+  // useFocusEffect (em vez de useEffect simples) refaz a busca toda vez que
+  // a tela ganha foco — não só na primeira vez que é montada.
+  useFocusEffect(
+    useCallback(() => {
+      buscarPerfil();
+    }, [buscarPerfil])
+  );
+
+  // Assim que o perfil completo chega do backend, preenche os campos do
+  // formulário e define o "ponto de partida" pra comparação de mudanças.
+  useEffect(() => {
+    if (!usuario) return;
+
+    const valoresIniciais = {
+      telefone: usuario.telefone ? maskPhone(usuario.telefone) : '',
+      cep: usuario.endereco?.cep ? maskCep(usuario.endereco.cep) : '',
+      logradouro: usuario.endereco?.logradouro || '',
+      numero: usuario.endereco?.numero || '',
+      complemento: usuario.endereco?.complemento || '',
+      bairro: usuario.endereco?.bairro || '',
+      estadoId: usuario.endereco?.cidade?.estado?.id ?? null,
+      cidadeId: usuario.endereco?.cidade?.id ?? null,
+    };
+
+    setTelefone(valoresIniciais.telefone);
+    setCep(valoresIniciais.cep);
+    setLogradouro(valoresIniciais.logradouro);
+    setNumero(valoresIniciais.numero);
+    setComplemento(valoresIniciais.complemento);
+    setBairro(valoresIniciais.bairro);
+    setEstadoSelecionado(usuario.endereco?.cidade?.estado || null);
+    setCidadeSelecionada(usuario.endereco?.cidade || null);
+
+    valoresIniciaisRef.current = valoresIniciais;
+  }, [usuario]);
 
   // Busca a lista de estados — mesma chamada usada no cadastro de
   // estabelecimento do painel web.
@@ -176,7 +235,9 @@ export default function PersonalDataScreen({ navigation }) {
   }, []);
 
   // Toda vez que o estado selecionado muda, busca as cidades daquele estado
-  // — mesma lógica em cascata do formulário web (estado -> cidade).
+  // — mesma lógica em cascata do formulário web (estado -> cidade). Isso
+  // roda tanto quando o usuário troca manualmente quanto quando o estado
+  // vem pré-selecionado do perfil carregado.
   useEffect(() => {
     if (!estadoSelecionado?.id) {
       setCidades([]);
@@ -243,15 +304,16 @@ export default function PersonalDataScreen({ navigation }) {
       };
 
       const updated = await updateProfile(payload);
+      const usuarioAtualizado = updated?.response ?? updated;
 
-      // Mantém o AuthContext em dia sem precisar recarregar o usuário
-      // inteiro do backend.
+      // Atualiza o objeto completo local (fonte de verdade dessa tela)...
+      setUsuario((atual) => ({ ...atual, ...usuarioAtualizado, ...payload, endereco: { ...payload.endereco, cidade: cidadeSelecionada } }));
+
+      // ...e também o AuthContext, já que outras telas do app dependem dele
+      // (ex: exibir telefone em algum resumo) sem precisar de um novo GET.
       updateUser?.({
-        telefone: updated?.telefone ?? telefone,
-        endereco: updated?.endereco ?? {
-          ...payload.endereco,
-          cidade: cidadeSelecionada,
-        },
+        telefone: usuarioAtualizado?.telefone ?? telefone,
+        endereco: usuarioAtualizado?.endereco ?? { ...payload.endereco, cidade: cidadeSelecionada },
       });
 
       // O que acabou de ser salvo vira o novo "ponto de partida" — assim o
@@ -275,10 +337,22 @@ export default function PersonalDataScreen({ navigation }) {
     }
   };
 
-  if (!user) {
+  if (loadingUsuario && !usuario) {
     return (
       <SafeAreaView style={[styles.safe, styles.centerAll]}>
         <ActivityIndicator size="small" color={colors.blue} />
+      </SafeAreaView>
+    );
+  }
+
+  if (!loadingUsuario && !!usuarioError && !usuario) {
+    return (
+      <SafeAreaView style={[styles.safe, styles.centerAll]}>
+        <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
+        <Text style={[styles.stateText, { marginTop: 10 }]}>{usuarioError}</Text>
+        <TouchableOpacity style={styles.stateButton} onPress={buscarPerfil}>
+          <Text style={styles.stateButtonText}>Tentar novamente</Text>
+        </TouchableOpacity>
       </SafeAreaView>
     );
   }
@@ -297,10 +371,10 @@ export default function PersonalDataScreen({ navigation }) {
 
       <ScrollView contentContainerStyle={styles.body} keyboardShouldPersistTaps="handled">
         <Text style={styles.sectionTitle}>Dados pessoais</Text>
-        <ReadOnlyField icon="person-outline" label="Nome completo" value={user.nome} />
-        <ReadOnlyField icon="mail-outline" label="E-mail" value={user.email} />
-        <ReadOnlyField icon="card-outline" label="CPF" value={user.documento} />
-        <ReadOnlyField icon="body-outline" label="Sexo" value={formatSexo(user.sexo)} />
+        <ReadOnlyField icon="person-outline" label="Nome completo" value={usuario.nome} />
+        <ReadOnlyField icon="mail-outline" label="E-mail" value={usuario.email} />
+        <ReadOnlyField icon="card-outline" label="CPF" value={usuario.documento} />
+        <ReadOnlyField icon="body-outline" label="Sexo" value={formatSexo(usuario.sexo)} />
 
         <Text style={[styles.sectionTitle, { marginTop: 8 }]}>Contato</Text>
         <View style={styles.inputGroup}>
@@ -455,7 +529,7 @@ export default function PersonalDataScreen({ navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  centerAll: { alignItems: 'center', justifyContent: 'center' },
+  centerAll: { alignItems: 'center', justifyContent: 'center', paddingHorizontal: 30, gap: 4 },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -506,6 +580,16 @@ const styles = StyleSheet.create({
 
   selectText: { flex: 1, fontSize: 14, color: colors.text, marginRight: 6 },
   selectPlaceholder: { color: colors.textLight },
+
+  stateText: { fontSize: 13, color: colors.textMuted, textAlign: 'center', lineHeight: 18 },
+  stateButton: {
+    backgroundColor: colors.blue,
+    paddingHorizontal: 18,
+    paddingVertical: 10,
+    borderRadius: radius.md,
+    marginTop: 10,
+  },
+  stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
 
   errorBox: {
     flexDirection: 'row',

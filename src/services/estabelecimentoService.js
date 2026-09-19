@@ -12,8 +12,8 @@ export const findAllByCondition = async (params) => {
   return response.data;
 };
 
-export const findById = async (id) => {
-  const response = await axiosPrivate.get(`${BASE_URL}/explorar/${id}`);
+export const findById = async (id, latitude, longitude) => {
+  const response = await axiosPrivate.get(`${BASE_URL}/explorar/${id}?latitude=${latitude}&longitude=${longitude}`);
   return response.data;
 };
 
