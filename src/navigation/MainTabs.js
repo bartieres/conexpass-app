@@ -13,6 +13,7 @@ import CheckInPendingScreen from '../screens/checkins/CheckInPendingScreen';
 
 import PlanScreen from '../screens/plan/PlanScreen';
 import ChangePlanScreen from '../screens/plan/ChangePlanScreen';
+import ReviewPlanScreen from '../screens/plan/ReviewPlanScreen';
 import PaymentDetailScreen from '../screens/plan/PaymentDetailScreen';
 import PaymentScreen from '../screens/plan/PaymentScreen';
 
@@ -75,10 +76,10 @@ function PlanStack() {
     <PlanStackNav.Navigator screenOptions={{ headerShown: false }}>
       <PlanStackNav.Screen name="PlanMain" component={PlanScreen} />
       <PlanStackNav.Screen name="ChangePlan" component={ChangePlanScreen} />
-      <PlanStackNav.Screen
-        name="PaymentDetail"
-        component={PaymentDetailScreen}
-      />
+      <PlanStackNav.Screen name="ReviewPlan" component={ReviewPlanScreen} />
+      <PlanStackNav.Screen name="PaymentDetail" component={PaymentDetailScreen} />
+      <PlanStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
+      <PlanStackNav.Screen name="RegisterCard" component={RegisterCardScreen} />
     </PlanStackNav.Navigator>
   );
 }
@@ -88,30 +89,15 @@ function ProfileStack() {
     <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
       <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
       <ProfileStackNav.Screen name="Plan" component={PlanStack} />
-      <ProfileStackNav.Screen
-        name="PersonalData"
-        component={PersonalDataScreen}
-      />
+      <ProfileStackNav.Screen name="PersonalData" component={PersonalDataScreen} />
       <ProfileStackNav.Screen name="Security" component={SecurityScreen} />
-      <ProfileStackNav.Screen
-        name="ChangePassword"
-        component={ChangePasswordScreen}
-      />
-      <ProfileStackNav.Screen
-        name="Notification"
-        component={NotificationScreen}
-      />
+      <ProfileStackNav.Screen name="ChangePassword" component={ChangePasswordScreen} />
+      <ProfileStackNav.Screen name="Notification" component={NotificationScreen} />
       <ProfileStackNav.Screen name="Location" component={LocationScreen} />
       <ProfileStackNav.Screen name="Help" component={HelpScreen} />
       <ProfileStackNav.Screen name="Contact" component={ContactScreen} />
-      <ProfileStackNav.Screen
-        name="PaymentMethod"
-        component={PaymentMethodScreen}
-      />
-      <ProfileStackNav.Screen
-        name="RegisterCard"
-        component={RegisterCardScreen}
-      />
+      <ProfileStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
+      <ProfileStackNav.Screen name="RegisterCard" component={RegisterCardScreen} />
       <ProfileStackNav.Screen name="Payment" component={PaymentScreen} />
     </ProfileStackNav.Navigator>
   );

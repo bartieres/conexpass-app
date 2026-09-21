@@ -7,6 +7,7 @@ import {
   ScrollView,
   ActivityIndicator,
   Linking,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, typography } from '../../theme/theme';
@@ -100,6 +101,30 @@ export default function EstablishmentDetail({
     Linking.openURL(comProtocolo).catch(() => {});
   };
 
+  const abrirNoMaps = () => {
+    // Prioriza coordenadas (mais preciso), cai pro endereço em texto se não tiver.
+    // TODO: confirmar se o backend manda latitude/longitude no gym — chutei
+    // gym.latitude / gym.longitude, ajusta se o campo real tiver outro nome
+    // (ex: gym.endereco?.latitude).
+    const temCoordenadas = gym.latitude != null && gym.longitude != null;
+    const query = temCoordenadas
+      ? `${gym.latitude},${gym.longitude}`
+      : encodeURIComponent(`${gym.name} ${gym.address || ''}`.trim());
+
+    const urlNativa = Platform.select({
+      ios: `maps:0,0?q=${query}`,
+      android: `geo:0,0?q=${query}`,
+    });
+
+    const urlWeb = `https://www.google.com/maps/search/?api=1&query=${query}`;
+
+    Linking.openURL(urlNativa).catch(() => {
+      // App de mapas nativo não abriu (raro, mas pode acontecer) — cai pro
+      // navegador, que sempre funciona.
+      Linking.openURL(urlWeb).catch(() => {});
+    });
+  };
+
   const fechado = gym.horarioFuncionamento?.aberto === false;
   const checkinHojeUtilizado = gym.checkinHojeAutorizado !== true;
   const usuarioDentroLimiteDistancia = gym.usuarioDentroLimiteDistancia;
@@ -120,7 +145,7 @@ export default function EstablishmentDetail({
         : checkinHojeUtilizado
           ? 'Check-in diário utilizado'
           : usuarioDentroLimiteDistancia === false
-            ? 'Fora do limite permitido'
+            ? 'Aproxime-se para fazer check-in'
             : 'Fazer Check-in';
 
   return (
@@ -250,26 +275,6 @@ export default function EstablishmentDetail({
             </View>
           )}
 
-          {ehParceiro &&
-          !loadingDetalhes &&
-          !!gym.amenities?.length && (
-            <View style={styles.amenitiesRow}>
-              {gym.amenities.map((a) => (
-                <View key={a.label} style={styles.amenityItem}>
-                  <View style={styles.amenityIconWrap}>
-                    <Ionicons
-                      name={a.icon}
-                      size={18}
-                      color={colors.blue}
-                    />
-                  </View>
-
-                  <Text style={styles.amenityLabel}>{a.label}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
           {/* Site e Instagram */}
           {!loadingDetalhes && (!!gym.website || !!gym.instagram) && (
             <View style={styles.linksRow}>
@@ -323,15 +328,31 @@ export default function EstablishmentDetail({
           {!!gym.address && (
             <>
               <Text style={styles.sectionTitle}>Endereço</Text>
-              <View style={styles.addressRow}>
+              <TouchableOpacity style={styles.addressRow} onPress={abrirNoMaps} activeOpacity={0.7}>
                 <Text style={styles.addressText}>{gym.address}</Text>
-                <Ionicons
-                  name="navigate-circle-outline"
-                  size={22}
-                  color={colors.blue}
-                />
-              </View>
+                <Ionicons name="navigate-circle-outline" size={22} color={colors.blue} />
+              </TouchableOpacity>
             </>
+          )}
+
+          {ehParceiro &&
+          !loadingDetalhes &&
+          !!gym.amenities?.length && (
+            <View style={styles.amenitiesRow}>
+              {gym.amenities.map((a) => (
+                <View key={a.label} style={styles.amenityItem}>
+                  <View style={styles.amenityIconWrap}>
+                    <Ionicons
+                      name={a.icon}
+                      size={18}
+                      color={colors.blue}
+                    />
+                  </View>
+
+                  <Text style={styles.amenityLabel}>{a.label}</Text>
+                </View>
+              ))}
+            </View>
           )}
 
           {/* Horário de funcionamento (padrão semanal) */}
@@ -628,14 +649,22 @@ const styles = StyleSheet.create({
 
   amenitiesRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',           // <- permite quebrar linha
     marginTop: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
     borderColor: colors.border,
+    // "justifyContent: 'space-between'" saiu daqui — com wrap ele deixa
+    // buracos estranhos na última linha quando ela não fecha o total de
+    // colunas (ex: 5 itens = última linha só com 1, esticado igual às de 4)
   },
-  amenityItem: { alignItems: 'center', gap: 6, flex: 1 },
+  amenityItem: {
+    alignItems: 'center',
+    gap: 6,
+    width: '25%',                // <- 4 colunas por linha, em vez de flex:1
+    marginBottom: 16,            // <- respiro entre as linhas quando quebra
+  },
   amenityIconWrap: {
     width: 38,
     height: 38,

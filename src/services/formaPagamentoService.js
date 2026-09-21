@@ -7,8 +7,13 @@ const BASE_URL = '/payment-methods';
   return response.data;
 };*/
 
-export const getFormaPagamento = async () => {
+export const findAllByUsuario = async () => {
   const response = await axiosPrivate.get(BASE_URL);
+  return response.data;
+};
+
+export const findCreditCardPrincipalByUsuario = async () => {
+  const response = await axiosPrivate.get(`${BASE_URL}/credit-card`);
   return response.data;
 };
 

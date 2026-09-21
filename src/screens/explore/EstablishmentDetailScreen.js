@@ -109,17 +109,10 @@ function montarEstabelecimento(gymResumo, e) {
     ...gymResumo,
     id: e.id ?? gymResumo?.id,
 
-    name:
-      e.nomeFantasia ||
-      e.razaoSocial ||
-      gymResumo?.name,
-
+    name: e.nomeFantasia || e.razaoSocial || gymResumo?.name,
     category: e.tipo?.descricao,
-
     about: e.descricao,
-
     address: formatarEndereco(e.endereco),
-
     amenities: (e.comodidades || [])
       .map((item) => {
         const codigo =
@@ -198,7 +191,7 @@ export default function EstablishmentDetailScreen({
       id: route.params?.id,
     };
 
-  const { coords } = useCurrentLocation();
+  const { coords, loading: loadingLocation, permissionDenied, refetch: refetchLocation } = useCurrentLocation();
 
   const [estabelecimento, setEstabelecimento] =
     useState(null);
@@ -242,9 +235,10 @@ export default function EstablishmentDetailScreen({
       return;
     }
 
+    if (!coords) return;
+
     setLoadingDetalhes(true);
     setDetalhesError('');
-
     setEstabelecimento(null);
 
     try {
@@ -264,7 +258,13 @@ export default function EstablishmentDetailScreen({
     } finally {
       setLoadingDetalhes(false);
     }
-  }, [gymResumo]);
+  }, [gymResumo, coords]);
+
+  useEffect(() => {
+    if (!coords) return;
+    buscarDetalhes();
+    buscarComentarios();
+  }, [coords, buscarDetalhes, buscarComentarios]);
 
   const buscarComentarios = useCallback(async () => {
     if (!gymResumo?.id) return;
@@ -433,7 +433,25 @@ export default function EstablishmentDetailScreen({
    * O gymResumo recebido da tela anterior não é exibido.
    */
 
-  if (loadingDetalhes) {
+  if (permissionDenied) {
+    return (
+      <View style={styles.errorContainer}>
+        <Ionicons name="location-outline" size={42} color="#DC2626" />
+        <Text style={styles.errorTitle}>Precisamos da sua localização</Text>
+        <Text style={styles.errorMessage}>
+          Para mostrar os detalhes desse estabelecimento, permita o acesso à localização.
+        </Text>
+        <TouchableOpacity style={styles.retryButton} onPress={refetchLocation} activeOpacity={0.85}>
+          <Text style={styles.retryButtonText}>Permitir localização</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <Text style={styles.backButtonText}>Voltar</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (loadingDetalhes || loadingLocation) {
     return (
       <View style={styles.loadingContainer}>
         <ActivityIndicator

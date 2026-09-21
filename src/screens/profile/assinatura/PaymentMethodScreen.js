@@ -15,7 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 
 import { colors, radius, shadow } from '../../../theme/theme';
 import {
-  getFormaPagamento,
+  findAllByUsuario,
   updatePrincipal,
   deleteFormaPagamento,
 } from '../../../services/formaPagamentoService';
@@ -36,7 +36,7 @@ export default function PaymentMethodScreen({ navigation }) {
     setError('');
 
     try {
-      const data = await getFormaPagamento();
+      const data = await findAllByUsuario();
 
       const { response } = data;
 
