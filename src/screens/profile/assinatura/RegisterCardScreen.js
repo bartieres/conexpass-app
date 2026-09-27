@@ -185,51 +185,16 @@ export default function RegisterCardScreen({ navigation }) {
 
     try {
       const numeroCartao = numero.replace(/\D/g, '');
-
-      /*
-       * IMPORTANTE:
-       *
-       * Este é o ponto onde deverá entrar a tokenização
-       * do gateway escolhido.
-       *
-       * O fluxo de produção deve ser:
-       *
-       * 1. App coleta número, validade e CVV.
-       * 2. App envia os dados diretamente para o gateway
-       *    através do mecanismo de tokenização disponibilizado.
-       * 3. Gateway retorna um token/card_id.
-       * 4. App envia somente o token para o seu backend.
-       *
-       * O backend NÃO deve receber:
-       *
-       * - número completo do cartão
-       * - CVV
-       *
-       * Exemplo futuro:
-       *
-       * const token = await tokenizarCartao({
-       *   number: numeroCartao,
-       *   holder_name: nome.trim().toUpperCase(),
-       *   expiration_date: validade,
-       *   cvv,
-       * });
-       *
-       * await save({
-       *   tipo: 'CREDIT_CARD',
-       *   token: token.id,
-       * });
-       *
-       * Por enquanto o save abaixo mantém a integração atual
-       * para você conseguir testar o fluxo do MVP.
-       */
+      const [validadeMes, validadeAno] = validade.split('/');
 
       const payload = {
         tipo: 'CREDIT_CARD',
         cartao: {
           bandeira: bandeira,
-          ultimosDigitos: numeroCartao,
+          numero: numeroCartao,
           titularCartao: nome.trim().toUpperCase(),
-          validade,
+          validadeMes,
+          validadeAno,
           cvv,
         },
       };
