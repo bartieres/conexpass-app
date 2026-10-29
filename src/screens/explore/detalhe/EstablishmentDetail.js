@@ -10,8 +10,8 @@ import {
   Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, typography } from '../../theme/theme';
-import ReportProblemModal from './ReportProblemModal';
+import { colors, radius, typography } from '../../../theme/theme';
+import ReportProblemModal from '../ReportProblemModal';
 //import CommentsSection from './CommentsSection';
 
 // Ordem de exibição do horário semanal — códigos batem com o cadastro no
@@ -25,6 +25,14 @@ const DIAS_SEMANA_ORDEM = [
   { value: '6', label: 'Sexta-feira', codigo: 'SEXTA_FEIRA' },
   { value: '7', label: 'Sábado', codigo: 'SABADO' },
 ];
+
+// Tipo de plano/oferta -> badge exibido no card (cor e texto). Ajusta os
+// códigos conforme o enum real do backend (chutei RECORRENTE/PACOTE/AVULSO).
+const TIPO_OFERTA_META = {
+  RECORRENTE: { label: 'Recorrente', color: colors.blue, bg: '#DBEAFE' },
+  PACOTE: { label: 'Pacote', color: '#7C3AED', bg: '#EDE9FE' },
+  AVULSO: { label: 'Avulso', color: colors.success, bg: colors.successLight },
+};
 
 function formatarHora(hora) {
   if (!hora) return '';
@@ -53,6 +61,14 @@ function formatarDataExcecao(dataISO) {
   return `${dia}/${mes}/${ano}`;
 }
 
+function formatarValor(valor) {
+  if (valor == null) return '';
+  return valor.toLocaleString('pt-BR', {
+    style: 'currency',
+    currency: 'BRL',
+  });
+}
+
 /*const handleShare = async (gym) => {
   const link = `conexpass://estabelecimento/${gym.id}`;
   try {
@@ -63,6 +79,275 @@ function formatarDataExcecao(dataISO) {
     console.warn('Erro ao compartilhar:', err);
   }
 };*/
+
+const TABS = [
+  { key: 'sobre', label: 'Sobre' },
+  { key: 'planos', label: 'Planos e ofertas' },
+  { key: 'horarios', label: 'Horários' },
+];
+
+function TabBar({ activeTab, onChangeTab }) {
+  return (
+    <View style={styles.tabBar}>
+      {TABS.map((tab) => {
+        const ativa = tab.key === activeTab;
+        return (
+          <TouchableOpacity
+            key={tab.key}
+            style={styles.tabItem}
+            onPress={() => onChangeTab(tab.key)}
+            activeOpacity={0.7}
+          >
+            <Text style={[styles.tabLabel, ativa && styles.tabLabelActive]}>
+              {tab.label}
+            </Text>
+            {ativa && <View style={styles.tabIndicator} />}
+          </TouchableOpacity>
+        );
+      })}
+    </View>
+  );
+}
+
+function SobreTab({ gym, loadingDetalhes, abrirNoMaps, ehParceiro }) {
+  return (
+    <>
+      {!!gym.about && (
+        <>
+          <Text style={styles.sectionTitle}>Sobre</Text>
+          <Text style={styles.aboutText}>{gym.about}</Text>
+        </>
+      )}
+
+      {!!gym.address && (
+        <>
+          <Text style={styles.sectionTitle}>Endereço</Text>
+          <TouchableOpacity
+            style={styles.addressRow}
+            onPress={abrirNoMaps}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.addressText}>{gym.address}</Text>
+            <Ionicons
+              name="navigate-circle-outline"
+              size={22}
+              color={colors.blue}
+            />
+          </TouchableOpacity>
+        </>
+      )}
+
+      {ehParceiro && !loadingDetalhes && !!gym.amenities?.length && (
+        <>
+          <Text style={styles.sectionTitle}>Comodidades</Text>
+          <View style={styles.amenitiesRow}>
+            {gym.amenities.map((a) => (
+              <View key={a.label} style={styles.amenityItem}>
+                <View style={styles.amenityIconWrap}>
+                  <Ionicons name={a.icon} size={18} color={colors.blue} />
+                </View>
+                <Text style={styles.amenityLabel}>{a.label}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+    </>
+  );
+}
+
+function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSelecionarOferta }) {
+  if (loadingPlanos) {
+    return (
+      <View style={styles.tabLoadingBox}>
+        <ActivityIndicator size="small" color={colors.blue} />
+        <Text style={styles.tabLoadingText}>Carregando planos e ofertas...</Text>
+      </View>
+    );
+  }
+
+  if (planosError) {
+    return (
+      <View style={styles.errorBox}>
+        <Ionicons name="alert-circle-outline" size={16} color="#DC2626" />
+        <Text style={styles.errorText}>{planosError}</Text>
+        <TouchableOpacity onPress={onRetryPlanos}>
+          <Text style={styles.retryText}>Tentar novamente</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!planos?.length) {
+    return (
+      <View style={styles.tabEmptyBox}>
+        <Ionicons name="pricetags-outline" size={28} color={colors.textLight} />
+        <Text style={styles.tabEmptyText}>
+          Nenhum plano ou oferta cadastrado por este estabelecimento ainda.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      <Text style={styles.sectionTitle}>Planos e ofertas</Text>
+      <Text style={styles.sectionSubtitle}>
+        Escolha a opção ideal para treinar nesta academia.
+      </Text>
+
+      {planos.map((oferta) => {
+        const meta = TIPO_OFERTA_META[oferta.tipo.codigo] || {
+          label: oferta.tipo.codigo,
+          color: colors.textMuted,
+          bg: colors.chipBg,
+        };
+
+        return (
+          <TouchableOpacity
+            key={oferta.id}
+            style={styles.ofertaCard}
+            activeOpacity={0.7}
+            onPress={() => onSelecionarOferta?.(oferta)}
+          >
+            <View style={styles.ofertaTopRow}>
+              <Text style={styles.ofertaNome} numberOfLines={1}>
+                {oferta.nome}
+              </Text>
+              <View style={[styles.ofertaBadge, { backgroundColor: meta.bg }]}>
+                <Text style={[styles.ofertaBadgeText, { color: meta.color }]}>
+                  {meta.label}
+                </Text>
+              </View>
+            </View>
+
+            {!!oferta.descricao && (
+              <Text style={styles.ofertaDescricao} numberOfLines={2}>
+                {oferta.descricao}
+              </Text>
+            )}
+
+            <View style={styles.ofertaBottomRow}>
+              <View style={styles.ofertaPrecoRow}>
+                <Text style={styles.ofertaPreco}>
+                  {formatarValor(oferta.valor)}
+                </Text>
+                {!!oferta.periodicidade && (
+                  <Text style={styles.ofertaPeriodicidade}>
+                    /{oferta.periodicidade}
+                  </Text>
+                )}
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={colors.textLight}
+              />
+            </View>
+          </TouchableOpacity>
+        );
+      })}
+
+      <View style={styles.ofertaInfoBox}>
+        <Ionicons
+          name="information-circle-outline"
+          size={16}
+          color={colors.textMuted}
+        />
+        <Text style={styles.ofertaInfoText}>
+          Os planos e ofertas são disponibilizados diretamente por este
+          estabelecimento.
+        </Text>
+      </View>
+    </>
+  );
+}
+
+function HorariosTab({ gym }) {
+  const temHorarios = !!gym.horarios?.length;
+  const temExcecoes = !!gym.horariosExcecao?.length;
+
+  if (!temHorarios && !temExcecoes) {
+    return (
+      <View style={styles.tabEmptyBox}>
+        <Ionicons name="time-outline" size={28} color={colors.textLight} />
+        <Text style={styles.tabEmptyText}>
+          Horários de funcionamento não informados.
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <>
+      {temHorarios && (
+        <>
+          <Text style={styles.sectionTitle}>Horário de atendimento</Text>
+          <View style={styles.scheduleCard}>
+            {DIAS_SEMANA_ORDEM.map((dia, index) => {
+              const horarioDoDia = gym.horarios.find(
+                (h) => h.diaSemana.codigo === dia.codigo
+              );
+
+              return (
+                <View
+                  key={dia.value}
+                  style={[
+                    styles.scheduleRow,
+                    index < DIAS_SEMANA_ORDEM.length - 1 &&
+                      styles.scheduleRowDivider,
+                  ]}
+                >
+                  <Text style={styles.scheduleDay}>{dia.label}</Text>
+                  <Text
+                    style={[
+                      styles.scheduleHours,
+                      !horarioDoDia && styles.scheduleHoursClosed,
+                    ]}
+                  >
+                    {formatarPeriodos(horarioDoDia)}
+                  </Text>
+                </View>
+              );
+            })}
+          </View>
+        </>
+      )}
+
+      {temExcecoes && (
+        <>
+          <Text style={styles.sectionTitle}>Horários especiais</Text>
+          <View style={styles.scheduleCard}>
+            {gym.horariosExcecao.map((excecao, index) => (
+              <View
+                key={`${excecao.data}-${index}`}
+                style={[
+                  styles.exceptionRow,
+                  index < gym.horariosExcecao.length - 1 &&
+                    styles.scheduleRowDivider,
+                ]}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.exceptionDate}>
+                    {formatarDataExcecao(excecao.data)}
+                  </Text>
+                  {!!excecao.descricao && (
+                    <Text style={styles.exceptionDescription}>
+                      {excecao.descricao}
+                    </Text>
+                  )}
+                </View>
+                <Text style={styles.scheduleHours}>
+                  {formatarPeriodos(excecao)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+    </>
+  );
+}
 
 export default function EstablishmentDetail({
   navigation,
@@ -84,6 +369,13 @@ export default function EstablishmentDetail({
   onRetryComentarios,
   onEnviarComentario,
   enviandoComentario,
+  activeTab,
+  onChangeTab,
+  planos,
+  loadingPlanos,
+  planosError,
+  onRetryPlanos,
+  onSelecionarOferta,
 }) {
   const gym = estabelecimento;
   //const [favorite, setFavorite] = useState(false);
@@ -137,7 +429,7 @@ export default function EstablishmentDetail({
     usuarioDentroLimiteDistancia === false;
 
   const textoBotao = gym.parceiro === false
-    ? 'Estabelecimento não parceiro' 
+    ? 'Estabelecimento não parceiro'
     : gym.inclusoPlanoUsuario === false
       ? 'Não incluso no seu plano'
       : fechado
@@ -315,126 +607,29 @@ export default function EstablishmentDetail({
             </View>
           )}
 
-          {!!gym.about && (
-            <>
-              <Text style={styles.sectionTitle}>Sobre</Text>
+          {/* Abas: Sobre / Planos e ofertas / Horários */}
+          <TabBar activeTab={activeTab} onChangeTab={onChangeTab} />
 
-              <Text style={styles.aboutText}>
-                {gym.about}
-              </Text>
-            </>
+          {activeTab === 'sobre' && (
+            <SobreTab
+              gym={gym}
+              loadingDetalhes={loadingDetalhes}
+              abrirNoMaps={abrirNoMaps}
+              ehParceiro={ehParceiro}
+            />
           )}
 
-          {!!gym.address && (
-            <>
-              <Text style={styles.sectionTitle}>Endereço</Text>
-              <TouchableOpacity style={styles.addressRow} onPress={abrirNoMaps} activeOpacity={0.7}>
-                <Text style={styles.addressText}>{gym.address}</Text>
-                <Ionicons name="navigate-circle-outline" size={22} color={colors.blue} />
-              </TouchableOpacity>
-            </>
+          {activeTab === 'planos' && (
+            <PlanosTab
+              planos={planos}
+              loadingPlanos={loadingPlanos}
+              planosError={planosError}
+              onRetryPlanos={onRetryPlanos}
+              onSelecionarOferta={onSelecionarOferta}
+            />
           )}
 
-          {ehParceiro &&
-          !loadingDetalhes &&
-          !!gym.amenities?.length && (
-            <View style={styles.amenitiesRow}>
-              {gym.amenities.map((a) => (
-                <View key={a.label} style={styles.amenityItem}>
-                  <View style={styles.amenityIconWrap}>
-                    <Ionicons
-                      name={a.icon}
-                      size={18}
-                      color={colors.blue}
-                    />
-                  </View>
-
-                  <Text style={styles.amenityLabel}>{a.label}</Text>
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Horário de funcionamento (padrão semanal) */}
-          {!loadingDetalhes &&
-            !!gym.horarios?.length && (
-              <>
-                <Text style={styles.sectionTitle}>
-                  Horário de atendimento
-                </Text>
-
-                <View style={styles.scheduleCard}>
-                  {DIAS_SEMANA_ORDEM.map((dia, index) => {
-                    const horarioDoDia = gym.horarios.find(
-                      (h) => h.diaSemana.codigo === dia.codigo
-                    );
-
-                    return (
-                      <View
-                        key={dia.value}
-                        style={[
-                          styles.scheduleRow,
-                          index < DIAS_SEMANA_ORDEM.length - 1 &&
-                            styles.scheduleRowDivider,
-                        ]}
-                      >
-                        <Text style={styles.scheduleDay}>
-                          {dia.label}
-                        </Text>
-
-                        <Text
-                          style={[
-                            styles.scheduleHours,
-                            !horarioDoDia && styles.scheduleHoursClosed,
-                          ]}
-                        >
-                          {formatarPeriodos(horarioDoDia)}
-                        </Text>
-                      </View>
-                    );
-                  })}
-                </View>
-              </>
-            )}
-
-          {/* Horário de exceção (feriados, datas especiais) — separado do padrão semanal */}
-          {!loadingDetalhes &&
-            !!gym.horariosExcecao?.length && (
-              <>
-                <Text style={styles.sectionTitle}>
-                  Horários especiais
-                </Text>
-
-                <View style={styles.scheduleCard}>
-                  {gym.horariosExcecao.map((excecao, index) => (
-                    <View
-                      key={`${excecao.data}-${index}`}
-                      style={[
-                        styles.exceptionRow,
-                        index < gym.horariosExcecao.length - 1 &&
-                          styles.scheduleRowDivider,
-                      ]}
-                    >
-                      <View style={{ flex: 1 }}>
-                        <Text style={styles.exceptionDate}>
-                          {formatarDataExcecao(excecao.data)}
-                        </Text>
-
-                        {!!excecao.descricao && (
-                          <Text style={styles.exceptionDescription}>
-                            {excecao.descricao}
-                          </Text>
-                        )}
-                      </View>
-
-                      <Text style={styles.scheduleHours}>
-                        {formatarPeriodos(excecao)}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
-              </>
-            )}
+          {activeTab === 'horarios' && <HorariosTab gym={gym} />}
 
           {/* Interesse em treinar ali (só quando não é parceiro) */}
           {!ehParceiro && (
@@ -650,7 +845,7 @@ const styles = StyleSheet.create({
   amenitiesRow: {
     flexDirection: 'row',
     flexWrap: 'wrap',           // <- permite quebrar linha
-    marginTop: 20,
+    marginTop: 4,
     paddingVertical: 16,
     borderTopWidth: 1,
     borderBottomWidth: 1,
@@ -692,7 +887,59 @@ const styles = StyleSheet.create({
     maxWidth: 140,
   },
 
+  // Abas
+  tabBar: {
+    flexDirection: 'row',
+    marginTop: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  tabItem: {
+    marginRight: 22,
+    paddingBottom: 10,
+  },
+  tabLabel: {
+    fontSize: 13.5,
+    fontWeight: '600',
+    color: colors.textMuted,
+  },
+  tabLabelActive: {
+    color: colors.blue,
+    fontWeight: '700',
+  },
+  tabIndicator: {
+    marginTop: 8,
+    height: 2,
+    borderRadius: 1,
+    backgroundColor: colors.blue,
+  },
+  tabLoadingBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 24,
+    justifyContent: 'center',
+  },
+  tabLoadingText: { fontSize: 12.5, color: colors.textMuted },
+  tabEmptyBox: {
+    alignItems: 'center',
+    gap: 8,
+    paddingVertical: 32,
+  },
+  tabEmptyText: {
+    fontSize: 13,
+    color: colors.textMuted,
+    textAlign: 'center',
+    paddingHorizontal: 24,
+  },
+
   sectionTitle: { ...typography.h3, marginTop: 20, marginBottom: 8 },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: colors.textMuted,
+    marginTop: -4,
+    marginBottom: 14,
+  },
   aboutText: { ...typography.body, color: colors.textMuted, lineHeight: 20 },
   addressRow: {
     flexDirection: 'row',
@@ -708,6 +955,61 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginRight: 10,
     lineHeight: 18,
+  },
+
+  // Planos e ofertas
+  ofertaCard: {
+    backgroundColor: colors.bg,
+    borderRadius: radius.md,
+    padding: 14,
+    marginBottom: 12,
+  },
+  ofertaTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 10,
+  },
+  ofertaNome: {
+    fontSize: 14.5,
+    fontWeight: '700',
+    color: colors.text,
+    flex: 1,
+  },
+  ofertaBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  ofertaBadgeText: { fontSize: 11, fontWeight: '700' },
+  ofertaDescricao: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    marginTop: 6,
+    lineHeight: 17,
+  },
+  ofertaBottomRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 12,
+  },
+  ofertaPrecoRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
+  ofertaPreco: { fontSize: 17, fontWeight: '700', color: colors.blue },
+  ofertaPeriodicidade: { fontSize: 12.5, color: colors.textMuted },
+  ofertaInfoBox: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: colors.chipBg,
+    borderRadius: radius.md,
+    padding: 12,
+    marginTop: 4,
+  },
+  ofertaInfoText: {
+    flex: 1,
+    fontSize: 12,
+    color: colors.textMuted,
+    lineHeight: 16,
   },
 
   scheduleCard: {

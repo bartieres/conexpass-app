@@ -2,9 +2,14 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import BottomNav from '../components/BottomNav';
 
-import ExploreScreen from '../screens/explore/ExploreScreen';
-import FiltersScreen from '../screens/explore/FiltersScreen';
-import EstablishmentDetailScreen from '../screens/explore/EstablishmentDetailScreen';
+import ExploreScreen from '../screens/explore/inicio/ExploreScreen';
+import FiltersScreen from '../screens/explore/inicio/FiltersScreen';
+import EstablishmentDetailScreen from '../screens/explore/detalhe/EstablishmentDetailScreen';
+
+import EstabelecimentoOfertaDetailScreen from '../screens/explore/ofertadetalhe/OfertaDetailScreen';
+import EstabelecimentoOfertaCheckoutScreen from '../screens/explore/ofertacheckout/OfertaCheckoutScreen';
+import EstabelecimentoOfertaPagamentoScreen from '../screens/explore/ofertapagemtno/OfertaPagamentoScreen';
+import EstabelecimentoOfertaFeedBackScreen from '../screens/explore/ofertafeedback/OfertaPagamentoResultadoScreen';
 
 import CheckInScreen from '../screens/checkins/CheckInScreen';
 import ConfirmCheckInScreen from '../screens/checkins/ConfirmCheckInScreen';
@@ -58,6 +63,20 @@ function ExploreStack() {
       <ExploreStackNav.Screen
         name="CheckInPending"
         component={CheckInPendingScreen}
+      />
+      <ExploreStackNav.Screen
+        name="EstabelecimentoOfertaDetail"
+        component={EstabelecimentoOfertaDetailScreen}
+      />
+      <ExploreStackNav.Screen
+        name="EstabelecimentoOfertaCheckout"
+        component={EstabelecimentoOfertaCheckoutScreen}
+        options={{ headerShown: false }}
+      />
+      <ExploreStackNav.Screen
+        name="EstabelecimentoOfertaPagamento"
+        component={EstabelecimentoOfertaPagamentoScreen}
+        options={{ headerShown: false }}
       />
     </ExploreStackNav.Navigator>
   );

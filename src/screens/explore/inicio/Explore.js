@@ -11,9 +11,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../../theme/theme';
-import { CATEGORIES } from '../../data/mock';
-import SuggestEstablishmentModal from './SuggestEstablishmentModal';
+import { colors, radius, shadow, typography } from '../../../theme/theme';
+import { CATEGORIES } from '../../../data/mock';
+import SuggestEstablishmentModal from '../SuggestEstablishmentModal';
 
 function EstabelecimentoCard({ estabelecimento, onPress }) {
   return (

@@ -9,8 +9,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
-import { colors, radius } from '../../theme/theme';
-import { CATEGORIES } from '../../data/mock';
+import { colors, radius } from '../../../theme/theme';
+import { CATEGORIES } from '../../../data/mock';
 
 // Chaves enviadas ao backend para cada opção de ordenação exibida na tela.
 // 'preco' fica pronto mas o back ainda pode não suportar - ver comentário abaixo.

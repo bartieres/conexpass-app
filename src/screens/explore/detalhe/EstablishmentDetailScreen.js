@@ -7,20 +7,26 @@ import {
   ActivityIndicator,
 } from 'react-native';
 
-import { useCurrentLocation } from '../../hooks/useCurrentLocation';
+import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import {
   findById,
   registrarInteresse,
-} from '../../services/estabelecimentoService';
+} from '../../../services/estabelecimentoService';
 
 import {
   reportarProblema,
-} from '../../services/reporteProblemaService';
+} from '../../../services/reporteProblemaService';
 
 import {
   listarPorEstabelecimento,
   adicionar as adicionarComentario,
-} from '../../services/comentarioService';
+} from '../../../services/comentarioService';
+
+// TODO: confirmar nome/path real do endpoint no backend — chutei
+// `listarPlanosEOfertas(estabelecimentoId)` fazendo um GET em algo como
+// /estabelecimentos/{id}/planos-ofertas. Criar o service real quando o
+// endpoint estiver pronto.
+import { listarPlanosEOfertas } from '../../../services/estabelecimentoOfertaService';
 
 import EstablishmentDetail from './EstablishmentDetail';
 
@@ -226,6 +232,15 @@ export default function EstablishmentDetailScreen({
   const [enviandoComentario, setEnviandoComentario] =
     useState(false);
 
+  // Aba ativa (Sobre / Planos e ofertas / Horários) + estado dos planos,
+  // que agora vêm de um endpoint separado e só são buscados quando o
+  // usuário realmente abre essa aba (evita chamada desnecessária).
+  const [activeTab, setActiveTab] = useState('sobre');
+  const [planos, setPlanos] = useState([]);
+  const [planosCarregados, setPlanosCarregados] = useState(false);
+  const [loadingPlanos, setLoadingPlanos] = useState(false);
+  const [planosError, setPlanosError] = useState('');
+
   const buscarDetalhes = useCallback(async () => {
     if (!gymResumo?.id) {
       setLoadingDetalhes(false);
@@ -259,12 +274,6 @@ export default function EstablishmentDetailScreen({
       setLoadingDetalhes(false);
     }
   }, [gymResumo, coords]);
-
-  useEffect(() => {
-    if (!coords) return;
-    buscarDetalhes();
-    buscarComentarios();
-  }, [coords, buscarDetalhes, buscarComentarios]);
 
   const buscarComentarios = useCallback(async () => {
     if (!gymResumo?.id) return;
@@ -305,13 +314,56 @@ export default function EstablishmentDetailScreen({
     }
   }, [gymResumo]);
 
+  const buscarPlanos = useCallback(async () => {
+    if (!gymResumo?.id) return;
+
+    setLoadingPlanos(true);
+    setPlanosError('');
+
+    try {
+      const data = await listarPlanosEOfertas(gymResumo.id);
+
+      const lista = data?.response?.content ?? data?.response ?? [];
+
+      setPlanos(lista);
+      setPlanosCarregados(true);
+    } catch (err) {
+      setPlanosError(
+        err.friendlyMessage ||
+          'Não foi possível carregar os planos e ofertas.'
+      );
+    } finally {
+      setLoadingPlanos(false);
+    }
+  }, [gymResumo]);
+
+  // Único efeito de carregamento inicial: dispara assim que temos coords.
   useEffect(() => {
+    if (!coords) return;
     buscarDetalhes();
     buscarComentarios();
-  }, [
-    buscarDetalhes,
-    buscarComentarios,
-  ]);
+  }, [coords, buscarDetalhes, buscarComentarios]);
+
+  const handleChangeTab = (tab) => {
+    setActiveTab(tab);
+
+    // Busca os planos/ofertas só na primeira vez que a aba é aberta.
+    if (tab === 'planos' && !planosCarregados && !loadingPlanos) {
+      buscarPlanos();
+    }
+  };
+
+  const handleSelecionarOferta = (oferta) => {
+    navigation.navigate('EstabelecimentoOfertaDetail', {
+      ofertaId: oferta.id,
+      ofertaResumo: oferta,
+      estabelecimento: {
+        id: estabelecimento?.id,
+        name: estabelecimento?.name,
+        image: estabelecimento?.image,
+      },
+    });
+  };
 
   const handleRegistrarInteresse = async () => {
     if (
@@ -573,6 +625,14 @@ export default function EstablishmentDetailScreen({
       enviandoComentario={
         enviandoComentario
       }
+
+      activeTab={activeTab}
+      onChangeTab={handleChangeTab}
+      planos={planos}
+      loadingPlanos={loadingPlanos}
+      planosError={planosError}
+      onRetryPlanos={buscarPlanos}
+      onSelecionarOferta={handleSelecionarOferta}
     />
   );
 }

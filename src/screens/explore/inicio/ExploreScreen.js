@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useCurrentLocation } from '../../hooks/useCurrentLocation';
-import { findAllByCondition } from '../../services/estabelecimentoService';
-import { save as sugerirEstabelecimento } from '../../services/estabelecimentoLeadService';
+import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
+import { findAllByCondition } from '../../../services/estabelecimentoService';
+import { save as sugerirEstabelecimento } from '../../../services/estabelecimentoLeadService';
 import Explore from './Explore';
 
 const RAIO_INICIAL_KM = 10;
