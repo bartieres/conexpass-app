@@ -7,16 +7,11 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "backgroundColor": "#F5F7FB",
-    "splash": {
-      "backgroundColor": "#2B6CE0",
-      "resizeMode": "contain"
-    },
-    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.conexpass.app",
       "infoPlist": {
-        "NSLocationWhenInUseUsageDescription": "O ConexPass usa sua localização para mostrar academias próximas de você."
+        "NSLocationWhenInUseUsageDescription": "O ConexPass usa sua localização para mostrar estabelecimentos e atividades próximas de você."
       }
     },
     "android": {
@@ -26,10 +21,9 @@
       "package": "com.conexpass.app",
       "permissions": [
         "ACCESS_COARSE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION"
-      ]
+        "ACCESS_FINE_LOCATION"
+      ],
+      "versionCode": 1
     },
     "web": {
       "bundler": "metro"
@@ -38,9 +32,13 @@
       [
         "expo-location",
         {
-          "locationAlwaysAndWhenInUsePermission": "O ConexPass usa sua localização para mostrar academias próximas de você."
+          "locationWhenInUsePermission": "O ConexPass usa sua localização para mostrar estabelecimentos e atividades próximas de você."
         }
-      ]
+      ],
+      "expo-font",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-splash-screen"
     ],
     "extra": {
       "eas": {

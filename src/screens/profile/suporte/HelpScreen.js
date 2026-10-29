@@ -7,19 +7,9 @@ import {
   StyleSheet,
   ScrollView,
   LayoutAnimation,
-  Platform,
-  UIManager,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
-
-// Habilita animação de layout no Android (iOS já tem por padrão)
-if (
-  Platform.OS === 'android' &&
-  UIManager.setLayoutAnimationEnabledExperimental
-) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 /**
  * Conteúdo das dúvidas — 100% local, sem chamada ao backend. Pra adicionar
