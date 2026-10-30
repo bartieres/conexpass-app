@@ -144,8 +144,8 @@ export default function ExploreScreen({ navigation, route }) {
                 : null,
             checkinHoje: e.checkinRealizadoHoje ?? false, // implementar flag que indica se fez checkin hoje
             //reviews: 120,
-            image:
-              'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
+            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
+            //image: '../../../assets/image-academia.jpeg?w=900&q=80',
             //coord: { top: '46%', left: '46%' },
           };
         });

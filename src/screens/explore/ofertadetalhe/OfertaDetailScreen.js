@@ -1,13 +1,9 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 
 import { findById } from '../../../services/estabelecimentoOfertaService';
 
 import OfertaDetail from './OfertaDetail';
 
-// Monta o objeto final da oferta mesclando o resumo recebido da listagem
-// (nome, tipo, valor — já exibidos na tela anterior) com o detalhe vindo
-// do findById (benefícios, condições, informações importantes), seguindo
-// o mesmo padrão usado em EstablishmentDetailScreen.
 function montarOferta(ofertaResumo, estabelecimentoResumo, o) {
   return {
     ...ofertaResumo,
@@ -16,16 +12,10 @@ function montarOferta(ofertaResumo, estabelecimentoResumo, o) {
     descricao: o.descricao ?? ofertaResumo?.descricao,
     tipo: o.tipo ?? ofertaResumo?.tipo,
     valor: o.valor ?? ofertaResumo?.valor,
-    periodicidade: o.periodicidade ?? ofertaResumo?.periodicidade,
-
-    // TODO: confirmar os nomes desses campos com o backend — chutei
-    // `beneficios` (lista de strings), `condicoes` (lista de
-    // { label, valor }) e `informacoesImportantes` (lista de strings),
-    // já que o conteúdo varia bastante entre plano/pacote/avulso.
+    valorPromocional: o.valorPromocional ?? ofertaResumo?.valorPromocional,
     beneficios: o.beneficios || [],
     condicoes: o.condicoes || [],
     informacoesImportantes: o.informacoesImportantes || [],
-
     estabelecimento: {
       id: estabelecimentoResumo?.id,
       name: estabelecimentoResumo?.name,
@@ -40,47 +30,72 @@ function montarOferta(ofertaResumo, estabelecimentoResumo, o) {
 }
 
 export default function OfertaDetailScreen({ route, navigation }) {
-  const ofertaResumo = route.params?.ofertaResumo ?? {
-    id: route.params?.ofertaId,
-  };
+  const ofertaResumo = useMemo(
+    () => route.params?.ofertaResumo ?? { id: route.params?.ofertaId },
+    [route.params?.ofertaResumo, route.params?.ofertaId]
+  );
   const estabelecimentoResumo = route.params?.estabelecimento;
 
   const [oferta, setOferta] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const buscarOferta = useCallback(async () => {
+  const obterOferta = useCallback(async () => {
     if (!ofertaResumo?.id || !estabelecimentoResumo?.id) {
-      setLoading(false);
-      setError('Não foi possível identificar a oferta.');
-      return;
+      throw new Error('Não foi possível identificar a oferta.');
     }
 
+    const data = await findById(estabelecimentoResumo.id, ofertaResumo.id);
+    const o = data?.response ?? data;
+
+    return montarOferta(ofertaResumo, estabelecimentoResumo, o);
+  }, [ofertaResumo, estabelecimentoResumo]);
+
+  const buscarOferta = useCallback(async () => {
     setLoading(true);
     setError('');
 
     try {
-      const data = await findById(estabelecimentoResumo.id, ofertaResumo.id);
-      const o = data?.response ?? data;
-
-      setOferta(montarOferta(ofertaResumo, estabelecimentoResumo, o));
+      setOferta(await obterOferta());
     } catch (err) {
       setError(
         err.friendlyMessage ||
+          err.message ||
           'Não foi possível carregar os detalhes dessa oferta.'
       );
     } finally {
       setLoading(false);
     }
-  }, [ofertaResumo, estabelecimentoResumo]);
+  }, [obterOferta]);
 
   useEffect(() => {
-    buscarOferta();
-  }, [buscarOferta]);
+    let ativo = true;
 
-  // Não contrata direto daqui — leva pro resumo da contratação, que por
-  // sua vez leva pra tela de pagamento. Mesmo padrão em dois passos já
-  // usado em ChangePlanScreen -> ChangePlanCheckoutScreen.
+    async function carregarOfertaInicial() {
+      try {
+        const ofertaCarregada = await obterOferta();
+
+        if (ativo) setOferta(ofertaCarregada);
+      } catch (err) {
+        if (ativo) {
+          setError(
+            err.friendlyMessage ||
+              err.message ||
+              'Não foi possível carregar os detalhes dessa oferta.'
+          );
+        }
+      } finally {
+        if (ativo) setLoading(false);
+      }
+    }
+
+    carregarOfertaInicial();
+
+    return () => {
+      ativo = false;
+    };
+  }, [obterOferta]);
+
   const handleContratar = () => {
     if (!oferta?.id) return;
 

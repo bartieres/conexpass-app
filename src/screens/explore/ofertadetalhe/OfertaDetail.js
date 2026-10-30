@@ -46,6 +46,15 @@ function formatarValor(valor) {
   });
 }
 
+// `valorPromocional` só conta como desconto quando vier preenchido e menor
+// que `valor` — mesma regra usada no PlanosTab do EstablishmentDetail.
+function calcularDesconto(valor, valorPromocional) {
+  if (!valor || valorPromocional == null || valorPromocional >= valor) {
+    return null;
+  }
+  return Math.round(((valor - valorPromocional) / valor) * 100);
+}
+
 export default function OfertaDetail({
   navigation,
   oferta,
@@ -88,6 +97,17 @@ export default function OfertaDetail({
     botaoLabel: 'Confirmar',
   };
 
+  const ehAssinatura =
+    oferta.tipo?.codigo === 'ASSINATURA' ||
+    oferta.tipo?.descricao?.toLowerCase() === 'assinatura';
+  const botaoLabel = ehAssinatura
+    ? 'Comprar assinatura'
+    : meta.botaoLabel;
+
+  const desconto = calcularDesconto(oferta.valor, oferta.valorPromocional);
+  const temDesconto = desconto != null;
+  const valorFinal = temDesconto ? oferta.valorPromocional : oferta.valor;
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -123,9 +143,16 @@ export default function OfertaDetail({
         </View>
 
         <View style={styles.precoRow}>
-          <Text style={styles.preco}>{formatarValor(oferta.valor)}</Text>
-          {!!oferta.periodicidade && (
-            <Text style={styles.periodicidade}> / {oferta.periodicidade}</Text>
+          {temDesconto && (
+            <Text style={styles.precoOriginal}>
+              {formatarValor(oferta.valor)}
+            </Text>
+          )}
+          <Text style={styles.preco}>{formatarValor(valorFinal)}</Text>
+          {temDesconto && (
+            <View style={styles.descontoBadge}>
+              <Text style={styles.descontoBadgeText}>-{desconto}%</Text>
+            </View>
           )}
         </View>
 
@@ -210,7 +237,14 @@ export default function OfertaDetail({
       <View style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>{meta.totalLabel}</Text>
-          <Text style={styles.totalValor}>{formatarValor(oferta.valor)}</Text>
+          <View style={styles.totalValorRow}>
+            {temDesconto && (
+              <Text style={styles.totalValorOriginal}>
+                {formatarValor(oferta.valor)}
+              </Text>
+            )}
+            <Text style={styles.totalValor}>{formatarValor(valorFinal)}</Text>
+          </View>
         </View>
 
         <TouchableOpacity
@@ -218,7 +252,7 @@ export default function OfertaDetail({
           activeOpacity={0.85}
           onPress={onContratar}
         >
-          <Text style={styles.ctaButtonText}>{meta.botaoLabel}</Text>
+          <Text style={styles.ctaButtonText}>{botaoLabel}</Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -272,9 +306,21 @@ const styles = StyleSheet.create({
   },
   badgeText: { fontSize: 11.5, fontWeight: '700' },
 
-  precoRow: { flexDirection: 'row', alignItems: 'baseline', marginTop: 10 },
+  precoRow: { flexDirection: 'row', alignItems: 'baseline', gap: 8, marginTop: 10 },
+  precoOriginal: {
+    fontSize: 16,
+    color: colors.textLight,
+    textDecorationLine: 'line-through',
+  },
   preco: { fontSize: 26, fontWeight: '800', color: colors.blue },
-  periodicidade: { fontSize: 14, color: colors.textMuted },
+  descontoBadge: {
+    backgroundColor: colors.successLight,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+    alignSelf: 'center',
+  },
+  descontoBadgeText: { fontSize: 12, fontWeight: '700', color: colors.success },
 
   descricao: {
     fontSize: 13.5,
@@ -362,6 +408,12 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   totalLabel: { fontSize: 13, color: colors.textMuted },
+  totalValorRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  totalValorOriginal: {
+    fontSize: 13,
+    color: colors.textLight,
+    textDecorationLine: 'line-through',
+  },
   totalValor: { fontSize: 17, fontWeight: '800', color: colors.text },
 
   ctaButton: {

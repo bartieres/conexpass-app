@@ -9,7 +9,7 @@ import {
 
 import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import {
-  findById,
+  findByIdAndLocalizacao as findById,
   registrarInteresse,
 } from '../../../services/estabelecimentoService';
 
@@ -168,11 +168,8 @@ function montarEstabelecimento(gymResumo, e) {
     rating: e.avaliacaoMedia,
 
     reviews: e.totalAvaliacoes,
-
     horarios: e.horarios || [],
-
     horariosExcecao: e.horariosExcecao || [],
-
     usuarioPossuiInteresse: e.usuarioPossuiInteresse ?? false,
     usuarioDentroLimiteDistancia: e.usuarioDentroLimiteDistancia ?? false,
     totalInteresses: e.totalInteresses ?? 0,

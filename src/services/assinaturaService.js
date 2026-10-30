@@ -16,3 +16,8 @@ export const cancelarPlano = async (payload) => {
   const response = await axiosPrivate.patch(`${BASE_URL}/cancelar`, payload);
   return response.data;
 };
+
+export async function contratarOferta(payload) {
+  const { data } = await axiosPrivate.post(`${BASE_URL}/offers`, payload);
+  return data;
+}

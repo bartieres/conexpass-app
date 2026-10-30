@@ -69,6 +69,15 @@ function formatarValor(valor) {
   });
 }
 
+// `valorPromocional` só é considerado desconto quando vem preenchido e
+// menor que `valor` — mesma regra usada no ChangePlanScreen pros planos.
+function calcularDesconto(valor, valorPromocional) {
+  if (!valor || valorPromocional == null || valorPromocional >= valor) {
+    return null;
+  }
+  return Math.round(((valor - valorPromocional) / valor) * 100);
+}
+
 /*const handleShare = async (gym) => {
   const link = `conexpass://estabelecimento/${gym.id}`;
   try {
@@ -203,6 +212,9 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
           bg: colors.chipBg,
         };
 
+        const desconto = calcularDesconto(oferta.valor, oferta.valorPromocional);
+        const temDesconto = desconto != null;
+
         return (
           <TouchableOpacity
             key={oferta.id}
@@ -229,13 +241,18 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
 
             <View style={styles.ofertaBottomRow}>
               <View style={styles.ofertaPrecoRow}>
-                <Text style={styles.ofertaPreco}>
-                  {formatarValor(oferta.valor)}
-                </Text>
-                {!!oferta.periodicidade && (
-                  <Text style={styles.ofertaPeriodicidade}>
-                    /{oferta.periodicidade}
+                {temDesconto && (
+                  <Text style={styles.ofertaPrecoOriginal}>
+                    {formatarValor(oferta.valor)}
                   </Text>
+                )}
+                <Text style={styles.ofertaPreco}>
+                  {formatarValor(temDesconto ? oferta.valorPromocional : oferta.valor)}
+                </Text>
+                {temDesconto && (
+                  <View style={styles.descontoBadge}>
+                    <Text style={styles.descontoBadgeText}>-{desconto}%</Text>
+                  </View>
                 )}
               </View>
               <Ionicons
@@ -994,9 +1011,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginTop: 12,
   },
-  ofertaPrecoRow: { flexDirection: 'row', alignItems: 'baseline', gap: 2 },
+  ofertaPrecoRow: { flexDirection: 'row', alignItems: 'baseline', gap: 6 },
+  ofertaPrecoOriginal: {
+    fontSize: 12.5,
+    color: colors.textLight,
+    textDecorationLine: 'line-through',
+  },
   ofertaPreco: { fontSize: 17, fontWeight: '700', color: colors.blue },
-  ofertaPeriodicidade: { fontSize: 12.5, color: colors.textMuted },
+  descontoBadge: {
+    backgroundColor: colors.successLight,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: radius.pill,
+    alignSelf: 'center',
+  },
+  descontoBadgeText: {
+    fontSize: 10.5,
+    fontWeight: '700',
+    color: colors.success,
+  },
   ofertaInfoBox: {
     flexDirection: 'row',
     gap: 8,

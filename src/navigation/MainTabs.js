@@ -1,5 +1,7 @@
+
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+
 import BottomNav from '../components/BottomNav';
 
 import ExploreScreen from '../screens/explore/inicio/ExploreScreen';
@@ -8,8 +10,7 @@ import EstablishmentDetailScreen from '../screens/explore/detalhe/EstablishmentD
 
 import EstabelecimentoOfertaDetailScreen from '../screens/explore/ofertadetalhe/OfertaDetailScreen';
 import EstabelecimentoOfertaCheckoutScreen from '../screens/explore/ofertacheckout/OfertaCheckoutScreen';
-import EstabelecimentoOfertaPagamentoScreen from '../screens/explore/ofertapagemtno/OfertaPagamentoScreen';
-import EstabelecimentoOfertaFeedBackScreen from '../screens/explore/ofertafeedback/OfertaPagamentoResultadoScreen';
+import EstabelecimentoOfertaPagamentoResultadoScreen from '../screens/explore/ofertafeedback/OfertaPagamentoResultadoScreen';
 
 import CheckInScreen from '../screens/checkins/CheckInScreen';
 import ConfirmCheckInScreen from '../screens/checkins/ConfirmCheckInScreen';
@@ -34,6 +35,7 @@ import PaymentMethodScreen from '../screens/profile/assinatura/PaymentMethodScre
 import RegisterCardScreen from '../screens/profile/assinatura/RegisterCardScreen';
 
 const Tab = createBottomTabNavigator();
+
 const ExploreStackNav = createNativeStackNavigator();
 const CheckInStackNav = createNativeStackNavigator();
 const PlanStackNav = createNativeStackNavigator();
@@ -41,42 +43,53 @@ const ProfileStackNav = createNativeStackNavigator();
 
 function ExploreStack() {
   return (
-    <ExploreStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ExploreStackNav.Screen name="ExplorarMain" component={ExploreScreen} />
+    <ExploreStackNav.Navigator
+      screenOptions={{ headerShown: false }}
+    >
+      <ExploreStackNav.Screen
+        name="ExplorarMain"
+        component={ExploreScreen}
+      />
+
       <ExploreStackNav.Screen
         name="EstablishmentDetail"
         component={EstablishmentDetailScreen}
       />
+
       <ExploreStackNav.Screen
         name="Filters"
         component={FiltersScreen}
         options={{ presentation: 'modal' }}
       />
+
       <ExploreStackNav.Screen
         name="ConfirmCheckIn"
         component={ConfirmCheckInScreen}
       />
+
       <ExploreStackNav.Screen
         name="CheckInSuccess"
         component={CheckinSuccessScreen}
       />
+
       <ExploreStackNav.Screen
         name="CheckInPending"
         component={CheckInPendingScreen}
       />
+
       <ExploreStackNav.Screen
         name="EstabelecimentoOfertaDetail"
         component={EstabelecimentoOfertaDetailScreen}
       />
+
       <ExploreStackNav.Screen
         name="EstabelecimentoOfertaCheckout"
         component={EstabelecimentoOfertaCheckoutScreen}
-        options={{ headerShown: false }}
       />
+
       <ExploreStackNav.Screen
-        name="EstabelecimentoOfertaPagamento"
-        component={EstabelecimentoOfertaPagamentoScreen}
-        options={{ headerShown: false }}
+        name="EstabelecimentoOfertaPagamentoResultado"
+        component={EstabelecimentoOfertaPagamentoResultadoScreen}
       />
     </ExploreStackNav.Navigator>
   );
@@ -84,40 +97,119 @@ function ExploreStack() {
 
 function CheckInStack() {
   return (
-    <CheckInStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <CheckInStackNav.Screen name="CheckIns" component={CheckInScreen} />
+    <CheckInStackNav.Navigator
+      screenOptions={{ headerShown: false }}
+    >
+      <CheckInStackNav.Screen
+        name="CheckIns"
+        component={CheckInScreen}
+      />
     </CheckInStackNav.Navigator>
   );
 }
 
 function PlanStack() {
   return (
-    <PlanStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <PlanStackNav.Screen name="PlanMain" component={PlanScreen} />
-      <PlanStackNav.Screen name="ChangePlan" component={ChangePlanScreen} />
-      <PlanStackNav.Screen name="ReviewPlan" component={ReviewPlanScreen} />
-      <PlanStackNav.Screen name="PaymentDetail" component={PaymentDetailScreen} />
-      <PlanStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
-      <PlanStackNav.Screen name="RegisterCard" component={RegisterCardScreen} />
+    <PlanStackNav.Navigator
+      screenOptions={{ headerShown: false }}
+    >
+      <PlanStackNav.Screen
+        name="PlanMain"
+        component={PlanScreen}
+      />
+
+      <PlanStackNav.Screen
+        name="ChangePlan"
+        component={ChangePlanScreen}
+      />
+
+      <PlanStackNav.Screen
+        name="ReviewPlan"
+        component={ReviewPlanScreen}
+      />
+
+      <PlanStackNav.Screen
+        name="PaymentDetail"
+        component={PaymentDetailScreen}
+      />
+
+      <PlanStackNav.Screen
+        name="PaymentMethod"
+        component={PaymentMethodScreen}
+      />
+
+      <PlanStackNav.Screen
+        name="RegisterCard"
+        component={RegisterCardScreen}
+      />
     </PlanStackNav.Navigator>
   );
 }
 
 function ProfileStack() {
   return (
-    <ProfileStackNav.Navigator screenOptions={{ headerShown: false }}>
-      <ProfileStackNav.Screen name="ProfileMain" component={ProfileScreen} />
-      <ProfileStackNav.Screen name="Plan" component={PlanStack} />
-      <ProfileStackNav.Screen name="PersonalData" component={PersonalDataScreen} />
-      <ProfileStackNav.Screen name="Security" component={SecurityScreen} />
-      <ProfileStackNav.Screen name="ChangePassword" component={ChangePasswordScreen} />
-      <ProfileStackNav.Screen name="Notification" component={NotificationScreen} />
-      <ProfileStackNav.Screen name="Location" component={LocationScreen} />
-      <ProfileStackNav.Screen name="Help" component={HelpScreen} />
-      <ProfileStackNav.Screen name="Contact" component={ContactScreen} />
-      <ProfileStackNav.Screen name="PaymentMethod" component={PaymentMethodScreen} />
-      <ProfileStackNav.Screen name="RegisterCard" component={RegisterCardScreen} />
-      <ProfileStackNav.Screen name="Payment" component={PaymentScreen} />
+    <ProfileStackNav.Navigator
+      screenOptions={{ headerShown: false }}
+    >
+      <ProfileStackNav.Screen
+        name="ProfileMain"
+        component={ProfileScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Plan"
+        component={PlanStack}
+      />
+
+      <ProfileStackNav.Screen
+        name="PersonalData"
+        component={PersonalDataScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Security"
+        component={SecurityScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="ChangePassword"
+        component={ChangePasswordScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Notification"
+        component={NotificationScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Location"
+        component={LocationScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Help"
+        component={HelpScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Contact"
+        component={ContactScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="PaymentMethod"
+        component={PaymentMethodScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="RegisterCard"
+        component={RegisterCardScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="Payment"
+        component={PaymentScreen}
+      />
     </ProfileStackNav.Navigator>
   );
 }
@@ -128,10 +220,25 @@ export default function MainTabs() {
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <BottomNav {...props} />}
     >
-      <Tab.Screen name="Explorar" component={ExploreStack} />
-      <Tab.Screen name="CheckIn" component={CheckInStack} />
-      <Tab.Screen name="Plano" component={PlanStack} />
-      <Tab.Screen name="Perfil" component={ProfileStack} />
+      <Tab.Screen
+        name="Explorar"
+        component={ExploreStack}
+      />
+
+      <Tab.Screen
+        name="CheckIn"
+        component={CheckInStack}
+      />
+
+      <Tab.Screen
+        name="Plano"
+        component={PlanStack}
+      />
+
+      <Tab.Screen
+        name="Perfil"
+        component={ProfileStack}
+      />
     </Tab.Navigator>
   );
 }
