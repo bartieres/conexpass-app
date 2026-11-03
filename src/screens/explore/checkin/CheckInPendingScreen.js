@@ -9,8 +9,8 @@ import {
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../theme/theme';
-import { getStatus, cancelar } from '../../services/checkinService';
+import { colors, radius, shadow } from '../../../theme/theme';
+import { getStatus, cancelar } from '../../../services/checkinService';
 
 const INTERVALO_POLLING_MS = 3000; // pergunta ao backend a cada 3s
 const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos esperando sem resposta

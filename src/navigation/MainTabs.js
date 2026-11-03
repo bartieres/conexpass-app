@@ -13,9 +13,9 @@ import EstabelecimentoOfertaCheckoutScreen from '../screens/explore/ofertachecko
 import EstabelecimentoOfertaPagamentoResultadoScreen from '../screens/explore/ofertafeedback/OfertaPagamentoResultadoScreen';
 
 import CheckInScreen from '../screens/checkins/CheckInScreen';
-import ConfirmCheckInScreen from '../screens/checkins/ConfirmCheckInScreen';
-import CheckinSuccessScreen from '../screens/checkins/CheckinSuccessScreen';
-import CheckInPendingScreen from '../screens/checkins/CheckInPendingScreen';
+import ConfirmCheckInScreen from '../screens/explore/checkin/ConfirmCheckInScreen';
+import CheckinSuccessScreen from '../screens/explore/checkin/CheckinSuccessScreen';
+import CheckInPendingScreen from '../screens/explore/checkin/CheckInPendingScreen';
 
 import PlanScreen from '../screens/plan/PlanScreen';
 import ChangePlanScreen from '../screens/plan/ChangePlanScreen';

@@ -5,6 +5,7 @@ import {
   TouchableOpacity,
   StyleSheet,
   ScrollView,
+  RefreshControl,
   ActivityIndicator,
   Linking,
   Platform,
@@ -14,8 +15,6 @@ import { colors, radius, typography } from '../../../theme/theme';
 import ReportProblemModal from '../ReportProblemModal';
 //import CommentsSection from './CommentsSection';
 
-// Ordem de exibição do horário semanal — códigos batem com o cadastro no
-// painel web (EstabelecimentoFormPage): 1 = Domingo ... 7 = Sábado.
 const DIAS_SEMANA_ORDEM = [
   { value: '1', label: 'Domingo', codigo: 'DOMINGO' },
   { value: '2', label: 'Segunda-feira', codigo: 'SEGUNDA_FEIRA' },
@@ -26,8 +25,6 @@ const DIAS_SEMANA_ORDEM = [
   { value: '7', label: 'Sábado', codigo: 'SABADO' },
 ];
 
-// Tipo de plano/oferta -> badge exibido no card (cor e texto). Ajusta os
-// códigos conforme o enum real do backend (chutei RECORRENTE/PACOTE/AVULSO).
 const TIPO_OFERTA_META = {
   RECORRENTE: { label: 'Recorrente', color: colors.blue, bg: '#DBEAFE' },
   PACOTE: { label: 'Pacote', color: '#7C3AED', bg: '#EDE9FE' },
@@ -69,8 +66,6 @@ function formatarValor(valor) {
   });
 }
 
-// `valorPromocional` só é considerado desconto quando vem preenchido e
-// menor que `valor` — mesma regra usada no ChangePlanScreen pros planos.
 function calcularDesconto(valor, valorPromocional) {
   if (!valor || valorPromocional == null || valorPromocional >= valor) {
     return null;
@@ -206,11 +201,19 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
       </Text>
 
       {planos.map((oferta) => {
-        const meta = TIPO_OFERTA_META[oferta.tipo.codigo] || {
-          label: oferta.tipo.codigo,
+        const meta = TIPO_OFERTA_META[oferta.tipo?.codigo] || {
+          label: oferta.tipo?.descricao || oferta.tipo?.codigo || 'Oferta',
           color: colors.textMuted,
           bg: colors.chipBg,
         };
+        const contratada = Boolean(oferta.usuarioContratado);
+
+        const situacao = oferta.usuarioContratado?.situacao?.codigo;
+
+        const contratacaoAtiva = contratada && situacao === 'ATIVO';
+
+        const contratacaoProcessando =
+          contratada && situacao !== 'ATIVO' && situacao != null;
 
         const desconto = calcularDesconto(oferta.valor, oferta.valorPromocional);
         const temDesconto = desconto != null;
@@ -218,10 +221,38 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
         return (
           <TouchableOpacity
             key={oferta.id}
-            style={styles.ofertaCard}
+            style={[
+              styles.ofertaCard,
+              contratacaoAtiva && styles.ofertaCardContratada,
+              contratacaoProcessando && styles.ofertaCardProcessando,
+            ]}
             activeOpacity={0.7}
             onPress={() => onSelecionarOferta?.(oferta)}
           >
+            {contratacaoAtiva && (
+              <View style={styles.ofertaContratadaRow}>
+                <Ionicons
+                  name="checkmark-circle"
+                  size={17}
+                  color={colors.success}
+                />
+                <Text style={styles.ofertaContratadaText}>
+                  Você já contratou
+                </Text>
+              </View>
+            )}
+
+            {contratacaoProcessando && (
+              <View style={styles.ofertaContratadaRow}>
+                <Ionicons name="time-outline" size={17} color="#B45309" />
+                <Text
+                  style={[styles.ofertaContratadaText, styles.ofertaProcessandoText]}
+                >
+                  Em processamento
+                </Text>
+              </View>
+            )}
+
             <View style={styles.ofertaTopRow}>
               <Text style={styles.ofertaNome} numberOfLines={1}>
                 {oferta.nome}
@@ -372,6 +403,8 @@ export default function EstablishmentDetail({
   loadingDetalhes,
   detalhesError,
   onRetryDetalhes,
+  refreshing,
+  onRefresh,
   onRegistrarInteresse,
   registrandoInteresse,
   onReportarProblema,
@@ -411,10 +444,6 @@ export default function EstablishmentDetail({
   };
 
   const abrirNoMaps = () => {
-    // Prioriza coordenadas (mais preciso), cai pro endereço em texto se não tiver.
-    // TODO: confirmar se o backend manda latitude/longitude no gym — chutei
-    // gym.latitude / gym.longitude, ajusta se o campo real tiver outro nome
-    // (ex: gym.endereco?.latitude).
     const temCoordenadas = gym.latitude != null && gym.longitude != null;
     const query = temCoordenadas
       ? `${gym.latitude},${gym.longitude}`
@@ -427,39 +456,25 @@ export default function EstablishmentDetail({
 
     const urlWeb = `https://www.google.com/maps/search/?api=1&query=${query}`;
 
-    Linking.openURL(urlNativa).catch(() => {
-      // App de mapas nativo não abriu (raro, mas pode acontecer) — cai pro
-      // navegador, que sempre funciona.
-      Linking.openURL(urlWeb).catch(() => {});
-    });
+    Linking.openURL(urlNativa).catch(() => Linking.openURL(urlWeb).catch(() => {}));
   };
 
-  const fechado = gym.horarioFuncionamento?.aberto === false;
-  const checkinHojeUtilizado = gym.checkinHojeAutorizado !== true;
-  const usuarioDentroLimiteDistancia = gym.usuarioDentroLimiteDistancia;
-
-  const checkinDesabilitado =
-    gym.parceiro === false ||
-    gym.inclusoPlanoUsuario === false ||
-    fechado ||
-    checkinHojeUtilizado ||
-    usuarioDentroLimiteDistancia === false;
-
-  const textoBotao = gym.parceiro === false
-    ? 'Estabelecimento não parceiro'
-    : gym.inclusoPlanoUsuario === false
-      ? 'Não incluso no seu plano'
-      : fechado
-        ? 'Fechado no momento'
-        : checkinHojeUtilizado
-          ? 'Check-in diário utilizado'
-          : usuarioDentroLimiteDistancia === false
-            ? 'Aproxime-se para fazer check-in'
-            : 'Fazer Check-in';
+  const checkinAutorizado = gym.checkinAutorizado.autorizado;
+  const checkinMotivo = gym.checkinAutorizado.motivo;
 
   return (
     <View style={styles.container}>
-      <ScrollView bounces={false}>
+      <ScrollView
+        bounces
+        refreshControl={
+          <RefreshControl
+            refreshing={!!refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.blue}
+            colors={[colors.blue]}
+          />
+        }
+      >
         <View style={styles.imageWrap}>
           <Image source={{ uri: gym.image }} style={styles.image} />
           <View style={styles.topBar}>
@@ -738,14 +753,14 @@ export default function EstablishmentDetail({
         <TouchableOpacity
           style={[
             styles.checkinButton,
-            checkinDesabilitado && styles.checkinButtonDisabled,
+            !checkinAutorizado && styles.checkinButtonDisabled,
           ]}
           activeOpacity={0.85}
           onPress={handleCheckin}
-          disabled={checkinDesabilitado}
+          disabled={!checkinAutorizado}
         >
           <Ionicons name="checkmark-circle-outline" size={19} color="#fff" />
-          <Text style={styles.checkinButtonText}>{textoBotao}</Text>
+          <Text style={styles.checkinButtonText}>{checkinMotivo}</Text>
         </TouchableOpacity>
       </View>
 
@@ -978,8 +993,32 @@ const styles = StyleSheet.create({
   ofertaCard: {
     backgroundColor: colors.bg,
     borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: 'transparent',
     padding: 14,
     marginBottom: 12,
+  },
+  ofertaCardContratada: {
+    backgroundColor: '#F0FDF4',
+    borderColor: colors.success,
+  },
+  ofertaCardProcessando: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#F59E0B',
+  },
+  ofertaContratadaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  ofertaContratadaText: {
+    fontSize: 12.5,
+    fontWeight: '700',
+    color: colors.success,
+  },
+  ofertaProcessandoText: {
+    color: '#B45309',
   },
   ofertaTopRow: {
     flexDirection: 'row',

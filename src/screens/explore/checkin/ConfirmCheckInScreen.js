@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
-import { getTotal, solicitar } from '../../services/checkinService';
-import { useCurrentLocation } from '../../hooks/useCurrentLocation';
+import { getTotal, solicitar } from '../../../services/checkinService';
+import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import ConfirmCheckIn from './ConfirmCheckIn';
 
 // Ordem de prioridade de uso: gasta primeiro o check-in do plano, depois

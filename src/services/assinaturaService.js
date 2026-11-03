@@ -21,3 +21,8 @@ export async function contratarOferta(payload) {
   const { data } = await axiosPrivate.post(`${BASE_URL}/offers`, payload);
   return data;
 }
+
+export async function consultarPagamento(assinaturaId) {
+  const { data } = await axiosPrivate.get(`${BASE_URL}/${assinaturaId}`);
+  return data;
+}

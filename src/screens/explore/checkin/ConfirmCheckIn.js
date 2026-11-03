@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../theme/theme';
+import { colors, radius, shadow } from '../../../theme/theme';
 
 const TYPE_META = {
   Plano: { color: colors.blue, bg: '#E8EEFC', icon: 'calendar-outline' },

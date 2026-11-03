@@ -8,7 +8,7 @@ import {
   Easing,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../theme/theme';
+import { colors, radius, shadow } from '../../../theme/theme';
 
 export default function CheckInSuccessScreen({ route, navigation }) {
   const estabelecimento = route?.params?.estabelecimento;

@@ -1,4 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import {
   View,
@@ -22,10 +23,6 @@ import {
   adicionar as adicionarComentario,
 } from '../../../services/comentarioService';
 
-// TODO: confirmar nome/path real do endpoint no backend — chutei
-// `listarPlanosEOfertas(estabelecimentoId)` fazendo um GET em algo como
-// /estabelecimentos/{id}/planos-ofertas. Criar o service real quando o
-// endpoint estiver pronto.
 import { listarPlanosEOfertas } from '../../../services/estabelecimentoOfertaService';
 
 import EstablishmentDetail from './EstablishmentDetail';
@@ -114,7 +111,6 @@ function montarEstabelecimento(gymResumo, e) {
   return {
     ...gymResumo,
     id: e.id ?? gymResumo?.id,
-
     name: e.nomeFantasia || e.razaoSocial || gymResumo?.name,
     category: e.tipo?.descricao,
     about: e.descricao,
@@ -146,11 +142,10 @@ function montarEstabelecimento(gymResumo, e) {
       .filter(Boolean),
 
     website: e.website,
-
     instagram: e.instagram,
-
     horarioFuncionamento,
-
+    checkinAutorizado: e.checkinAutorizado,
+    
     hours: horarioFuncionamento
       ? horarioFuncionamento.aberto
         ? `Aberto até as ${formatarHora(
@@ -166,21 +161,15 @@ function montarEstabelecimento(gymResumo, e) {
       : null,
 
     rating: e.avaliacaoMedia,
-
     reviews: e.totalAvaliacoes,
     horarios: e.horarios || [],
     horariosExcecao: e.horariosExcecao || [],
     usuarioPossuiInteresse: e.usuarioPossuiInteresse ?? false,
     usuarioDentroLimiteDistancia: e.usuarioDentroLimiteDistancia ?? false,
     totalInteresses: e.totalInteresses ?? 0,
-    inclusoPlanoUsuario:
-      e.inclusoPlanoUsuario,
-
-    checkinHojeAutorizado:
-      e.checkinHojeAutorizado,
-
+    inclusoPlanoUsuario: e.inclusoPlanoUsuario,
+    checkinAutorizado: e.checkinAutorizado,
     plano: e.plano ?? null,
-
     parceiro: e.parceiro,
   };
 }
@@ -189,10 +178,10 @@ export default function EstablishmentDetailScreen({
   route,
   navigation,
 }) {
-  const gymResumo =
-    route.params?.gym ?? {
-      id: route.params?.id,
-    };
+  const gymResumo = useMemo(
+    () => route.params?.gym ?? { id: route.params?.id },
+    [route.params?.gym, route.params?.id]
+  );
 
   const { coords, loading: loadingLocation, permissionDenied, refetch: refetchLocation } = useCurrentLocation();
 
@@ -204,6 +193,8 @@ export default function EstablishmentDetailScreen({
 
   const [detalhesError, setDetalhesError] =
     useState('');
+
+  const [refreshing, setRefreshing] = useState(false);
 
   const [registrandoInteresse, setRegistrandoInteresse] =
     useState(false);
@@ -235,10 +226,11 @@ export default function EstablishmentDetailScreen({
   const [activeTab, setActiveTab] = useState('sobre');
   const [planos, setPlanos] = useState([]);
   const [planosCarregados, setPlanosCarregados] = useState(false);
+  const planosCarregadosRef = useRef(false);
   const [loadingPlanos, setLoadingPlanos] = useState(false);
   const [planosError, setPlanosError] = useState('');
 
-  const buscarDetalhes = useCallback(async () => {
+  const buscarDetalhes = useCallback(async ({ silent = false } = {}) => {
     if (!gymResumo?.id) {
       setLoadingDetalhes(false);
       setDetalhesError(
@@ -249,9 +241,12 @@ export default function EstablishmentDetailScreen({
 
     if (!coords) return;
 
-    setLoadingDetalhes(true);
     setDetalhesError('');
-    setEstabelecimento(null);
+
+    if (!silent) {
+      setLoadingDetalhes(true);
+      setEstabelecimento(null);
+    }
 
     try {
       const { latitude, longitude } = coords;
@@ -268,14 +263,18 @@ export default function EstablishmentDetailScreen({
           'Não foi possível carregar os detalhes desse estabelecimento.'
       );
     } finally {
-      setLoadingDetalhes(false);
+      if (!silent) {
+        setLoadingDetalhes(false);
+      }
     }
   }, [gymResumo, coords]);
 
-  const buscarComentarios = useCallback(async () => {
+  const buscarComentarios = useCallback(async ({ silent = false } = {}) => {
     if (!gymResumo?.id) return;
 
-    setLoadingComentarios(true);
+    if (!silent) {
+      setLoadingComentarios(true);
+    }
     setComentariosError('');
 
     try {
@@ -307,32 +306,52 @@ export default function EstablishmentDetailScreen({
           'Não foi possível carregar os comentários.'
       );
     } finally {
-      setLoadingComentarios(false);
+      if (!silent) {
+        setLoadingComentarios(false);
+      }
     }
   }, [gymResumo]);
 
-  const buscarPlanos = useCallback(async () => {
+  const buscarPlanos = useCallback(async ({ silent = false } = {}) => {
     if (!gymResumo?.id) return;
 
-    setLoadingPlanos(true);
+    if (!silent) {
+      setLoadingPlanos(true);
+    }
     setPlanosError('');
 
     try {
       const data = await listarPlanosEOfertas(gymResumo.id);
 
       const lista = data?.response?.content ?? data?.response ?? [];
+      const listaOrdenada = [...lista].sort(
+        (ofertaA, ofertaB) =>
+          Number(Boolean(ofertaB?.usuarioContratado)) -
+          Number(Boolean(ofertaA?.usuarioContratado))
+      );
 
-      setPlanos(lista);
+      setPlanos(listaOrdenada);
       setPlanosCarregados(true);
+      planosCarregadosRef.current = true;
     } catch (err) {
       setPlanosError(
         err.friendlyMessage ||
           'Não foi possível carregar os planos e ofertas.'
       );
     } finally {
-      setLoadingPlanos(false);
+      if (!silent) {
+        setLoadingPlanos(false);
+      }
     }
   }, [gymResumo]);
+
+  useFocusEffect(
+    useCallback(() => {
+      if (planosCarregadosRef.current) {
+        buscarPlanos();
+      }
+    }, [buscarPlanos])
+  );
 
   // Único efeito de carregamento inicial: dispara assim que temos coords.
   useEffect(() => {
@@ -340,6 +359,22 @@ export default function EstablishmentDetailScreen({
     buscarDetalhes();
     buscarComentarios();
   }, [coords, buscarDetalhes, buscarComentarios]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+
+    try {
+      await Promise.all([
+        buscarDetalhes({ silent: true }),
+        buscarComentarios({ silent: true }),
+        planosCarregadosRef.current
+          ? buscarPlanos({ silent: true })
+          : Promise.resolve(),
+      ]);
+    } finally {
+      setRefreshing(false);
+    }
+  }, [buscarDetalhes, buscarComentarios, buscarPlanos]);
 
   const handleChangeTab = (tab) => {
     setActiveTab(tab);
@@ -471,17 +506,6 @@ export default function EstablishmentDetailScreen({
     }
   };
 
-  /*
-   * ============================================================
-   * IMPORTANTE
-   * ============================================================
-   *
-   * Enquanto o findById estiver carregando, NÃO renderizamos
-   * EstablishmentDetail.
-   *
-   * O gymResumo recebido da tela anterior não é exibido.
-   */
-
   if (permissionDenied) {
     return (
       <View style={styles.errorContainer}>
@@ -515,10 +539,6 @@ export default function EstablishmentDetailScreen({
     );
   }
 
-  /*
-   * Se o findById terminou mas ocorreu erro,
-   * mostramos somente a tela de erro.
-   */
   if (detalhesError || !estabelecimento) {
     return (
       <View style={styles.errorContainer}>
@@ -560,11 +580,6 @@ export default function EstablishmentDetailScreen({
     );
   }
 
-  /*
-   * Só chega aqui depois que o findById terminou
-   * e estabelecimento foi preenchido com os dados
-   * completos.
-   */
   return (
     <EstablishmentDetail
       navigation={navigation}
@@ -573,6 +588,9 @@ export default function EstablishmentDetailScreen({
       loadingDetalhes={false}
       detalhesError=""
       onRetryDetalhes={buscarDetalhes}
+
+      refreshing={refreshing}
+      onRefresh={handleRefresh}
 
       onRegistrarInteresse={
         handleRegistrarInteresse

@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
+import { consultarPagamento } from '../../../services/assinaturaService';
 import OfertaPagamentoResultado from './OfertaPagamentoResultado';
 
-// Adapte consultarPagamento(pagamentoId) ao endpoint real.
-// Não use apenas o HTTP 200 da criação da cobrança como confirmação.
 export default function OfertaPagamentoResultadoScreen({ route, navigation }) {
   const { pagamentoId, statusInicial, oferta } = route.params || {};
   const [status, setStatus] = useState(statusInicial || 'PENDENTE');
@@ -18,9 +17,10 @@ export default function OfertaPagamentoResultadoScreen({ route, navigation }) {
     setLoading(true);
     setError('');
     try {
-      // TODO: const pagamento = await consultarPagamento(pagamentoId);
-      // setStatus(pagamento.status);
-      setError('A consulta de pagamento ainda não foi integrada.');
+      
+      const { response } = await consultarPagamento(pagamentoId);
+      const { pagamento } = response;
+      setStatus(pagamento.situacao.codigo);
     } catch (err) {
       setError(err?.friendlyMessage || 'Não foi possível consultar o pagamento.');
     } finally {
