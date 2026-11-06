@@ -26,7 +26,7 @@ const ONBOARDING_KEY = '@conexpass:onboarding_completed';
 // quando a estrutura de navegação de MainTabs for confirmada.
 
 function RootNavigator() {
-  const { isAuthenticated, isBooting } = useAuth();
+  const { isAuthenticated, isBooting, sessionError, retrySession } = useAuth();
 
   const [onboardingConcluido, setOnboardingConcluido] = useState(null);
 
@@ -63,6 +63,10 @@ function RootNavigator() {
   // Aguarda a validação do token e a leitura do primeiro acesso.
   if (isBooting || onboardingConcluido === null) {
     return <SplashLoadingScreen />;
+  }
+
+  if (sessionError) {
+    return <SplashLoadingScreen error={sessionError} onRetry={retrySession} />;
   }
 
   return (

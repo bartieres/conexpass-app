@@ -4,9 +4,11 @@ import {
   useEffect,
   useState,
   useCallback,
+  useRef,
 } from 'react';
 import { authService } from '../services/authService';
-import { setOnUnauthorized } from '../config/api';
+import { AppState, Alert } from 'react-native';
+import { setOnUnauthorized, getSessionVersion } from '../config/api';
 
 const AuthContext = createContext(null);
 
@@ -14,34 +16,65 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [isBooting, setIsBooting] = useState(true); // checando sessão salva ao abrir o app
 
-  // Ao abrir o app: se existir token salvo, valida contra o backend (GET /users/me).
-  // Se o backend confirmar, mantém o usuário logado; se não, limpa a sessão.
-  useEffect(() => {
-    (async () => {
-      try {
-        const token = await authService.getStoredToken();
-        if (!token) {
-          setIsBooting(false);
-          return;
+  const [sessionError, setSessionError] = useState(null);
+  const restorationRef = useRef(null);
+
+  const restoreSession = useCallback(() => {
+    if (restorationRef.current) return restorationRef.current;
+    const version = getSessionVersion();
+    setSessionError(null);
+    setIsBooting(true);
+    const pending = authService
+      .restoreSession()
+      .then(
+        (restoredUser) => {
+          if (version === getSessionVersion()) setUser(restoredUser);
+        },
+        (error) => {
+          if (version === getSessionVersion()) {
+            setSessionError(
+              error.friendlyMessage ||
+                'Não foi possível restaurar sua sessão. Tente novamente.'
+            );
+          }
         }
-        const freshUser = await authService.getMe();
-        setUser(freshUser);
-      } catch (_err) {
-        await authService.logout();
-        setUser(null);
-      } finally {
+      )
+      .finally(() => {
+        restorationRef.current = null;
         setIsBooting(false);
-      }
-    })();
+      });
+    restorationRef.current = pending;
+    return pending;
   }, []);
 
-  // Se o backend responder 401 em qualquer chamada, derruba a sessão automaticamente
   useEffect(() => {
     setOnUnauthorized(() => {
-      authService.logout();
       setUser(null);
+      setSessionError(null);
+      setIsBooting(false);
     });
+    return () => setOnUnauthorized(null);
   }, []);
+
+  useEffect(() => {
+    // A restauração é uma operação assíncrona compartilhada entre tentativas.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    restoreSession();
+  }, [restoreSession]);
+
+  useEffect(() => {
+    if (!user) return;
+    let previousState = AppState.currentState;
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active' && previousState !== 'active') {
+        authService.ensureSession().catch(() => {
+          // Falhas transitórias não apagam a sessão; a próxima chamada pode tentar novamente.
+        });
+      }
+      previousState = state;
+    });
+    return () => subscription.remove();
+  }, [user]);
 
   const login = useCallback(async (identifier, password) => {
     const loggedUser = await authService.login(identifier, password);
@@ -58,14 +91,23 @@ export function AuthProvider({ children }) {
   }, []);
 
   const logout = useCallback(async () => {
-    await authService.logout();
     setUser(null);
+    setSessionError(null);
+    const result = await authService.logout();
+    if (!result.remoteRevoked) {
+      Alert.alert(
+        'Você saiu do aplicativo',
+        'Não foi possível confirmar o encerramento no servidor. A sessão no servidor poderá permanecer ativa até expirar.'
+      );
+    }
   }, []);
 
   const value = {
     user,
     isAuthenticated: !!user,
     isBooting,
+    sessionError,
+    retrySession: restoreSession,
     login,
     register,
     forgotPassword,

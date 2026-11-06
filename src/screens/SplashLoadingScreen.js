@@ -1,21 +1,44 @@
-import { View, ActivityIndicator, StyleSheet, Image } from 'react-native';
+import {
+  View,
+  ActivityIndicator,
+  StyleSheet,
+  Image,
+  Text,
+  Pressable,
+} from 'react-native';
 import { colors } from '../theme/theme';
 import Logo from '../assets/logo.png';
 
-export default function SplashLoadingScreen() {
+export default function SplashLoadingScreen({ error, onRetry }) {
   return (
     <View style={styles.container}>
       <Image source={Logo} style={{ height: 130, resizeMode: 'contain' }} />
-      <ActivityIndicator
-        size="small"
-        color={colors.blue}
-        style={{ marginTop: 18 }}
-      />
+      {error ? (
+        <>
+          <Text style={styles.error}>{error}</Text>
+          <Pressable
+            accessibilityRole="button"
+            onPress={onRetry}
+            style={styles.retry}
+          >
+            <Text style={styles.retryText}>Tentar novamente</Text>
+          </Pressable>
+        </>
+      ) : (
+        <ActivityIndicator
+          size="small"
+          color={colors.blue}
+          style={{ marginTop: 18 }}
+        />
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  error: { color: colors.text, textAlign: 'center', margin: 24 },
+  retry: { backgroundColor: colors.blue, padding: 14, borderRadius: 12 },
+  retryText: { color: '#fff', fontWeight: '700' },
   container: {
     flex: 1,
     alignItems: 'center',
