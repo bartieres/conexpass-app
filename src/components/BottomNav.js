@@ -12,8 +12,8 @@ const TABS = [
   },
   //{ key: 'Historico', label: 'Histórico', icon: 'time-outline', iconActive: 'time' },
   {
-    key: 'CheckIn',
-    label: 'Check-ins',
+    key: 'Meus Acessos',
+    label: 'Meus Acessos',
     icon: 'qr-code-outline',
     iconActive: 'qr-code',
   },

@@ -92,7 +92,7 @@ export default function CheckInSuccessScreen({ route, navigation }) {
       <View style={styles.footer}>
         <TouchableOpacity
           style={styles.primaryButton}
-          onPress={() => navigation.replace('CheckIn')}
+          onPress={() => navigation.replace('ExplorarMain')}
           activeOpacity={0.85}
         >
           <Text style={styles.primaryButtonText}>Ver meus check-ins</Text>

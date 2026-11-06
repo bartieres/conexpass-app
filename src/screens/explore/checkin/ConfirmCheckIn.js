@@ -1,6 +1,7 @@
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   TouchableOpacity,
   ScrollView,
@@ -9,38 +10,19 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow } from '../../../theme/theme';
 
-const TYPE_META = {
-  Plano: { color: colors.blue, bg: '#E8EEFC', icon: 'calendar-outline' },
-  Avulso: { color: '#B45309', bg: '#FEF3C7', icon: 'cart-outline' },
-  Bônus: {
-    color: colors.success,
-    bg: colors.successLight,
-    icon: 'gift-outline',
-  },
-};
-
-function DisponibilidadeRow({ label, value, meta, isLast }) {
-  return (
-    <View style={[styles.dispRow, !isLast && styles.dispRowDivider]}>
-      <View style={styles.dispLeft}>
-        <View style={[styles.dispIconWrap, { backgroundColor: meta.bg }]}>
-          <Ionicons name={meta.icon} size={16} color={meta.color} />
-        </View>
-        <Text style={styles.dispLabel}>{label}</Text>
-      </View>
-      <Text style={styles.dispValue}>{value}</Text>
-    </View>
-  );
+function formatarData(dataISO) {
+  if (!dataISO) return '';
+  const [ano, mes, dia] = dataISO.split('-');
+  return `${dia}/${mes}/${ano}`;
 }
 
 export default function ConfirmCheckIn({
   navigation,
   estabelecimento,
-  resumo,
-  loadingResumo,
-  resumoError,
-  onRetryResumo,
-  tipoUtilizado,
+  acesso,
+  loadingAcesso,
+  acessoError,
+  onRetryAcesso,
   loadingLocation,
   permissionDenied,
   onRetryLocation,
@@ -48,16 +30,21 @@ export default function ConfirmCheckIn({
   confirmError,
   onSolicitar,
 }) {
-  const meta = TYPE_META[tipoUtilizado?.nome] || TYPE_META.Plano;
-  const semCheckinsDisponiveis =
-    !loadingResumo && !resumoError && !tipoUtilizado;
+  const semAcessoDisponivel =
+    !loadingAcesso && !acessoError && !acesso;
+
   const podeConfirmar =
-    !!tipoUtilizado &&
+    !!acesso &&
     !loadingLocation &&
     !permissionDenied &&
     !confirming &&
-    !loadingResumo &&
-    !resumoError;
+    !loadingAcesso &&
+    !acessoError;
+
+  const progresso =
+    acesso?.total > 0
+      ? Math.max(0, Math.min(1, (acesso.disponiveis ?? 0) / acesso.total))
+      : 0;
 
   return (
     <View style={styles.safe}>
@@ -74,110 +61,167 @@ export default function ConfirmCheckIn({
 
       <ScrollView contentContainerStyle={styles.body}>
         <View style={styles.gymCard}>
-          <View style={styles.gymIconWrap}>
-            <Ionicons name="barbell-outline" size={26} color={colors.blue} />
-          </View>
+          {estabelecimento?.image ? (
+            <Image
+              source={{ uri: estabelecimento.image }}
+              style={styles.gymImage}
+            />
+          ) : (
+            <View style={styles.gymIconWrap}>
+              <Ionicons name="barbell-outline" size={26} color={colors.blue} />
+            </View>
+          )}
+
           <View style={{ flex: 1 }}>
             <Text style={styles.gymName}>{estabelecimento?.name}</Text>
-            {!!estabelecimento?.address && (
-              <View style={styles.gymInfoRow}>
-                <Ionicons
-                  name="location-outline"
-                  size={13}
-                  color={colors.textLight}
-                />
-                <Text style={styles.gymInfoText} numberOfLines={1}>
-                  {estabelecimento.address}
-                </Text>
-              </View>
+            {!!estabelecimento?.category && (
+              <Text style={styles.gymCategory} numberOfLines={1}>
+                {estabelecimento.category}
+              </Text>
             )}
-            {!!estabelecimento?.hours && (
-              <View style={styles.gymInfoRow}>
+
+            {!loadingAcesso && !acessoError && !!acesso && (
+              <View style={styles.availableBadge}>
                 <Ionicons
-                  name="time-outline"
-                  size={13}
-                  color={colors.textLight}
+                  name="checkmark-circle"
+                  size={14}
+                  color={colors.success}
                 />
-                <Text style={styles.gymInfoText}>{estabelecimento.hours}</Text>
+                <Text style={styles.availableBadgeText}>
+                  Disponível para check-in
+                </Text>
               </View>
             )}
           </View>
         </View>
 
-        {loadingResumo && (
+        <Text style={styles.sectionTitle}>Acesso que será utilizado</Text>
+
+        {loadingAcesso && (
           <View style={styles.stateBox}>
             <ActivityIndicator size="small" color={colors.blue} />
           </View>
         )}
 
-        {!loadingResumo && !!resumoError && (
+        {!loadingAcesso && !!acessoError && (
           <View style={styles.stateBox}>
             <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
-            <Text style={styles.stateText}>{resumoError}</Text>
+            <Text style={styles.stateText}>{acessoError}</Text>
             <TouchableOpacity
               style={styles.stateButton}
-              onPress={onRetryResumo}
+              onPress={onRetryAcesso}
             >
               <Text style={styles.stateButtonText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
         )}
 
-        {!loadingResumo && !resumoError && tipoUtilizado && (
-          <View style={styles.usoCard}>
-            <Text style={styles.usoTitle}>Será utilizado:</Text>
-            <View style={styles.usoRow}>
-              <View style={styles.usoLeft}>
-                <View
-                  style={[styles.usoIconWrap, { backgroundColor: meta.bg }]}
-                >
-                  <Ionicons name={meta.icon} size={17} color={meta.color} />
-                </View>
-                <Text style={styles.usoLabel}>
-                  Check-in do {tipoUtilizado.nome.toLowerCase()}
-                </Text>
-              </View>
-              <View style={[styles.typePill, { backgroundColor: meta.bg }]}>
-                <Text style={[styles.typePillText, { color: meta.color }]}>
-                  {tipoUtilizado.nome}
-                </Text>
-              </View>
-            </View>
-          </View>
-        )}
-
-        {semCheckinsDisponiveis && (
+        {semAcessoDisponivel && (
           <View style={styles.stateBox}>
             <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
             <Text style={styles.stateText}>
-              Você não tem check-ins disponíveis no momento. Verifique seu plano
-              ou adquira um check-in avulso.
+              Você não tem check-ins disponíveis no momento. Verifique seu
+              plano ou adquira uma oferta deste estabelecimento.
             </Text>
           </View>
         )}
 
-        {!loadingResumo && !resumoError && resumo && (
-          <>
-            <Text style={styles.disponiveisTitle}>Você tem disponíveis:</Text>
-            <View style={styles.dispCard}>
-              <DisponibilidadeRow
-                label="Check-ins do plano"
-                value={resumo.plano}
-                meta={TYPE_META.Plano}
-              />
-              <DisponibilidadeRow
-                label="Check-ins avulsos"
-                value={resumo.avulso}
-                meta={TYPE_META.Avulso}
-              />
-              <DisponibilidadeRow
-                label="Check-ins bônus"
-                value={resumo.bonus}
-                meta={TYPE_META.Bônus}
-                isLast
-              />
+        {!loadingAcesso && !acessoError && !!acesso && (
+          <View style={styles.acessoCard}>
+            <View style={styles.acessoTopRow}>
+              <View style={styles.acessoIconWrap}>
+                <Ionicons name="barbell-outline" size={22} color={colors.blue} />
+              </View>
+              <Text style={styles.acessoNome} numberOfLines={1}>
+                {acesso.nome}
+              </Text>
+              {!!acesso.origem?.descricao && (
+                <View style={styles.origemPill}>
+                  <Text style={styles.origemPillText} numberOfLines={1}>
+                    {acesso.origem.descricao}
+                  </Text>
+                </View>
+              )}
             </View>
-          </>
+
+            {acesso.total != null && (
+              <>
+                <View style={styles.contadorRow}>
+                  <Text style={styles.contadorNumero}>
+                    {acesso.disponiveis}
+                  </Text>
+                  <Text style={styles.contadorLabel}>
+                    de {acesso.total} acessos disponíveis{'\n'}no ciclo
+                  </Text>
+                </View>
+
+                <View style={styles.progressTrack}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${progresso * 100}%` },
+                    ]}
+                  />
+                </View>
+              </>
+            )}
+
+            <View style={styles.acessoInfoRows}>
+              <View style={styles.acessoInfoRow}>
+                <View style={styles.acessoInfoLeft}>
+                  <Ionicons
+                    name="layers-outline"
+                    size={16}
+                    color={colors.textMuted}
+                  />
+                  <Text style={styles.acessoInfoLabel}>
+                    Este check-in consumirá
+                  </Text>
+                </View>
+                <Text style={styles.acessoInfoValue}>
+                  {acesso.consumira ?? 1} acesso
+                  {(acesso.consumira ?? 1) > 1 ? 's' : ''}
+                </Text>
+              </View>
+
+              {acesso.saldoApos != null && (
+                <View style={[styles.acessoInfoRow, styles.acessoInfoRowDivider]}>
+                  <View style={styles.acessoInfoLeft}>
+                    <Ionicons
+                      name="sync-outline"
+                      size={16}
+                      color={colors.textMuted}
+                    />
+                    <Text style={styles.acessoInfoLabel}>
+                      Saldo após confirmação
+                    </Text>
+                  </View>
+                  <Text style={styles.acessoInfoValue}>
+                    {acesso.saldoApos} acesso
+                    {acesso.saldoApos !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              )}
+
+              {!!acesso.proximaRenovacao && (
+                <View style={[styles.acessoInfoRow, styles.acessoInfoRowDivider]}>
+                  <View style={styles.acessoInfoLeft}>
+                    <Ionicons
+                      name="calendar-outline"
+                      size={16}
+                      color={colors.textMuted}
+                    />
+                    <Text style={styles.acessoInfoLabel}>
+                      Próxima renovação
+                    </Text>
+                  </View>
+                  <Text style={styles.acessoInfoValue}>
+                    {formatarData(acesso.proximaRenovacao)}
+                  </Text>
+                </View>
+              )}
+            </View>
+          </View>
         )}
 
         {permissionDenied && (
@@ -193,7 +237,7 @@ export default function ConfirmCheckIn({
           </View>
         )}
 
-        {!permissionDenied && (
+        {!permissionDenied && !!acesso && (
           <View style={styles.infoBox}>
             <Ionicons
               name="information-circle-outline"
@@ -201,8 +245,8 @@ export default function ConfirmCheckIn({
               color={colors.blue}
             />
             <Text style={styles.infoText}>
-              O check-in será confirmado com base na sua localização, garantindo
-              que você esteja próximo ao estabelecimento.
+              O acesso será descontado somente após a confirmação do check-in
+              pelo estabelecimento.
             </Text>
           </View>
         )}
@@ -227,7 +271,10 @@ export default function ConfirmCheckIn({
           {confirming ? (
             <ActivityIndicator color="#fff" />
           ) : (
-            <Text style={styles.confirmButtonText}>Confirmar check-in</Text>
+            <>
+              <Ionicons name="checkmark-circle-outline" size={19} color="#fff" />
+              <Text style={styles.confirmButtonText}>Confirmar check-in</Text>
+            </>
           )}
         </TouchableOpacity>
       </View>
@@ -264,8 +311,13 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderRadius: radius.lg,
     padding: 14,
-    marginBottom: 18,
+    marginBottom: 22,
     ...shadow,
+  },
+  gymImage: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
   },
   gymIconWrap: {
     width: 56,
@@ -276,13 +328,34 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   gymName: { fontSize: 16, fontWeight: '800', color: colors.text },
-  gymInfoRow: {
+  gymCategory: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  availableBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 3,
+    alignSelf: 'flex-start',
+    gap: 5,
+    backgroundColor: colors.successLight,
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    marginTop: 8,
   },
-  gymInfoText: { fontSize: 12.5, color: colors.textMuted, flexShrink: 1 },
+  availableBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.success,
+  },
+
+  sectionTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 12,
+  },
 
   stateBox: {
     alignItems: 'center',
@@ -305,78 +378,96 @@ const styles = StyleSheet.create({
   },
   stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 12.5 },
 
-  usoCard: {
-    backgroundColor: '#EEF1FC',
+  acessoCard: {
+    backgroundColor: '#fff',
     borderRadius: radius.lg,
     padding: 16,
-    marginBottom: 20,
-  },
-  usoTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.blue,
-    marginBottom: 10,
-  },
-  usoRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#fff',
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-  },
-  usoLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  usoIconWrap: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  usoLabel: {
-    fontSize: 13.5,
-    fontWeight: '700',
-    color: colors.text,
-    flexShrink: 1,
-  },
-  typePill: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: radius.pill,
-  },
-  typePillText: { fontSize: 11.5, fontWeight: '700' },
-
-  disponiveisTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: colors.text,
-    marginBottom: 10,
-  },
-  dispCard: {
-    backgroundColor: '#fff',
-    borderRadius: radius.lg,
-    paddingHorizontal: 14,
     marginBottom: 18,
     ...shadow,
   },
-  dispRow: {
+  acessoTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 13,
+    gap: 10,
+    marginBottom: 16,
   },
-  dispRowDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
-  dispLeft: { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  dispIconWrap: {
-    width: 30,
-    height: 30,
-    borderRadius: 15,
+  acessoIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EEF1FC',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  dispLabel: { fontSize: 13.5, color: colors.text },
-  dispValue: { fontSize: 15, fontWeight: '800', color: colors.text },
+  acessoNome: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: colors.text,
+    flex: 1,
+  },
+  origemPill: {
+    backgroundColor: '#EEF1FC',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    maxWidth: 150,
+  },
+  origemPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.blue,
+  },
+
+  contadorRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    gap: 8,
+    marginBottom: 10,
+  },
+  contadorNumero: {
+    fontSize: 34,
+    fontWeight: '800',
+    color: colors.blue,
+    lineHeight: 36,
+  },
+  contadorLabel: {
+    fontSize: 13,
+    color: colors.textMuted,
+    lineHeight: 17,
+    marginBottom: 4,
+  },
+
+  progressTrack: {
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: colors.border,
+    overflow: 'hidden',
+    marginBottom: 16,
+  },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: colors.blue,
+  },
+
+  acessoInfoRows: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 4,
+  },
+  acessoInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 11,
+  },
+  acessoInfoRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  acessoInfoLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  acessoInfoLabel: { fontSize: 13, color: colors.text },
+  acessoInfoValue: { fontSize: 13.5, fontWeight: '700', color: colors.text },
 
   infoBox: {
     flexDirection: 'row',
@@ -422,6 +513,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.bg,
   },
   confirmButton: {
+    flexDirection: 'row',
+    gap: 8,
     backgroundColor: colors.blue,
     height: 52,
     borderRadius: radius.md,

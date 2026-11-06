@@ -25,22 +25,9 @@ export const findAllByCondition = async (params) => {
   return response.data;
 };
 
-export const getTotal = async () => {
-  const response = await axiosPrivate.get(`${BASE_URL}/totalizador`);
+export const consultarAcessoDisponivel = async (estabelecimentoId) => {
+  const response = await axiosPrivate.get(
+    `${BASE_URL}/resumo-consumo/${estabelecimentoId}`
+  );
   return response.data;
 };
-
-/*export const checkinService = {
-    
-    findAll: async () => {
-        var params = {
-            ignoreSize: true
-        };
-        return await findAllByCondition(params);
-    },
-
-    findAllByCondition: async (params) => {
-        const response = await api.get(BASE_URL, { params });
-        return response.data.response;
-    },
-};*/

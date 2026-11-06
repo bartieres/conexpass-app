@@ -2,8 +2,10 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
+  Image,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
   Animated,
   Easing,
   Alert,
@@ -15,6 +17,12 @@ import { getStatus, cancelar } from '../../../services/checkinService';
 const INTERVALO_POLLING_MS = 3000; // pergunta ao backend a cada 3s
 const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos esperando sem resposta
 
+function formatarData(dataISO) {
+  if (!dataISO) return '';
+  const [ano, mes, dia] = dataISO.split('-');
+  return `${dia}/${mes}/${ano}`;
+}
+
 /**
  * CheckInPendingScreen
  *
@@ -24,15 +32,19 @@ const TIMEOUT_MS = 2 * 60 * 1000; // 2 minutos esperando sem resposta
  * confirmação de verdade depende de uma ação humana do outro lado (o
  * atendente no painel web).
  *
- * route.params esperado: { checkinId, estabelecimento }
+ * route.params esperado: { checkinId, estabelecimento, acesso }
+ * `acesso` é o mesmo objeto já consultado/exibido na tela de confirmação
+ * (ConfirmCheckInScreen) — reaproveitado aqui só pra exibição, não é
+ * buscado de novo.
  */
 export default function CheckInPendingScreen({ route, navigation }) {
-  const { checkinId, estabelecimento } = route?.params ?? {};
+  const { checkinId, estabelecimento, acesso } = route?.params ?? {};
 
   // 'aguardando' | 'confirmado' | 'recusado' | 'expirado' | 'erro'
   const [status, setStatus] = useState('aguardando');
   const [erro, setErro] = useState('');
   const [cancelando, setCancelando] = useState(false);
+  const [verificandoAgora, setVerificandoAgora] = useState(false);
 
   const intervalRef = useRef(null);
   const timeoutRef = useRef(null);
@@ -116,6 +128,18 @@ export default function CheckInPendingScreen({ route, navigation }) {
     }, TIMEOUT_MS);
   };
 
+  // Checagem manual, disparada pelo botão "Acompanhar solicitação" — o
+  // polling automático continua rodando normalmente, isso só adianta a
+  // resposta pra quem não quer esperar o próximo ciclo de 3s.
+  const handleAcompanhar = async () => {
+    setVerificandoAgora(true);
+    try {
+      await checarStatus();
+    } finally {
+      setVerificandoAgora(false);
+    }
+  };
+
   const handleCancelar = () => {
     Alert.alert(
       'Cancelar check-in',
@@ -152,76 +176,224 @@ export default function CheckInPendingScreen({ route, navigation }) {
     outputRange: ['0deg', '360deg'],
   });
 
+  const mostrarResumo =
+    (status === 'aguardando' || status === 'expirado') &&
+    (!!estabelecimento || !!acesso);
+
   return (
     <View style={styles.safe}>
-      <View style={styles.content}>
-        {status === 'aguardando' && (
-          <>
-            <Animated.View
-              style={[
-                styles.iconCircle,
-                { transform: [{ rotate: rotateInterpolate }] },
-              ]}
-            >
-              <Ionicons name="time-outline" size={40} color="#fff" />
-            </Animated.View>
-            <Text style={styles.title}>Aguardando confirmação</Text>
-            <Text style={styles.subtitle}>
-              Enviamos sua solicitação para a recepção
-              {!!estabelecimento?.name && ` de ${estabelecimento.name}`}. Assim
-              que for aprovada, você segue automaticamente.
-            </Text>
-          </>
-        )}
-
-        {status === 'recusado' && (
-          <>
-            <View style={[styles.iconCircle, styles.iconCircleError]}>
-              <Ionicons name="close" size={40} color="#fff" />
-            </View>
-            <Text style={styles.title}>Check-in não aprovado</Text>
-            <Text style={styles.subtitle}>
-              A recepção não confirmou sua solicitação. Verifique com o
-              estabelecimento ou tente novamente.
-            </Text>
-          </>
-        )}
-
-        {status === 'expirado' && (
-          <>
-            <View style={[styles.iconCircle, styles.iconCircleWarning]}>
-              <Ionicons name="alert" size={38} color="#fff" />
-            </View>
-            <Text style={styles.title}>Ainda sem resposta</Text>
-            <Text style={styles.subtitle}>
-              A recepção ainda não confirmou sua solicitação. Você pode
-              continuar aguardando ou cancelar.
-            </Text>
-          </>
-        )}
-
-        {status === 'erro' && (
-          <>
-            <View style={[styles.iconCircle, styles.iconCircleError]}>
-              <Ionicons name="alert-circle-outline" size={38} color="#fff" />
-            </View>
-            <Text style={styles.title}>Algo deu errado</Text>
-            <Text style={styles.subtitle}>{erro}</Text>
-          </>
-        )}
+      <View style={styles.header}>
+        <TouchableOpacity
+          style={styles.backButton}
+          onPress={() => navigation.goBack()}
+        >
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Check-in solicitado</Text>
+        <View style={{ width: 38 }} />
       </View>
+
+      <ScrollView contentContainerStyle={styles.content}>
+        <View style={styles.statusBlock}>
+          {status === 'aguardando' && (
+            <>
+              <Animated.View
+                style={[
+                  styles.iconCircle,
+                  { transform: [{ rotate: rotateInterpolate }] },
+                ]}
+              >
+                <Ionicons name="time-outline" size={40} color="#fff" />
+              </Animated.View>
+              <Text style={styles.title}>Aguardando confirmação</Text>
+              <Text style={styles.subtitle}>
+                Seu check-in foi enviado para a
+                {!!estabelecimento?.name && ` ${estabelecimento.name}`} e está
+                aguardando análise.
+              </Text>
+            </>
+          )}
+
+          {status === 'recusado' && (
+            <>
+              <View style={[styles.iconCircle, styles.iconCircleError]}>
+                <Ionicons name="close" size={40} color="#fff" />
+              </View>
+              <Text style={styles.title}>Check-in não aprovado</Text>
+              <Text style={styles.subtitle}>
+                A recepção não confirmou sua solicitação. Verifique com o
+                estabelecimento ou tente novamente.
+              </Text>
+            </>
+          )}
+
+          {status === 'expirado' && (
+            <>
+              <View style={[styles.iconCircle, styles.iconCircleWarning]}>
+                <Ionicons name="alert" size={38} color="#fff" />
+              </View>
+              <Text style={styles.title}>Ainda sem resposta</Text>
+              <Text style={styles.subtitle}>
+                A recepção ainda não confirmou sua solicitação. Você pode
+                continuar aguardando ou cancelar.
+              </Text>
+            </>
+          )}
+
+          {status === 'erro' && (
+            <>
+              <View style={[styles.iconCircle, styles.iconCircleError]}>
+                <Ionicons name="alert-circle-outline" size={38} color="#fff" />
+              </View>
+              <Text style={styles.title}>Algo deu errado</Text>
+              <Text style={styles.subtitle}>{erro}</Text>
+            </>
+          )}
+        </View>
+
+        {mostrarResumo && (
+          <>
+            {!!estabelecimento && (
+              <View style={styles.gymCard}>
+                {estabelecimento.image ? (
+                  <Image
+                    source={{ uri: estabelecimento.image }}
+                    style={styles.gymImage}
+                  />
+                ) : (
+                  <View style={styles.gymIconWrap}>
+                    <Ionicons
+                      name="barbell-outline"
+                      size={26}
+                      color={colors.blue}
+                    />
+                  </View>
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.gymName}>{estabelecimento.name}</Text>
+                  {!!estabelecimento.category && (
+                    <Text style={styles.gymCategory} numberOfLines={1}>
+                      {estabelecimento.category}
+                    </Text>
+                  )}
+                </View>
+              </View>
+            )}
+
+            {!!acesso && (
+              <View style={styles.acessoCard}>
+                <View style={styles.acessoTopRow}>
+                  <View style={styles.acessoIconWrap}>
+                    <Ionicons
+                      name="barbell-outline"
+                      size={20}
+                      color={colors.blue}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.acessoNome} numberOfLines={1}>
+                      {acesso.nome}
+                    </Text>
+                    <Text style={styles.acessoSubtitulo}>
+                      Utilização do seu saldo
+                    </Text>
+                  </View>
+                  {!!acesso.origem?.descricao && (
+                    <View style={styles.origemPill}>
+                      <Text style={styles.origemPillText} numberOfLines={1}>
+                        {acesso.origem.descricao}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.acessoInfoRows}>
+                  <View style={styles.acessoInfoRow}>
+                    <View style={styles.acessoInfoLeft}>
+                      <Ionicons
+                        name="layers-outline"
+                        size={16}
+                        color={colors.textMuted}
+                      />
+                      <Text style={styles.acessoInfoLabel}>
+                        Consumo solicitado
+                      </Text>
+                    </View>
+                    <Text style={styles.acessoInfoValue}>
+                      {acesso.consumira ?? 1} acesso
+                      {(acesso.consumira ?? 1) > 1 ? 's' : ''}
+                    </Text>
+                  </View>
+
+                  {acesso.saldoApos != null && (
+                    <View
+                      style={[styles.acessoInfoRow, styles.acessoInfoRowDivider]}
+                    >
+                      <View style={styles.acessoInfoLeft}>
+                        <Ionicons
+                          name="sync-outline"
+                          size={16}
+                          color={colors.textMuted}
+                        />
+                        <Text style={styles.acessoInfoLabel}>
+                          Saldo após confirmação
+                        </Text>
+                      </View>
+                      <Text style={styles.acessoInfoValue}>
+                        {acesso.saldoApos} acesso
+                        {acesso.saldoApos !== 1 ? 's' : ''}
+                      </Text>
+                    </View>
+                  )}
+
+                  {!!acesso.proximaRenovacao && (
+                    <View
+                      style={[styles.acessoInfoRow, styles.acessoInfoRowDivider]}
+                    >
+                      <View style={styles.acessoInfoLeft}>
+                        <Ionicons
+                          name="calendar-outline"
+                          size={16}
+                          color={colors.textMuted}
+                        />
+                        <Text style={styles.acessoInfoLabel}>
+                          Próxima renovação
+                        </Text>
+                      </View>
+                      <Text style={styles.acessoInfoValue}>
+                        {formatarData(acesso.proximaRenovacao)}
+                      </Text>
+                    </View>
+                  )}
+                </View>
+              </View>
+            )}
+          </>
+        )}
+      </ScrollView>
 
       <View style={styles.footer}>
         {status === 'aguardando' && (
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={handleCancelar}
-            disabled={cancelando}
-          >
-            <Text style={styles.secondaryButtonText}>
-              {cancelando ? 'Cancelando...' : 'Cancelar solicitação'}
-            </Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity
+              style={styles.outlineButton}
+              onPress={handleAcompanhar}
+              disabled={verificandoAgora}
+            >
+              <Text style={styles.outlineButtonText}>
+                {verificandoAgora ? 'Verificando...' : 'Acompanhar solicitação'}
+              </Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={styles.secondaryButton}
+              onPress={handleCancelar}
+              disabled={cancelando}
+            >
+              <Text style={styles.secondaryButtonText}>
+                {cancelando ? 'Cancelando...' : 'Cancelar solicitação'}
+              </Text>
+            </TouchableOpacity>
+          </>
         )}
 
         {status === 'expirado' && (
@@ -259,11 +431,31 @@ export default function CheckInPendingScreen({ route, navigation }) {
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  content: {
-    flex: 1,
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingTop: 54,
+    paddingBottom: 14,
+  },
+  backButton: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 30,
+    ...shadow,
+  },
+  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
+
+  content: { padding: 20, paddingTop: 10, paddingBottom: 30 },
+
+  statusBlock: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginBottom: 22,
   },
   iconCircle: {
     width: 92,
@@ -290,6 +482,105 @@ const styles = StyleSheet.create({
     marginTop: 8,
     lineHeight: 19,
   },
+
+  gymCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#fff',
+    borderRadius: radius.lg,
+    padding: 14,
+    marginBottom: 16,
+    ...shadow,
+  },
+  gymImage: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
+  },
+  gymIconWrap: {
+    width: 56,
+    height: 56,
+    borderRadius: radius.md,
+    backgroundColor: '#E8EEFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  gymName: { fontSize: 16, fontWeight: '800', color: colors.text },
+  gymCategory: {
+    fontSize: 12.5,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+
+  acessoCard: {
+    backgroundColor: '#fff',
+    borderRadius: radius.lg,
+    padding: 16,
+    marginBottom: 16,
+    ...shadow,
+  },
+  acessoTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  acessoIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EEF1FC',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  acessoNome: { fontSize: 15, fontWeight: '800', color: colors.text },
+  acessoSubtitulo: {
+    fontSize: 12,
+    color: colors.textMuted,
+    marginTop: 2,
+  },
+  origemPill: {
+    backgroundColor: '#EEF1FC',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: radius.pill,
+    maxWidth: 140,
+  },
+  origemPillText: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: colors.blue,
+  },
+
+  acessoInfoRows: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+    paddingTop: 4,
+  },
+  acessoInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: 11,
+  },
+  acessoInfoRowDivider: {
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  acessoInfoLeft: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  acessoInfoLabel: { fontSize: 13, color: colors.text },
+  acessoInfoValue: { fontSize: 13.5, fontWeight: '700', color: colors.text },
+
+  infoBox: {
+    flexDirection: 'row',
+    gap: 8,
+    backgroundColor: colors.chipBg,
+    borderRadius: radius.md,
+    padding: 14,
+  },
+  infoText: { flex: 1, fontSize: 12, color: colors.textMuted, lineHeight: 17 },
+
   footer: { padding: 20, paddingBottom: 30, gap: 10 },
   primaryButton: {
     backgroundColor: colors.blue,
@@ -299,6 +590,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  outlineButton: {
+    height: 52,
+    borderRadius: radius.md,
+    borderWidth: 1.5,
+    borderColor: colors.blue,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  outlineButtonText: { color: colors.blue, fontWeight: '700', fontSize: 15 },
   secondaryButton: {
     height: 46,
     alignItems: 'center',

@@ -12,7 +12,7 @@ import EstabelecimentoOfertaDetailScreen from '../screens/explore/ofertadetalhe/
 import EstabelecimentoOfertaCheckoutScreen from '../screens/explore/ofertacheckout/OfertaCheckoutScreen';
 import EstabelecimentoOfertaPagamentoResultadoScreen from '../screens/explore/ofertafeedback/OfertaPagamentoResultadoScreen';
 
-import CheckInScreen from '../screens/checkins/CheckInScreen';
+import MeusAcessosScreen from '../screens/meusacessos/MeusAcessosScreen';
 import ConfirmCheckInScreen from '../screens/explore/checkin/ConfirmCheckInScreen';
 import CheckinSuccessScreen from '../screens/explore/checkin/CheckinSuccessScreen';
 import CheckInPendingScreen from '../screens/explore/checkin/CheckInPendingScreen';
@@ -37,7 +37,7 @@ import RegisterCardScreen from '../screens/profile/assinatura/RegisterCardScreen
 const Tab = createBottomTabNavigator();
 
 const ExploreStackNav = createNativeStackNavigator();
-const CheckInStackNav = createNativeStackNavigator();
+const MeusAcessosStackNav = createNativeStackNavigator();
 const PlanStackNav = createNativeStackNavigator();
 const ProfileStackNav = createNativeStackNavigator();
 
@@ -91,20 +91,21 @@ function ExploreStack() {
         name="EstabelecimentoOfertaPagamentoResultado"
         component={EstabelecimentoOfertaPagamentoResultadoScreen}
       />
+      
     </ExploreStackNav.Navigator>
   );
 }
 
-function CheckInStack() {
+function MeusAcessosStack() {
   return (
-    <CheckInStackNav.Navigator
+    <MeusAcessosStackNav.Navigator
       screenOptions={{ headerShown: false }}
     >
-      <CheckInStackNav.Screen
-        name="CheckIns"
-        component={CheckInScreen}
+      <MeusAcessosStackNav.Screen
+        name="MeusAcessos"
+        component={MeusAcessosScreen}
       />
-    </CheckInStackNav.Navigator>
+    </MeusAcessosStackNav.Navigator>
   );
 }
 
@@ -226,8 +227,8 @@ export default function MainTabs() {
       />
 
       <Tab.Screen
-        name="CheckIn"
-        component={CheckInStack}
+        name="Meus Acessos"
+        component={MeusAcessosStack}
       />
 
       <Tab.Screen
