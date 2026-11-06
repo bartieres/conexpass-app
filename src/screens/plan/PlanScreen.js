@@ -42,6 +42,7 @@ export default function PlanScreen({ navigation }) {
       setPlano({
         id: planoContratado.id,
         ativo: response.situacao?.codigo === 'ATIVO',
+        situacao: response.situacao,
         nome: `Plano ${planoContratado.nome}`,
         descricao: planoContratado.descricao,
         nivel: planoContratado.nivel,
@@ -72,6 +73,7 @@ export default function PlanScreen({ navigation }) {
   );
 
   const handleCancelarPlano = () => {
+    if (plano?.situacao?.codigo === 'AGUARDANDO_CONFIRMACAO') return;
     Alert.alert(
       'Cancelar plano',
       'Seu acesso continua ativo até o fim do período já pago. Deseja mesmo cancelar sua assinatura?',
@@ -109,9 +111,10 @@ export default function PlanScreen({ navigation }) {
       loading={loading}
       error={error}
       onRetry={buscarPlano}
-      onAlterarPlano={() =>
-        navigation.navigate('ChangePlan', { planoAtual: plano })
-      }
+      onAlterarPlano={() => {
+        if (plano?.situacao?.codigo === 'AGUARDANDO_CONFIRMACAO') return;
+        navigation.navigate('ChangePlan', { planoAtual: plano });
+      }}
       onEscolherPlano={() =>
         navigation.navigate('ChangePlan', { planoAtual: null })
       }

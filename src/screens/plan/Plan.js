@@ -17,11 +17,14 @@ function formatarMoeda(valor) {
   return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
 }
 
-function MenuRow({ icon, title, subtitle, onPress }) {
+function MenuRow({ icon, title, subtitle, onPress, disabled = false }) {
   return (
     <TouchableOpacity
-      style={styles.menuRow}
-      onPress={onPress}
+      style={[styles.menuRow, disabled && styles.menuRowDisabled]}
+      disabled={disabled}
+      accessibilityRole="button"
+      accessibilityState={{ disabled }}
+      onPress={disabled ? undefined : onPress}
       activeOpacity={0.7}
     >
       <View style={styles.menuIconWrap}>
@@ -75,6 +78,9 @@ export default function Plan({
   onEscolherPlano,
   onCancelarPlano,
 }) {
+  const aguardandoConfirmacao =
+    plano?.situacao?.codigo === 'AGUARDANDO_CONFIRMACAO';
+
   return (
     <SafeAreaView style={styles.safe}>
       <View style={styles.header}>
@@ -107,26 +113,37 @@ export default function Plan({
           <>
             <View style={styles.resumoCard}>
               <View style={styles.resumoTopRow}>
-                <Text style={styles.resumoTitle}>Seu plano atual</Text>
+                <Text style={styles.resumoTitle}>
+                  {aguardandoConfirmacao
+                    ? 'Plano solicitado'
+                    : 'Seu plano atual'}
+                </Text>
                 <View
                   style={[
                     styles.activeBadge,
                     !plano.ativo && styles.inactiveBadge,
+                    aguardandoConfirmacao && styles.pendingBadge,
                   ]}
                 >
                   <View
                     style={[
                       styles.activeDot,
                       !plano.ativo && styles.inactiveDot,
+                      aguardandoConfirmacao && styles.pendingDot,
                     ]}
                   />
                   <Text
                     style={[
                       styles.activeBadgeText,
                       !plano.ativo && styles.inactiveBadgeText,
+                      aguardandoConfirmacao && styles.pendingBadgeText,
                     ]}
                   >
-                    {plano.ativo ? 'Ativo' : 'Inativo'}
+                    {aguardandoConfirmacao
+                      ? 'Aguardando confirmação'
+                      : plano.ativo
+                        ? 'Ativo'
+                        : 'Inativo'}
                   </Text>
                 </View>
               </View>
@@ -147,6 +164,7 @@ export default function Plan({
                   Contratação: {dateToDateMasked(plano.dataContratacao)}
                 </Text>
               </View>
+
               <View style={styles.planInfoRow}>
                 <Ionicons
                   name="calendar-outline"
@@ -159,6 +177,29 @@ export default function Plan({
                   {formatarMoeda(plano.proximaCobranca?.valor)}
                 </Text>
               </View>
+
+              {aguardandoConfirmacao && (
+                <View style={styles.pendingInfo}>
+                  <Text style={styles.pendingInfoText}>
+                    Sua solicitação foi recebida. A assinatura será ativada após
+                    a confirmação do pagamento.
+                  </Text>
+                  <TouchableOpacity
+                    onPress={onRetry}
+                    accessibilityRole="button"
+                    style={styles.pendingRefresh}
+                  >
+                    <Ionicons
+                      name="refresh-outline"
+                      size={16}
+                      color="#92400E"
+                    />
+                    <Text style={styles.pendingRefreshText}>
+                      Atualizar situação
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
               <View style={styles.planDivider} />
 
@@ -180,12 +221,19 @@ export default function Plan({
                 title="Alterar plano"
                 subtitle="Visualize outros planos e faça sua escolha"
                 onPress={onAlterarPlano}
+                disabled={aguardandoConfirmacao}
               />
             </View>
 
             <TouchableOpacity
-              style={styles.dangerCard}
-              onPress={onCancelarPlano}
+              style={[
+                styles.dangerCard,
+                aguardandoConfirmacao && styles.menuRowDisabled,
+              ]}
+              disabled={aguardandoConfirmacao}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: aguardandoConfirmacao }}
+              onPress={aguardandoConfirmacao ? undefined : onCancelarPlano}
               activeOpacity={0.8}
             >
               <View style={styles.dangerLeft}>
@@ -248,6 +296,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 8,
     marginBottom: 14,
   },
   resumoTitle: { ...typography.h3 },
@@ -268,6 +318,25 @@ const styles = StyleSheet.create({
     backgroundColor: colors.success,
   },
   activeBadgeText: { fontSize: 11.5, fontWeight: '700', color: colors.success },
+  pendingBadge: { backgroundColor: '#FEF3C7' },
+  pendingDot: { backgroundColor: '#D97706' },
+  pendingBadgeText: { color: '#92400E' },
+  pendingInfo: {
+    backgroundColor: '#FFFBEB',
+    borderRadius: radius.md,
+    padding: 12,
+    marginTop: 12,
+    gap: 10,
+  },
+  pendingInfoText: { color: '#92400E', fontSize: 13, lineHeight: 19 },
+  pendingRefresh: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    paddingVertical: 6,
+  },
+  pendingRefreshText: { color: '#92400E', fontSize: 13, fontWeight: '700' },
   inactiveBadge: { backgroundColor: '#FEE2E2' },
   inactiveDot: { backgroundColor: '#DC2626' },
   inactiveBadgeText: { color: '#DC2626' },
@@ -330,6 +399,7 @@ const styles = StyleSheet.create({
   },
   escolherPlanoButtonText: { color: '#fff', fontWeight: '700', fontSize: 14.5 },
 
+  menuRowDisabled: { opacity: 0.45 },
   menuCard: { backgroundColor: '#fff', borderRadius: radius.md, ...shadow },
   menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
   menuIconWrap: {

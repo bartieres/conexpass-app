@@ -1,3 +1,6 @@
+import { useEffect, useState } from 'react';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
   View,
   Text,
@@ -85,9 +88,9 @@ function calcularDesconto(valor, valorPromocional) {
 };*/
 
 const TABS = [
-  { key: 'sobre', label: 'Sobre' },
-  { key: 'planos', label: 'Planos e ofertas' },
-  { key: 'horarios', label: 'Horários' },
+  { key: 'sobre', label: 'Sobre', icon: 'information-circle-outline' },
+  { key: 'planos', label: 'Planos e ofertas', icon: 'layers-outline' },
+  { key: 'horarios', label: 'Horários', icon: 'time-outline' },
 ];
 
 function TabBar({ activeTab, onChangeTab }) {
@@ -98,10 +101,17 @@ function TabBar({ activeTab, onChangeTab }) {
         return (
           <TouchableOpacity
             key={tab.key}
-            style={styles.tabItem}
+            style={[styles.tabItem, ativa && styles.tabItemActive]}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: ativa }}
             onPress={() => onChangeTab(tab.key)}
             activeOpacity={0.7}
           >
+            <Ionicons
+              name={tab.icon}
+              size={20}
+              color={ativa ? colors.blue : colors.textMuted}
+            />
             <Text style={[styles.tabLabel, ativa && styles.tabLabelActive]}>
               {tab.label}
             </Text>
@@ -123,6 +133,21 @@ function SobreTab({ gym, loadingDetalhes, abrirNoMaps, ehParceiro }) {
         </>
       )}
 
+      {ehParceiro && !loadingDetalhes && !!gym.amenities?.length && (
+        <>
+          <Text style={styles.sectionTitle}>Comodidades</Text>
+          <View style={styles.amenitiesRow}>
+            {gym.amenities.map((a) => (
+              <View key={a.label} style={styles.amenityItem}>
+                <View style={styles.amenityIconWrap}>
+                  <Ionicons name={a.icon} size={25} color={colors.blue} />
+                </View>
+                <Text style={styles.amenityLabel}>{a.label}</Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
       {!!gym.address && (
         <>
           <Text style={styles.sectionTitle}>Endereço</Text>
@@ -131,6 +156,7 @@ function SobreTab({ gym, loadingDetalhes, abrirNoMaps, ehParceiro }) {
             onPress={abrirNoMaps}
             activeOpacity={0.7}
           >
+            <Ionicons name="location-outline" size={22} color={colors.blue} />
             <Text style={styles.addressText}>{gym.address}</Text>
             <Ionicons
               name="navigate-circle-outline"
@@ -140,32 +166,24 @@ function SobreTab({ gym, loadingDetalhes, abrirNoMaps, ehParceiro }) {
           </TouchableOpacity>
         </>
       )}
-
-      {ehParceiro && !loadingDetalhes && !!gym.amenities?.length && (
-        <>
-          <Text style={styles.sectionTitle}>Comodidades</Text>
-          <View style={styles.amenitiesRow}>
-            {gym.amenities.map((a) => (
-              <View key={a.label} style={styles.amenityItem}>
-                <View style={styles.amenityIconWrap}>
-                  <Ionicons name={a.icon} size={18} color={colors.blue} />
-                </View>
-                <Text style={styles.amenityLabel}>{a.label}</Text>
-              </View>
-            ))}
-          </View>
-        </>
-      )}
     </>
   );
 }
 
-function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSelecionarOferta }) {
+function PlanosTab({
+  planos,
+  loadingPlanos,
+  planosError,
+  onRetryPlanos,
+  onSelecionarOferta,
+}) {
   if (loadingPlanos) {
     return (
       <View style={styles.tabLoadingBox}>
         <ActivityIndicator size="small" color={colors.blue} />
-        <Text style={styles.tabLoadingText}>Carregando planos e ofertas...</Text>
+        <Text style={styles.tabLoadingText}>
+          Carregando planos e ofertas...
+        </Text>
       </View>
     );
   }
@@ -215,7 +233,10 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
         const contratacaoProcessando =
           contratada && situacao !== 'ATIVO' && situacao != null;
 
-        const desconto = calcularDesconto(oferta.valor, oferta.valorPromocional);
+        const desconto = calcularDesconto(
+          oferta.valor,
+          oferta.valorPromocional
+        );
         const temDesconto = desconto != null;
 
         return (
@@ -246,7 +267,10 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
               <View style={styles.ofertaContratadaRow}>
                 <Ionicons name="time-outline" size={17} color="#B45309" />
                 <Text
-                  style={[styles.ofertaContratadaText, styles.ofertaProcessandoText]}
+                  style={[
+                    styles.ofertaContratadaText,
+                    styles.ofertaProcessandoText,
+                  ]}
                 >
                   Em processamento
                 </Text>
@@ -278,7 +302,9 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
                   </Text>
                 )}
                 <Text style={styles.ofertaPreco}>
-                  {formatarValor(temDesconto ? oferta.valorPromocional : oferta.valor)}
+                  {formatarValor(
+                    temDesconto ? oferta.valorPromocional : oferta.valor
+                  )}
                 </Text>
                 {temDesconto && (
                   <View style={styles.descontoBadge}>
@@ -311,7 +337,13 @@ function PlanosTab({ planos, loadingPlanos, planosError, onRetryPlanos, onSeleci
   );
 }
 
-function HorariosTab({ gym }) {
+function HorariosTab({ gym, agora }) {
+  const diaAtual = DIAS_SEMANA_ORDEM[agora.getDay()];
+  const dataAtual = `${agora.getFullYear()}-${String(agora.getMonth() + 1).padStart(2, '0')}-${String(agora.getDate()).padStart(2, '0')}`;
+  const excecaoHoje = gym.horariosExcecao?.find((h) => h.data === dataAtual);
+  const horarioHoje =
+    excecaoHoje ||
+    gym.horarios?.find((h) => h.diaSemana?.codigo === diaAtual.codigo);
   const temHorarios = !!gym.horarios?.length;
   const temExcecoes = !!gym.horariosExcecao?.length;
 
@@ -331,12 +363,32 @@ function HorariosTab({ gym }) {
       {temHorarios && (
         <>
           <Text style={styles.sectionTitle}>Horário de atendimento</Text>
+          <Text style={styles.sectionSubtitle}>
+            Confira os dias e horários de funcionamento.
+          </Text>
+          <View style={styles.todayCard}>
+            <Ionicons name="calendar-outline" size={28} color={colors.blue} />
+            <View style={{ flex: 1, gap: 5 }}>
+              <Text style={styles.todayTitle}>Hoje é {diaAtual.label}</Text>
+              <Text style={styles.todayHours}>
+                {formatarPeriodos(horarioHoje)}
+              </Text>
+              {!!excecaoHoje && (
+                <Text style={styles.todayHours}>
+                  Horário especial
+                  {excecaoHoje.descricao ? `: ${excecaoHoje.descricao}` : ''}
+                </Text>
+              )}
+            </View>
+          </View>
           <View style={styles.scheduleCard}>
             {DIAS_SEMANA_ORDEM.map((dia, index) => {
               const horarioDoDia = gym.horarios.find(
-                (h) => h.diaSemana.codigo === dia.codigo
+                (h) => h.diaSemana?.codigo === dia.codigo
               );
 
+              const hoje = dia.codigo === diaAtual.codigo;
+              const fechado = formatarPeriodos(horarioDoDia) === 'Fechado';
               return (
                 <View
                   key={dia.value}
@@ -344,13 +396,25 @@ function HorariosTab({ gym }) {
                     styles.scheduleRow,
                     index < DIAS_SEMANA_ORDEM.length - 1 &&
                       styles.scheduleRowDivider,
+                    hoje && styles.scheduleRowToday,
                   ]}
                 >
-                  <Text style={styles.scheduleDay}>{dia.label}</Text>
+                  <View style={styles.scheduleDayWrap}>
+                    <Text
+                      style={[
+                        styles.scheduleDay,
+                        hoje && styles.scheduleTextToday,
+                      ]}
+                    >
+                      {dia.label}
+                    </Text>
+                    {hoje && <Text style={styles.todayPill}>Hoje</Text>}
+                  </View>
                   <Text
                     style={[
                       styles.scheduleHours,
-                      !horarioDoDia && styles.scheduleHoursClosed,
+                      fechado && styles.scheduleHoursClosed,
+                      hoje && styles.scheduleTextToday,
                     ]}
                   >
                     {formatarPeriodos(horarioDoDia)}
@@ -413,12 +477,6 @@ export default function EstablishmentDetail({
   reportModalVisible,
   onOpenReportModal,
   onCloseReportModal,
-  comentarios,
-  loadingComentarios,
-  comentariosError,
-  onRetryComentarios,
-  onEnviarComentario,
-  enviandoComentario,
   activeTab,
   onChangeTab,
   planos,
@@ -428,6 +486,12 @@ export default function EstablishmentDetail({
   onSelecionarOferta,
 }) {
   const gym = estabelecimento;
+  const insets = useSafeAreaInsets();
+  const [agora, setAgora] = useState(() => new Date());
+  useEffect(() => {
+    const timer = setInterval(() => setAgora(new Date()), 60000);
+    return () => clearInterval(timer);
+  }, []);
   //const [favorite, setFavorite] = useState(false);
 
   const handleCheckin = () => {
@@ -456,11 +520,14 @@ export default function EstablishmentDetail({
 
     const urlWeb = `https://www.google.com/maps/search/?api=1&query=${query}`;
 
-    Linking.openURL(urlNativa).catch(() => Linking.openURL(urlWeb).catch(() => {}));
+    Linking.openURL(urlNativa).catch(() =>
+      Linking.openURL(urlWeb).catch(() => {})
+    );
   };
 
-  const checkinAutorizado = gym.checkinAutorizado.autorizado;
-  const checkinMotivo = gym.checkinAutorizado.motivo;
+  const checkinAutorizado = gym.checkinAutorizado?.autorizado === true;
+  const checkinMotivo =
+    gym.checkinAutorizado?.motivo || 'Check-in indisponível';
 
   return (
     <View style={styles.container}>
@@ -477,7 +544,7 @@ export default function EstablishmentDetail({
       >
         <View style={styles.imageWrap}>
           <Image source={{ uri: gym.image }} style={styles.image} />
-          <View style={styles.topBar}>
+          <View style={[styles.topBar, { top: insets.top + 12 }]}>
             <TouchableOpacity
               style={styles.roundButton}
               onPress={() => navigation.goBack()}
@@ -493,6 +560,11 @@ export default function EstablishmentDetail({
               </TouchableOpacity>
             </View>*/}
           </View>
+          <LinearGradient
+            colors={['transparent', 'rgba(15,17,21,0.65)']}
+            style={styles.imageGradient}
+            pointerEvents="none"
+          />
           {!!gym.hours && ehParceiro && (
             <View
               style={[
@@ -500,6 +572,15 @@ export default function EstablishmentDetail({
                 !gym.horarioFuncionamento?.aberto && styles.closedBadge,
               ]}
             >
+              <Ionicons
+                name={
+                  gym.horarioFuncionamento?.aberto
+                    ? 'checkmark-circle'
+                    : 'time-outline'
+                }
+                size={17}
+                color="#fff"
+              />
               <Text style={styles.openBadgeText}>{gym.hours}</Text>
             </View>
           )}
@@ -536,9 +617,9 @@ export default function EstablishmentDetail({
             )}*/}
             {!!gym.distance && (
               <>
-                {/*<Text style={styles.dot}>•</Text>*/}
+                <Ionicons name="location" size={18} color={colors.blue} />
                 <Text style={styles.distanceText}>
-                  Distância {gym.distance}
+                  A {gym.distance} de você
                 </Text>
               </>
             )}
@@ -661,7 +742,7 @@ export default function EstablishmentDetail({
             />
           )}
 
-          {activeTab === 'horarios' && <HorariosTab gym={gym} />}
+          {activeTab === 'horarios' && <HorariosTab gym={gym} agora={agora} />}
 
           {/* Interesse em treinar ali (só quando não é parceiro) */}
           {!ehParceiro && (
@@ -688,16 +769,10 @@ export default function EstablishmentDetail({
                   gym.usuarioPossuiInteresse && styles.interestButtonDone,
                 ]}
                 onPress={onRegistrarInteresse}
-                disabled={
-                  registrandoInteresse ||
-                  gym.usuarioPossuiInteresse
-                }
+                disabled={registrandoInteresse || gym.usuarioPossuiInteresse}
               >
                 {registrandoInteresse ? (
-                  <ActivityIndicator
-                    size="small"
-                    color={colors.blue}
-                  />
+                  <ActivityIndicator size="small" color={colors.blue} />
                 ) : (
                   <>
                     <Ionicons
@@ -732,7 +807,10 @@ export default function EstablishmentDetail({
           )}
 
           {/* Reportar problema */}
-          <TouchableOpacity style={styles.reportRow} onPress={onOpenReportModal}>
+          <TouchableOpacity
+            style={styles.reportRow}
+            onPress={onOpenReportModal}
+          >
             <Ionicons name="flag-outline" size={16} color={colors.textMuted} />
             <Text style={styles.reportText}>Reportar um problema</Text>
           </TouchableOpacity>
@@ -776,8 +854,55 @@ export default function EstablishmentDetail({
 }
 
 const styles = StyleSheet.create({
+  imageGradient: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 100,
+  },
+  tabItemActive: { backgroundColor: '#EDF2FF' },
+  todayCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 14,
+    backgroundColor: '#E8F0FF',
+    padding: 18,
+    borderRadius: 20,
+    marginBottom: 14,
+  },
+  todayTitle: { color: colors.blueDark, fontSize: 16, fontWeight: '800' },
+  todayHours: { color: colors.blueDark, fontSize: 13, lineHeight: 20 },
+  scheduleDayWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    flexShrink: 1,
+  },
+  scheduleRowToday: {
+    backgroundColor: '#E8F0FF',
+    borderRadius: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: colors.blue,
+  },
+  scheduleTextToday: { color: colors.blueDark, fontWeight: '800' },
+  todayPill: {
+    color: '#fff',
+    backgroundColor: colors.blue,
+    fontSize: 10,
+    fontWeight: '700',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
   container: { flex: 1, backgroundColor: '#fff' },
-  imageWrap: { height: 260, position: 'relative' },
+  imageWrap: {
+    height: 250,
+    position: 'relative',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: 'hidden',
+  },
   image: { width: '100%', height: '100%' },
   topBar: {
     position: 'absolute',
@@ -788,27 +913,35 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   roundButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.92)',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(255,255,255,0.95)',
     alignItems: 'center',
     justifyContent: 'center',
   },
   openBadge: {
     position: 'absolute',
-    bottom: 14,
+    bottom: 18,
     left: 20,
+    right: 20,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
     backgroundColor: colors.success,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
     borderRadius: radius.pill,
   },
   closedBadge: {
     backgroundColor: '#DC2626', // ou colors.textLight, se preferir um cinza neutro em vez de vermelho
   },
   openBadgeText: { color: '#fff', fontSize: 12, fontWeight: '700' },
-  content: { padding: 20, paddingBottom: 10 },
+  content: {
+    padding: 20,
+    paddingBottom: 24,
+  },
 
   notPartnerBanner: {
     flexDirection: 'row',
@@ -823,8 +956,16 @@ const styles = StyleSheet.create({
   },
   notPartnerText: { fontSize: 12.5, fontWeight: '700', color: '#92400E' },
 
-  name: { ...typography.h1, fontSize: 22 },
-  category: { ...typography.muted, marginTop: 2 },
+  name: {
+    ...typography.h1,
+    fontSize: 27,
+    lineHeight: 34,
+  },
+  category: {
+    ...typography.muted,
+    fontSize: 16,
+    marginTop: 4,
+  },
   ratingRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -834,7 +975,11 @@ const styles = StyleSheet.create({
   },
   ratingText: { fontSize: 13.5, fontWeight: '600', color: colors.text },
   dot: { color: colors.textLight },
-  distanceText: { fontSize: 13, color: colors.textMuted },
+  distanceText: {
+    fontSize: 14,
+    color: colors.textMuted,
+    fontWeight: '600',
+  },
 
   coverageBanner: {
     flexDirection: 'row',
@@ -876,40 +1021,46 @@ const styles = StyleSheet.create({
 
   amenitiesRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',           // <- permite quebrar linha
+    flexWrap: 'wrap',
     marginTop: 4,
-    paddingVertical: 16,
-    borderTopWidth: 1,
-    borderBottomWidth: 1,
-    borderColor: colors.border,
-    // "justifyContent: 'space-between'" saiu daqui — com wrap ele deixa
-    // buracos estranhos na última linha quando ela não fecha o total de
-    // colunas (ex: 5 itens = última linha só com 1, esticado igual às de 4)
+    marginBottom: 4,
   },
   amenityItem: {
+    width: '25%',
     alignItems: 'center',
-    gap: 6,
-    width: '25%',                // <- 4 colunas por linha, em vez de flex:1
-    marginBottom: 16,            // <- respiro entre as linhas quando quebra
+    gap: 8,
+    paddingHorizontal: 4,
+    marginBottom: 18,
   },
   amenityIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: colors.chipBg,
+    width: '100%',
+    height: 52,
+    borderRadius: 18,
+    backgroundColor: '#EDF2FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  amenityLabel: { fontSize: 11, color: colors.textMuted, textAlign: 'center' },
+  amenityLabel: {
+    fontSize: 11,
+    lineHeight: 15,
+    color: colors.textMuted,
+    textAlign: 'center',
+    flexShrink: 1,
+  },
 
-  linksRow: { flexDirection: 'row', gap: 10, marginTop: 16 },
+  linksRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginTop: 18,
+  },
   linkChip: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    backgroundColor: colors.chipBg,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
+    gap: 8,
+    backgroundColor: '#EDF2FF',
+    paddingHorizontal: 16,
+    paddingVertical: 11,
     borderRadius: radius.pill,
   },
   linkChipText: {
@@ -922,27 +1073,41 @@ const styles = StyleSheet.create({
   // Abas
   tabBar: {
     flexDirection: 'row',
-    marginTop: 20,
+    gap: 4,
+    marginTop: 24,
+    marginBottom: 8,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   tabItem: {
-    marginRight: 22,
-    paddingBottom: 10,
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingHorizontal: 2,
+    paddingTop: 12,
+    paddingBottom: 14,
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    position: 'relative',
   },
   tabLabel: {
-    fontSize: 13.5,
+    fontSize: 12,
     fontWeight: '600',
     color: colors.textMuted,
+    textAlign: 'center',
   },
   tabLabelActive: {
     color: colors.blue,
     fontWeight: '700',
   },
   tabIndicator: {
-    marginTop: 8,
-    height: 2,
-    borderRadius: 1,
+    position: 'absolute',
+    bottom: -1,
+    left: 0,
+    right: 0,
+    height: 3,
+    borderRadius: 2,
     backgroundColor: colors.blue,
   },
   tabLoadingBox: {
@@ -972,14 +1137,19 @@ const styles = StyleSheet.create({
     marginTop: -4,
     marginBottom: 14,
   },
-  aboutText: { ...typography.body, color: colors.textMuted, lineHeight: 20 },
+  aboutText: {
+    ...typography.body,
+    fontSize: 15,
+    color: colors.textMuted,
+    lineHeight: 24,
+  },
   addressRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: colors.bg,
-    borderRadius: radius.md,
-    padding: 14,
+    gap: 10,
+    backgroundColor: '#F0F3FA',
+    borderRadius: 18,
+    padding: 16,
   },
   addressText: {
     flex: 1,
@@ -1085,22 +1255,39 @@ const styles = StyleSheet.create({
   },
 
   scheduleCard: {
-    backgroundColor: colors.bg,
-    borderRadius: radius.md,
-    paddingHorizontal: 14,
+    backgroundColor: '#fff',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
+    padding: 8,
   },
   scheduleRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-between',
-    paddingVertical: 11,
+    gap: 8,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    flexWrap: 'wrap',
   },
   scheduleRowDivider: {
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   scheduleDay: { fontSize: 13, color: colors.text, fontWeight: '600' },
-  scheduleHours: { fontSize: 13, color: colors.textMuted },
-  scheduleHoursClosed: { color: colors.textLight },
+  scheduleHours: {
+    fontSize: 12,
+    lineHeight: 19,
+    color: colors.textMuted,
+    flexShrink: 1,
+    textAlign: 'right',
+  },
+  scheduleHoursClosed: {
+    color: '#C43C4C',
+    backgroundColor: '#FFF0F1',
+    borderRadius: 8,
+    paddingHorizontal: 6,
+  },
   exceptionRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -1117,8 +1304,9 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 8,
     backgroundColor: colors.chipBg,
-    height: 50,
-    borderRadius: radius.md,
+    minHeight: 54,
+    padding: 14,
+    borderRadius: 18,
     marginTop: 20,
   },
   interestButtonDone: { backgroundColor: colors.successLight },
@@ -1128,14 +1316,16 @@ const styles = StyleSheet.create({
   reportRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    marginTop: 20,
-    alignSelf: 'flex-start',
+    justifyContent: 'center',
+    gap: 8,
+    marginTop: 24,
+    padding: 16,
+    backgroundColor: colors.bg,
+    borderRadius: 16,
   },
   reportText: {
-    fontSize: 12.5,
+    fontSize: 13,
     color: colors.textMuted,
-    textDecorationLine: 'underline',
   },
 
   footer: {
@@ -1148,12 +1338,20 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     gap: 8,
     backgroundColor: colors.blue,
-    height: 52,
-    borderRadius: radius.md,
+    minHeight: 52,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  checkinButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  checkinButtonText: {
+    color: '#fff',
+    fontWeight: '700',
+    fontSize: 14,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
   checkinButtonDisabled: { opacity: 0.5 },
   interestCountRow: {
     flexDirection: 'row',

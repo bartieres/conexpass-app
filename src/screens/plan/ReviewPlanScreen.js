@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 
 import {
   View,
@@ -12,12 +12,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors, radius, shadow } from '../../theme/theme';
-
-import { alterarPlano } from '../../services/assinaturaService';
+import { obterEstadoAssinatura } from './assinaturaResultado';
 
 import {
-  findCreditCardPrincipalByUsuario,
-} from '../../services/formaPagamentoService';
+  alterarPlano,
+  consultarPagamento,
+} from '../../services/assinaturaService';
+
+import { findCreditCardPrincipalByUsuario } from '../../services/formaPagamentoService';
 
 function formatarMoeda(valor) {
   if (valor == null) return '';
@@ -56,42 +58,28 @@ function obterDescricaoFormaPagamento(formaPagamento) {
   if (!formaPagamento) return '';
 
   const tipo =
-    formaPagamento.tipo ??
-    formaPagamento.tipoPagamento ??
-    'Cartão de crédito';
+    formaPagamento.tipo ?? formaPagamento.tipoPagamento ?? 'Cartão de crédito';
 
   return tipo;
 }
 
-function PaymentMethodCard({
-  formaPagamento,
-  onChange,
-  onAdd,
-}) {
+function PaymentMethodCard({ formaPagamento, onChange, onAdd }) {
   if (!formaPagamento) {
     return (
       <View style={styles.paymentEmptyCard}>
         <View style={styles.paymentEmptyIcon}>
-          <Ionicons
-            name="card-outline"
-            size={24}
-            color={colors.blue}
-          />
+          <Ionicons name="card-outline" size={24} color={colors.blue} />
         </View>
 
         <View style={styles.paymentEmptyContent}>
-          <Text style={styles.paymentEmptyTitle}>
-            Forma de pagamento
-          </Text>
+          <Text style={styles.paymentEmptyTitle}>Forma de pagamento</Text>
 
           <Text style={styles.paymentEmptyText}>
-            Você ainda não possui uma forma de pagamento
-            cadastrada.
+            Você ainda não possui uma forma de pagamento cadastrada.
           </Text>
 
           <Text style={styles.paymentEmptyHint}>
-            Cadastre um cartão para continuar com sua
-            assinatura.
+            Cadastre um cartão para continuar com sua assinatura.
           </Text>
 
           <TouchableOpacity
@@ -99,15 +87,9 @@ function PaymentMethodCard({
             onPress={onAdd}
             activeOpacity={0.85}
           >
-            <Ionicons
-              name="add"
-              size={18}
-              color={colors.blue}
-            />
+            <Ionicons name="add" size={18} color={colors.blue} />
 
-            <Text style={styles.addPaymentButtonText}>
-              Cadastrar cartão
-            </Text>
+            <Text style={styles.addPaymentButtonText}>Cadastrar cartão</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -118,17 +100,11 @@ function PaymentMethodCard({
     <View style={styles.paymentCard}>
       <View style={styles.paymentCardHeader}>
         <View style={styles.paymentIcon}>
-          <Ionicons
-            name="card"
-            size={22}
-            color={colors.blue}
-          />
+          <Ionicons name="card" size={22} color={colors.blue} />
         </View>
 
         <View style={styles.paymentCardTitleContainer}>
-          <Text style={styles.paymentCardTitle}>
-            Forma de pagamento
-          </Text>
+          <Text style={styles.paymentCardTitle}>Forma de pagamento</Text>
 
           <Text style={styles.paymentCardSubtitle}>
             Usada para sua assinatura
@@ -144,23 +120,15 @@ function PaymentMethodCard({
             right: 10,
           }}
         >
-          <Text style={styles.changePaymentText}>
-            Alterar
-          </Text>
+          <Text style={styles.changePaymentText}>Alterar</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.cardPreview}>
         <View style={styles.cardBrandRow}>
-          <Text style={styles.cardBrand}>
-            {obterBandeira(formaPagamento)}
-          </Text>
+          <Text style={styles.cardBrand}>{obterBandeira(formaPagamento)}</Text>
 
-          <Ionicons
-            name="card-outline"
-            size={20}
-            color={colors.textMuted}
-          />
+          <Ionicons name="card-outline" size={20} color={colors.textMuted} />
         </View>
 
         <Text style={styles.cardNumber}>
@@ -175,18 +143,11 @@ function PaymentMethodCard({
   );
 }
 
-function SummaryRow({
-  label,
-  value,
-  highlight,
-  divider,
-}) {
+function SummaryRow({ label, value, highlight, divider }) {
   return (
     <>
       <View style={styles.summaryRow}>
-        <Text style={styles.summaryLabel}>
-          {label}
-        </Text>
+        <Text style={styles.summaryLabel}>{label}</Text>
 
         <Text
           style={[
@@ -198,88 +159,98 @@ function SummaryRow({
         </Text>
       </View>
 
-      {divider && (
-        <View style={styles.summaryDivider} />
-      )}
+      {divider && <View style={styles.summaryDivider} />}
     </>
   );
 }
 
-export default function ReviewPlanScreen({
-  route,
-  navigation,
-}) {
+export default function ReviewPlanScreen({ route, navigation }) {
   const planoAtual = route?.params?.planoAtual;
 
-  const planoSelecionado =
-    route?.params?.planoSelecionado;
+  const planoSelecionado = route?.params?.planoSelecionado;
 
-  const [formaPagamento, setFormaPagamento] =
-    useState(null);
+  const [formaPagamento, setFormaPagamento] = useState(null);
 
-  const [loadingPayment, setLoadingPayment] =
-    useState(true);
+  const [loadingPayment, setLoadingPayment] = useState(true);
 
-  const [paymentError, setPaymentError] =
-    useState('');
+  const [paymentError, setPaymentError] = useState('');
 
-  const [confirming, setConfirming] =
-    useState(false);
+  const [confirming, setConfirming] = useState(false);
 
-  const [confirmError, setConfirmError] =
-    useState('');
+  const [confirmError, setConfirmError] = useState('');
 
-  const [sucesso, setSucesso] =
-    useState(false);
+  const [resultado, setResultado] = useState(null);
+  const [consultando, setConsultando] = useState(false);
+  const envioRef = useRef(false);
+  const consultaRef = useRef(false);
 
-  const buscarFormaPagamento = useCallback(
-    async () => {
-      setLoadingPayment(true);
-      setPaymentError('');
-
-      try {
-        const { response } =
-          await findCreditCardPrincipalByUsuario();
-
-        const data = {
-          ultimosDigitos:
-            response.cartao.ultimosDigitos,
-
-          bandeira:
-            response.cartao.bandeira,
-
-          validade:
-            response.cartao.validade,
-        };
-
-        setFormaPagamento(data);
-      } catch (err) {
-        if (
-          err?.response?.status === 404 ||
-          err?.status === 404
-        ) {
-          setFormaPagamento(null);
-        } else {
-          setPaymentError(
-            err?.friendlyMessage ||
-              'Não foi possível carregar sua forma de pagamento.'
-          );
-        }
-      } finally {
-        setLoadingPayment(false);
+  const atualizarSituacao = async (assinatura) => {
+    if (consultaRef.current) return;
+    if (assinatura?.id == null) {
+      setConfirmError(
+        'Não foi possível identificar a assinatura. Consulte seus planos antes de tentar uma nova contratação.'
+      );
+      return;
+    }
+    consultaRef.current = true;
+    setConsultando(true);
+    setConfirmError('');
+    try {
+      const { response } = await consultarPagamento(assinatura.id);
+      if (response?.id !== assinatura.id || !response?.situacao?.codigo) {
+        throw new Error('Resposta de consulta da assinatura inválida.');
       }
-    },
-    []
-  );
+      setResultado({ ...assinatura, ...response });
+    } catch (err) {
+      setConfirmError(
+        err?.friendlyMessage ||
+          'Não foi possível consultar a assinatura. Atualize a situação novamente; não é necessário contratar outra vez.'
+      );
+    } finally {
+      consultaRef.current = false;
+      setConsultando(false);
+    }
+  };
+
+  const buscarFormaPagamento = useCallback(async () => {
+    setLoadingPayment(true);
+    setPaymentError('');
+
+    try {
+      const { response } = await findCreditCardPrincipalByUsuario();
+
+      const data = {
+        ultimosDigitos: response.cartao.ultimosDigitos,
+
+        bandeira: response.cartao.bandeira,
+
+        validade: response.cartao.validade,
+      };
+
+      setFormaPagamento(data);
+    } catch (err) {
+      if (err?.response?.status === 404 || err?.status === 404) {
+        setFormaPagamento(null);
+      } else {
+        setPaymentError(
+          err?.friendlyMessage ||
+            'Não foi possível carregar sua forma de pagamento.'
+        );
+      }
+    } finally {
+      setLoadingPayment(false);
+    }
+  }, []);
 
   useEffect(() => {
+    // Carrega a forma de pagamento ao montar a tela.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     buscarFormaPagamento();
   }, [buscarFormaPagamento]);
 
   const diferenca =
     planoAtual && planoSelecionado
-      ? Number(planoSelecionado.valor) -
-        Number(planoAtual.valor)
+      ? Number(planoSelecionado.valor) - Number(planoAtual.valor)
       : Number(planoSelecionado?.valor ?? 0);
 
   const isUpgrade = diferenca > 0;
@@ -299,18 +270,17 @@ export default function ReviewPlanScreen({
   };
 
   const handleConfirmar = async () => {
-    if (!planoSelecionado) {
+    if (!planoSelecionado || envioRef.current || resultado) {
       return;
     }
 
     if (!formaPagamento) {
-      setConfirmError(
-        'Cadastre uma forma de pagamento para continuar.'
-      );
+      setConfirmError('Cadastre uma forma de pagamento para continuar.');
 
       return;
     }
 
+    envioRef.current = true;
     setConfirming(true);
     setConfirmError('');
 
@@ -325,15 +295,18 @@ export default function ReviewPlanScreen({
         },
       };
 
-      await alterarPlano(payload);
-
-      setSucesso(true);
+      const { response } = await alterarPlano(payload);
+      // O PATCH registra a solicitação; a situação da assinatura vem da API.
+      const assinatura = response || {};
+      setResultado(assinatura);
+      await atualizarSituacao(assinatura);
     } catch (err) {
       setConfirmError(
         err?.friendlyMessage ||
           'Não foi possível concluir a alteração. Tente novamente.'
       );
     } finally {
+      envioRef.current = false;
       setConfirming(false);
     }
   };
@@ -350,26 +323,16 @@ export default function ReviewPlanScreen({
             style={styles.backButton}
             onPress={() => navigation.goBack()}
           >
-            <Ionicons
-              name="arrow-back"
-              size={22}
-              color={colors.text}
-            />
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
 
-          <Text style={styles.headerTitle}>
-            Revisar assinatura
-          </Text>
+          <Text style={styles.headerTitle}>Revisar assinatura</Text>
 
           <View style={{ width: 38 }} />
         </View>
 
         <View style={styles.invalidState}>
-          <Ionicons
-            name="alert-circle-outline"
-            size={36}
-            color="#DC2626"
-          />
+          <Ionicons name="alert-circle-outline" size={36} color="#DC2626" />
 
           <Text style={styles.invalidStateTitle}>
             Não foi possível carregar o plano.
@@ -379,55 +342,38 @@ export default function ReviewPlanScreen({
             style={styles.stateButton}
             onPress={() => navigation.goBack()}
           >
-            <Text style={styles.stateButtonText}>
-              Voltar
-            </Text>
+            <Text style={styles.stateButtonText}>Voltar</Text>
           </TouchableOpacity>
         </View>
       </View>
     );
   }
 
-  if (sucesso) {
+  if (resultado) {
+    const estado = obterEstadoAssinatura(resultado);
     return (
       <View style={styles.safe}>
-        <View style={styles.successContainer}>
+        <ScrollView contentContainerStyle={styles.successContainer}>
           <View style={styles.successIconOuter}>
-            <View style={styles.successIcon}>
-              <Ionicons
-                name="checkmark"
-                size={42}
-                color="#fff"
-              />
+            <View
+              style={[styles.successIcon, { backgroundColor: estado.color }]}
+            >
+              <Ionicons name={estado.icon} size={42} color="#fff" />
             </View>
           </View>
 
-          <Text style={styles.successTitle}>
-            {planoAtual
-              ? 'Plano alterado com sucesso!'
-              : 'Assinatura realizada com sucesso!'}
-          </Text>
+          <Text style={styles.successTitle}>{estado.titulo}</Text>
 
-          <Text style={styles.successDescription}>
-            {planoAtual
-              ? 'Seu plano foi alterado e a nova assinatura já está registrada.'
-              : 'Sua assinatura foi realizada e o plano já está registrado na sua conta.'}
-          </Text>
+          <Text style={styles.successDescription}>{estado.mensagem}</Text>
 
           <View style={styles.successPlanCard}>
             <View style={styles.successPlanIcon}>
-              <Ionicons
-                name="fitness-outline"
-                size={23}
-                color={colors.blue}
-              />
+              <Ionicons name="fitness-outline" size={23} color={colors.blue} />
             </View>
 
             <View style={styles.successPlanContent}>
               <Text style={styles.successPlanLabel}>
-                {planoAtual
-                  ? 'Novo plano'
-                  : 'Plano contratado'}
+                {estado.confirmada ? 'Plano contratado' : 'Plano solicitado'}
               </Text>
 
               <Text style={styles.successPlanName}>
@@ -435,51 +381,67 @@ export default function ReviewPlanScreen({
               </Text>
 
               <Text style={styles.successPlanCheckins}>
-                {planoSelecionado.checkinsPorDia}x
-                {' '}check-in por dia
+                {planoSelecionado.checkinsPorDia}x check-in por dia
               </Text>
 
               <Text style={styles.successPlanPrice}>
-                {formatarMoeda(
-                  planoSelecionado.valor
-                )}
+                {formatarMoeda(planoSelecionado.valor)}
 
-                <Text style={styles.successPlanSuffix}>
-                  {' '}/mês
-                </Text>
+                <Text style={styles.successPlanSuffix}> /mês</Text>
               </Text>
             </View>
           </View>
 
-          <View style={styles.successInfoBox}>
+          <View
+            style={[
+              styles.successInfoBox,
+              !estado.confirmada && styles.pendingInfoBox,
+            ]}
+          >
             <Ionicons
-              name="checkmark-circle-outline"
+              name={
+                estado.confirmada
+                  ? 'checkmark-circle-outline'
+                  : 'information-circle-outline'
+              }
               size={19}
-              color={colors.success}
+              color={estado.color}
             />
 
-            <Text style={styles.successInfoText}>
-              Você já pode continuar usando o
-              ConexPass normalmente.
+            <Text style={[styles.successInfoText, { color: estado.color }]}>
+              {estado.confirmada && !resultado.alteracaoAgendada
+                ? 'Sua assinatura está ativa, conforme confirmação do servidor.'
+                : 'A disponibilidade dos acessos segue a situação informada pelo servidor.'}
             </Text>
           </View>
+
+          {!!confirmError && (
+            <Text style={styles.resultError}>{confirmError}</Text>
+          )}
+          {!estado.confirmada && (
+            <TouchableOpacity
+              style={[styles.successButton, styles.refreshStatusButton]}
+              onPress={() => atualizarSituacao(resultado)}
+              disabled={consultando || resultado.id == null}
+            >
+              {consultando ? (
+                <ActivityIndicator color={colors.blue} />
+              ) : (
+                <Text style={styles.refreshStatusText}>Atualizar situação</Text>
+              )}
+            </TouchableOpacity>
+          )}
 
           <TouchableOpacity
             style={styles.successButton}
             onPress={handleVoltarParaPlanos}
             activeOpacity={0.85}
           >
-            <Text style={styles.successButtonText}>
-              Voltar para planos
-            </Text>
+            <Text style={styles.successButtonText}>Voltar para planos</Text>
 
-            <Ionicons
-              name="arrow-forward"
-              size={18}
-              color="#fff"
-            />
+            <Ionicons name="arrow-forward" size={18} color="#fff" />
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       </View>
     );
   }
@@ -491,16 +453,10 @@ export default function ReviewPlanScreen({
           style={styles.backButton}
           onPress={() => navigation.goBack()}
         >
-          <Ionicons
-            name="arrow-back"
-            size={22}
-            color={colors.text}
-          />
+          <Ionicons name="arrow-back" size={22} color={colors.text} />
         </TouchableOpacity>
 
-        <Text style={styles.headerTitle}>
-          Revisar assinatura
-        </Text>
+        <Text style={styles.headerTitle}>Revisar assinatura</Text>
 
         <View style={{ width: 38 }} />
       </View>
@@ -510,24 +466,17 @@ export default function ReviewPlanScreen({
         showsVerticalScrollIndicator={false}
       >
         <Text style={styles.intro}>
-          Confira os detalhes da sua assinatura antes de
-          confirmar.
+          Confira os detalhes da sua assinatura antes de confirmar.
         </Text>
 
         {/* PLANO */}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Plano escolhido
-          </Text>
+          <Text style={styles.sectionTitle}>Plano escolhido</Text>
 
           <View style={styles.planSummaryCard}>
             <View style={styles.planSummaryIcon}>
-              <Ionicons
-                name="fitness-outline"
-                size={22}
-                color={colors.blue}
-              />
+              <Ionicons name="fitness-outline" size={22} color={colors.blue} />
             </View>
 
             <View style={styles.planSummaryContent}>
@@ -536,14 +485,11 @@ export default function ReviewPlanScreen({
               </Text>
 
               <Text style={styles.planSummaryCheckins}>
-                {planoSelecionado.checkinsPorDia}x
-                {' '}check-in por dia
+                {planoSelecionado.checkinsPorDia}x check-in por dia
               </Text>
 
               {!!planoSelecionado.descricao && (
-                <Text
-                  style={styles.planSummaryDescription}
-                >
+                <Text style={styles.planSummaryDescription}>
                   {planoSelecionado.descricao}
                 </Text>
               )}
@@ -554,38 +500,26 @@ export default function ReviewPlanScreen({
         {/* RESUMO */}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Resumo da alteração
-          </Text>
+          <Text style={styles.sectionTitle}>Resumo da alteração</Text>
 
           <View style={styles.summaryCard}>
             {planoAtual && (
               <>
-                <SummaryRow
-                  label="Plano atual"
-                  value={planoAtual.nome}
-                />
+                <SummaryRow label="Plano atual" value={planoAtual.nome} />
 
                 <SummaryRow
                   label="Valor atual"
-                  value={`${formatarMoeda(
-                    planoAtual.valor
-                  )}/mês`}
+                  value={`${formatarMoeda(planoAtual.valor)}/mês`}
                   divider
                 />
               </>
             )}
 
-            <SummaryRow
-              label="Novo plano"
-              value={planoSelecionado.nome}
-            />
+            <SummaryRow label="Novo plano" value={planoSelecionado.nome} />
 
             <SummaryRow
               label="Novo valor"
-              value={`${formatarMoeda(
-                planoSelecionado.valor
-              )}/mês`}
+              value={`${formatarMoeda(planoSelecionado.valor)}/mês`}
               highlight
               divider
             />
@@ -593,9 +527,7 @@ export default function ReviewPlanScreen({
             {planoAtual && (
               <SummaryRow
                 label="Diferença"
-                value={`${
-                  diferenca > 0 ? '+' : ''
-                }${formatarMoeda(
+                value={`${diferenca > 0 ? '+' : ''}${formatarMoeda(
                   diferenca
                 )}/mês`}
               />
@@ -604,9 +536,9 @@ export default function ReviewPlanScreen({
             <SummaryRow
               label="Entra em vigor"
               value={
-                planoAtual
+                planoAtual && isDowngrade
                   ? 'Próximo ciclo'
-                  : 'Imediatamente'
+                  : 'Após confirmação do pagamento'
               }
               divider
             />
@@ -614,9 +546,7 @@ export default function ReviewPlanScreen({
             {!!planoAtual?.proximaCobranca?.data && (
               <SummaryRow
                 label="Próxima cobrança"
-                value={formatarData(
-                  planoAtual.proximaCobranca.data
-                )}
+                value={formatarData(planoAtual.proximaCobranca.data)}
               />
             )}
           </View>
@@ -625,16 +555,11 @@ export default function ReviewPlanScreen({
         {/* FORMA DE PAGAMENTO */}
 
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>
-            Forma de pagamento
-          </Text>
+          <Text style={styles.sectionTitle}>Forma de pagamento</Text>
 
           {loadingPayment && (
             <View style={styles.paymentLoading}>
-              <ActivityIndicator
-                size="small"
-                color={colors.blue}
-              />
+              <ActivityIndicator size="small" color={colors.blue} />
 
               <Text style={styles.paymentLoadingText}>
                 Carregando forma de pagamento...
@@ -644,49 +569,32 @@ export default function ReviewPlanScreen({
 
           {!loadingPayment && !!paymentError && (
             <View style={styles.paymentErrorCard}>
-              <Ionicons
-                name="alert-circle-outline"
-                size={22}
-                color="#DC2626"
-              />
+              <Ionicons name="alert-circle-outline" size={22} color="#DC2626" />
 
               <View style={styles.paymentErrorContent}>
-                <Text style={styles.paymentErrorText}>
-                  {paymentError}
-                </Text>
+                <Text style={styles.paymentErrorText}>{paymentError}</Text>
 
-                <TouchableOpacity
-                  onPress={buscarFormaPagamento}
-                >
-                  <Text
-                    style={styles.paymentRetryText}
-                  >
-                    Tentar novamente
-                  </Text>
+                <TouchableOpacity onPress={buscarFormaPagamento}>
+                  <Text style={styles.paymentRetryText}>Tentar novamente</Text>
                 </TouchableOpacity>
               </View>
             </View>
           )}
 
-          {!loadingPayment &&
-            !paymentError && (
-              <PaymentMethodCard
-                formaPagamento={formaPagamento}
-                onAdd={handleCadastrarCartao}
-                onChange={
-                  handleAlterarFormaPagamento
-                }
-              />
-            )}
+          {!loadingPayment && !paymentError && (
+            <PaymentMethodCard
+              formaPagamento={formaPagamento}
+              onAdd={handleCadastrarCartao}
+              onChange={handleAlterarFormaPagamento}
+            />
+          )}
         </View>
 
         {/* TOTAL */}
 
         <View style={styles.totalCard}>
           <View>
-            <Text style={styles.totalLabel}>
-              Total da assinatura
-            </Text>
+            <Text style={styles.totalLabel}>Total da assinatura</Text>
 
             <Text style={styles.totalDescription}>
               Cobrança recorrente mensal
@@ -695,45 +603,29 @@ export default function ReviewPlanScreen({
 
           <View style={styles.totalValueContainer}>
             <Text style={styles.totalValue}>
-              {formatarMoeda(
-                planoSelecionado.valor
-              )}
+              {formatarMoeda(planoSelecionado.valor)}
             </Text>
 
-            <Text style={styles.totalSuffix}>
-              /mês
-            </Text>
+            <Text style={styles.totalSuffix}>/mês</Text>
           </View>
         </View>
 
         {!!confirmError && (
           <View style={styles.errorBox}>
-            <Ionicons
-              name="alert-circle"
-              size={17}
-              color="#DC2626"
-            />
+            <Ionicons name="alert-circle" size={17} color="#DC2626" />
 
-            <Text style={styles.errorText}>
-              {confirmError}
-            </Text>
+            <Text style={styles.errorText}>{confirmError}</Text>
           </View>
         )}
 
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            (!formaPagamento ||
-              loadingPayment ||
-              confirming) &&
+            (!formaPagamento || loadingPayment || confirming) &&
               styles.confirmButtonDisabled,
           ]}
           onPress={handleConfirmar}
-          disabled={
-            !formaPagamento ||
-            loadingPayment ||
-            confirming
-          }
+          disabled={!formaPagamento || loadingPayment || confirming}
           activeOpacity={0.85}
         >
           {confirming ? (
@@ -741,24 +633,17 @@ export default function ReviewPlanScreen({
           ) : (
             <>
               <Text style={styles.confirmButtonText}>
-                {planoAtual
-                  ? 'Confirmar alteração'
-                  : 'Confirmar assinatura'}
+                {planoAtual ? 'Confirmar alteração' : 'Confirmar assinatura'}
               </Text>
 
-              <Ionicons
-                name="arrow-forward"
-                size={18}
-                color="#fff"
-              />
+              <Ionicons name="arrow-forward" size={18} color="#fff" />
             </>
           )}
         </TouchableOpacity>
 
         {!formaPagamento && !loadingPayment && (
           <Text style={styles.bottomHint}>
-            Cadastre uma forma de pagamento para
-            continuar.
+            Cadastre uma forma de pagamento para continuar.
           </Text>
         )}
 
@@ -771,8 +656,8 @@ export default function ReviewPlanScreen({
             />
 
             <Text style={styles.infoText}>
-              O novo valor da assinatura será aplicado
-              conforme as regras do próximo ciclo.
+              O novo valor da assinatura será aplicado conforme as regras do
+              próximo ciclo.
             </Text>
           </View>
         )}
@@ -786,9 +671,8 @@ export default function ReviewPlanScreen({
             />
 
             <Text style={styles.infoText}>
-              A alteração para o novo plano será
-              considerada conforme as regras do próximo
-              ciclo.
+              A alteração para o novo plano será considerada conforme as regras
+              do próximo ciclo.
             </Text>
           </View>
         )}
@@ -798,6 +682,15 @@ export default function ReviewPlanScreen({
 }
 
 const styles = StyleSheet.create({
+  pendingInfoBox: { backgroundColor: '#FFFBEB' },
+  resultError: {
+    color: '#B91C1C',
+    textAlign: 'center',
+    marginBottom: 16,
+    fontSize: 13,
+  },
+  refreshStatusButton: { backgroundColor: colors.chipBg, marginBottom: 12 },
+  refreshStatusText: { color: colors.blue, fontWeight: '700' },
   safe: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -1246,7 +1139,8 @@ const styles = StyleSheet.create({
    */
 
   successContainer: {
-    flex: 1,
+    flexGrow: 1,
+    paddingTop: 54,
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 24,
