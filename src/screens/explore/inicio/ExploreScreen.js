@@ -3,6 +3,7 @@ import { useCurrentLocation } from '../../../hooks/useCurrentLocation';
 import { findAllByCondition } from '../../../services/estabelecimentoService';
 import { save as sugerirEstabelecimento } from '../../../services/estabelecimentoLeadService';
 import Explore from './Explore';
+import { useAuth } from '../../../context/AuthContext';
 
 const RAIO_INICIAL_KM = 10;
 const TAMANHO_PAGINA = 10;
@@ -33,6 +34,7 @@ function formatarHora(hora) {
  * O componente visual (Explore) só recebe dados e callbacks via props.
  */
 export default function ExploreScreen({ navigation, route }) {
+  const { user } = useAuth();
   const [search, setSearch] = useState('');
 
   // Filtros completos. "categorias" é sempre um array — tanto os chips
@@ -128,23 +130,21 @@ export default function ExploreScreen({ navigation, route }) {
             category: e.tipo.descricao,
             distance: formatarDistancia(e.distanciaMetros),
             parceiro: e.parceiro,
-            hours:
-              horarioFuncionamento
-                ? horarioFuncionamento.aberto
-                  ? `Aberto até as ${formatarHora(
-                      horarioFuncionamento.horarioFechamento
-                    )}`
-                  : horarioFuncionamento.diaAbertura
-                    ? `Abre ${
-                        horarioFuncionamento.diaAbertura.descricao
-                      } às ${formatarHora(
-                        horarioFuncionamento.horarioAbertura
-                      )}`
-                    : 'Fechado'
-                : null,
+            hours: horarioFuncionamento
+              ? horarioFuncionamento.aberto
+                ? `Aberto até as ${formatarHora(
+                    horarioFuncionamento.horarioFechamento
+                  )}`
+                : horarioFuncionamento.diaAbertura
+                  ? `Abre ${
+                      horarioFuncionamento.diaAbertura.descricao
+                    } às ${formatarHora(horarioFuncionamento.horarioAbertura)}`
+                  : 'Fechado'
+              : null,
             checkinHoje: e.checkinRealizadoHoje ?? false, // implementar flag que indica se fez checkin hoje
             //reviews: 120,
-            image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
+            image:
+              'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=900&q=80',
             //image: '../../../assets/image-academia.jpeg?w=900&q=80',
             //coord: { top: '46%', left: '46%' },
           };
@@ -244,7 +244,7 @@ export default function ExploreScreen({ navigation, route }) {
   const handleSelectCategory = useCallback(
     (categoryId) => {
       let novasCategorias;
-      if (categoryId === 'todos') {
+      if (categoryId === 'TODOS') {
         novasCategorias = [];
       } else if (categorias.includes(categoryId)) {
         novasCategorias = categorias.filter((c) => c !== categoryId);
@@ -301,6 +301,7 @@ export default function ExploreScreen({ navigation, route }) {
   return (
     <Explore
       navigation={navigation}
+      nomeUsuario={user?.nome}
       search={search}
       onChangeSearch={setSearch}
       onSubmitSearch={handleSubmitSearch}

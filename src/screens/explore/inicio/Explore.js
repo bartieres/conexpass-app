@@ -11,9 +11,23 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../../../theme/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, radius, shadow } from '../../../theme/theme';
 import { CATEGORIES } from '../../../data/mock';
 import SuggestEstablishmentModal from '../SuggestEstablishmentModal';
+
+const CATEGORY_COLORS = {
+  TODOS: ['#FCEAF5', '#A82779'],
+  ACADEMIA: ['#EEE9FF', '#7043C1'],
+  PILATES: ['#E5F7ED', '#23794B'],
+  CROSSFIT: ['#FFF0E2', '#B65C15'],
+  NATACAO: ['#E4F3FF', '#1876AD'],
+  LUTA: ['#FFE9EA', '#B83B50'],
+};
+const categorias = [
+  ...CATEGORIES.filter((c) => c.id !== 'TODOS'),
+  CATEGORIES.find((c) => c.id === 'TODOS'),
+];
 
 function EstabelecimentoCard({ estabelecimento, onPress }) {
   return (
@@ -21,58 +35,39 @@ function EstabelecimentoCard({ estabelecimento, onPress }) {
       style={styles.gymCard}
       onPress={onPress}
       activeOpacity={0.85}
+      accessibilityRole="button"
+      accessibilityLabel={`Ver ${estabelecimento.name}`}
     >
-      <View style={styles.gymImageWrap}>
-        <Image
-          source={{ uri: estabelecimento.image }}
-          style={styles.gymImage}
-        />
-        {/* Destaque de check-in já feito hoje nesse estabelecimento */}
-        {estabelecimento.checkinHoje && (
-          <View style={styles.checkinBadge}>
-            <Ionicons name="checkmark" size={11} color="#fff" />
-          </View>
-        )}
-      </View>
+      <Image source={{ uri: estabelecimento.image }} style={styles.gymImage} />
       <View style={styles.gymInfo}>
-        <View style={styles.gymNameRow}>
-          <Text style={styles.gymName} numberOfLines={1}>
-            {estabelecimento.name}
-          </Text>
-          {estabelecimento.checkinHoje && (
-            <View style={styles.checkinPill}>
-              <Text style={styles.checkinPillText}>Check-in hoje</Text>
-            </View>
-          )}
-        </View>
-        <Text style={styles.gymMeta}>
-          {estabelecimento.distance}
-          {estabelecimento.hours
-            ? ` • ${estabelecimento.hours}`
-            : ''}
+        <Text style={styles.gymName} numberOfLines={2}>
+          {estabelecimento.name}
         </Text>
-
-        <View style={styles.ratingRow}>
-          <Text style={styles.ratingText}>
-            {estabelecimento.category}
-          </Text>
-
+        <Text style={styles.gymMeta}>{estabelecimento.category}</Text>
+        <View style={styles.metaRow}>
+          <Ionicons name="location" size={14} color={colors.blue} />
+          <Text style={styles.distance}>{estabelecimento.distance}</Text>
           {estabelecimento.parceiro === false && (
             <View style={styles.notPartnerPill}>
-              <Text style={styles.notPartnerPillText}>
-                Não parceiro
-              </Text>
+              <Text style={styles.notPartnerText}>Não parceiro</Text>
             </View>
           )}
         </View>
+        {!!estabelecimento.hours && (
+          <Text style={styles.hours}>{estabelecimento.hours}</Text>
+        )}
+        {estabelecimento.checkinHoje && (
+          <Text style={styles.checkinText}>✓ Check-in realizado hoje</Text>
+        )}
       </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+      <Ionicons name="chevron-forward" size={20} color={colors.textLight} />
     </TouchableOpacity>
   );
 }
 
 export default function Explore({
   navigation,
+  nomeUsuario,
   search,
   onChangeSearch,
   onSubmitSearch,
@@ -88,9 +83,6 @@ export default function Explore({
   onRetryEstabelecimentos,
   estabelecimentos,
   estabelecimentosError,
-  selectedEstabelecimento,
-  onSelectEstabelecimento,
-  hasMore,
   loadingMore,
   onLoadMore,
   suggestModalVisible,
@@ -101,292 +93,268 @@ export default function Explore({
   suggestionError,
   suggestionSuccess,
 }) {
-  // "Todos" fica ativo quando não há nenhuma categoria selecionada; qualquer
-  // outra categoria fica ativa se estiver dentro do array (multi-seleção).
-  const isCategoriaAtiva = (id) =>
-    id === 'todos'
-      ? categoriasSelecionadas.length === 0
-      : categoriasSelecionadas.includes(id);
+  const nome = nomeUsuario?.trim() || '';
+  const primeiroNome = nome.split(/\s+/)[0];
+  const iniciais = nome
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((parte) => parte[0])
+    .join('')
+    .toLocaleUpperCase('pt-BR');
+  const podeExibirLista =
+    !permissionDenied && !isLoadingAnything && !estabelecimentosError;
+  const filtrosAtivos =
+    categoriasSelecionadas.filter((id) => id !== 'TODOS').length +
+    (raioKm !== 10 ? 1 : 0);
 
-  // view de mapa desativada por enquanto (ver bloco comentado no fim do arquivo)
-  // const [view, setView] = React.useState('lista');
-
-  return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <View>
-          <Text style={styles.headerTitle}>Explorar</Text>
-          {/*
-            Antes tínhamos um seletor de cidade aqui. Como o único filtro de
-            localização que temos hoje é a distância a partir da posição do
-            usuário, deixamos só o texto informativo abaixo (sem dropdown).
-          */}
-          <View style={styles.locationRow}>
-            <Ionicons name="location" size={14} color={colors.blue} />
-            <Text style={styles.locationText}>Até {raioKm} km de você</Text>
-          </View>
-        </View>
-
-        {/* Sino de notificações - será implementado depois */}
-        {/* <TouchableOpacity style={styles.iconButton}>
-          <Ionicons name="notifications-outline" size={20} color={colors.text} />
-        </TouchableOpacity> */}
+  const header = (
+    <View>
+      <View style={styles.brandRow}>
+        <Image
+          source={require('../../../assets/logo-conexpass.png')}
+          style={styles.logo}
+          resizeMode="contain"
+          accessibilityLabel="ConexPass"
+        />
+        <TouchableOpacity
+          style={styles.profileButton}
+          onPress={() => navigation.navigate('Perfil')}
+          accessibilityRole="button"
+          accessibilityLabel="Abrir perfil"
+        >
+          <Ionicons name="person-outline" size={21} color={colors.blueDark} />
+        </TouchableOpacity>
       </View>
-
+      <View style={styles.greetingRow}>
+        <View style={styles.avatar}>
+          {iniciais ? (
+            <Text style={styles.initials}>{iniciais}</Text>
+          ) : (
+            <Ionicons name="person-outline" size={25} color={colors.blue} />
+          )}
+        </View>
+        <View style={styles.greetingCopy}>
+          <Text style={styles.greeting}>
+            {primeiroNome ? `Olá, ${primeiroNome}!` : 'Olá!'}
+          </Text>
+          <Text style={styles.subtitle}>O que vamos explorar hoje?</Text>
+        </View>
+      </View>
+      <TouchableOpacity
+        style={styles.locationRow}
+        onPress={onOpenFilters}
+        accessibilityRole="button"
+        accessibilityLabel="Alterar distância nos filtros"
+      >
+        <Ionicons name="location" size={18} color={colors.blue} />
+        <Text style={styles.locationText}>
+          Explorando até {raioKm} km de você
+        </Text>
+        <Ionicons name="chevron-down" size={16} color={colors.blue} />
+      </TouchableOpacity>
       <View style={styles.searchRow}>
         <View style={styles.searchBox}>
-          <Ionicons name="search" size={17} color={colors.textLight} />
+          <Ionicons name="search-outline" size={21} color={colors.textMuted} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Buscar por razão social..."
-            placeholderTextColor={colors.textLight}
+            placeholder="Buscar estabelecimentos"
+            placeholderTextColor={colors.textMuted}
             value={search}
             onChangeText={onChangeSearch}
             onSubmitEditing={onSubmitSearch}
             returnKeyType="search"
+            accessibilityLabel="Buscar estabelecimentos por nome"
           />
         </View>
-        {/*
-          O ícone de filtro abre a FiltersScreen (categorias, distância,
-          estrelas e ordenação). A tela devolve os filtros escolhidos via
-          callback (onApply), e é o ExploreScreen quem chama o backend.
-        */}
-        <TouchableOpacity style={styles.filterButton} onPress={onOpenFilters}>
-          <Ionicons name="options-outline" size={18} color="#fff" />
+        <TouchableOpacity
+          style={styles.filterButton}
+          onPress={onOpenFilters}
+          accessibilityRole="button"
+          accessibilityLabel={`Abrir filtros${filtrosAtivos ? `, ${filtrosAtivos} ativos` : ''}`}
+        >
+          <Ionicons name="options-outline" size={24} color={colors.white} />
+          {filtrosAtivos > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{filtrosAtivos}</Text>
+            </View>
+          )}
         </TouchableOpacity>
       </View>
-
-      {/* Filtro por estrelas e ordenação agora vivem na FiltersScreen (veja onOpenFilters) */}
-
-      {/* Toggle lista/mapa - mapa desativado por enquanto */}
-      {/*
-      <View style={styles.toggleRow}>
+      <FlatList
+        horizontal
+        data={categorias}
+        keyExtractor={(item) => item.id}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.categories}
+        renderItem={({ item }) => {
+          const active =
+            item.id === 'TODOS'
+              ? categoriasSelecionadas.length === 0
+              : categoriasSelecionadas.includes(item.id);
+          const [backgroundColor, color] = CATEGORY_COLORS[item.id] || [
+            colors.chipBg,
+            colors.blue,
+          ];
+          return (
+            <TouchableOpacity
+              style={[
+                styles.category,
+                {
+                  backgroundColor,
+                  borderColor: active ? color : 'transparent',
+                },
+              ]}
+              onPress={() => onSelectCategory(item.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: active }}
+              accessibilityLabel={item.label}
+            >
+              <Ionicons name={item.icon} size={27} color={color} />
+              <Text style={[styles.categoryText, { color }]}>{item.label}</Text>
+              {active && (
+                <View
+                  style={[styles.categoryDot, { backgroundColor: color }]}
+                />
+              )}
+            </TouchableOpacity>
+          );
+        }}
+      />
+      <LinearGradient
+        colors={['#E8F1FF', '#DCE8FC', '#ECF8F4']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={styles.hero}
+      >
+        <View style={styles.heroDecoration}>
+          <Ionicons name="barbell-outline" size={100} color="#C1D6F5" />
+        </View>
+        <Text style={styles.eyebrow}>MAIS MOVIMENTO, MAIS POSSIBILIDADES</Text>
+        <Text style={styles.heroTitle}>Encontre seu{'\n'}próximo treino</Text>
+        <Text style={styles.heroSubtitle}>
+          Academias, estúdios e novas experiências na sua região.
+        </Text>
         <TouchableOpacity
-          style={[styles.toggleBtn, view === 'lista' && styles.toggleBtnActive]}
-          onPress={() => setView('lista')}
+          style={styles.heroButton}
+          onPress={() => navigation.navigate('Plano')}
+          accessibilityRole="button"
         >
-          <Text style={[styles.toggleText, view === 'lista' && styles.toggleTextActive]}>Lista</Text>
+          <Text style={styles.heroButtonText}>Conhecer planos</Text>
+          <Ionicons name="arrow-forward" size={18} color={colors.white} />
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.toggleBtn, view === 'mapa' && styles.toggleBtnActive]}
-          onPress={() => setView('mapa')}
-        >
-          <Text style={[styles.toggleText, view === 'mapa' && styles.toggleTextActive]}>Mapa</Text>
-        </TouchableOpacity>
-      </View>
-      */}
+      </LinearGradient>
+      <Text style={styles.sectionTitle}>Próximos de você</Text>
+    </View>
+  );
 
-      {permissionDenied && (
-        <View style={styles.stateBox}>
-          <Ionicons
-            name="location-outline"
-            size={28}
-            color={colors.textLight}
+  const estado = permissionDenied
+    ? {
+        icon: 'location-outline',
+        text: 'Permita o acesso à localização para ver estabelecimentos perto de você.',
+        action: 'Permitir localização',
+        onPress: onRetryLocation,
+      }
+    : estabelecimentosError
+      ? {
+          icon: 'alert-circle-outline',
+          text: estabelecimentosError,
+          action: 'Tentar novamente',
+          onPress: onRetryEstabelecimentos,
+        }
+      : {
+          icon: 'search-outline',
+          text: 'Nenhum estabelecimento encontrado com esses filtros. Que tal ampliar a distância?',
+          action: 'Ajustar filtros',
+          onPress: onOpenFilters,
+        };
+
+  return (
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <FlatList
+        data={podeExibirLista ? estabelecimentos : []}
+        keyExtractor={(item) => String(item.id)}
+        contentContainerStyle={styles.list}
+        keyboardShouldPersistTaps="handled"
+        ListHeaderComponent={header}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            colors={[colors.blue]}
+            tintColor={colors.blue}
           />
-          <Text style={styles.stateText}>
-            Permita o acesso à localização para ver estabelecimentos perto de
-            você.
-          </Text>
-          <TouchableOpacity
-            style={styles.stateButton}
-            onPress={onRetryLocation}
-          >
-            <Text style={styles.stateButtonText}>Permitir localização</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!permissionDenied && isLoadingAnything && (
-        <View style={styles.stateBox}>
-          <ActivityIndicator size="small" color={colors.blue} />
-          <Text style={styles.stateText}>
-            Buscando estabelecimentos próximos de você...
-          </Text>
-        </View>
-      )}
-
-      {!permissionDenied && !isLoadingAnything && !!estabelecimentosError && (
-        <View style={styles.stateBox}>
-          <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
-          <Text style={styles.stateText}>{estabelecimentosError}</Text>
-          <TouchableOpacity
-            style={styles.stateButton}
-            onPress={onRetryEstabelecimentos}
-          >
-            <Text style={styles.stateButtonText}>Tentar novamente</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-
-      {!permissionDenied && !isLoadingAnything && !estabelecimentosError && (
-        <>
-          <View style={styles.chipsRow}>
-            <FlatList
-              data={CATEGORIES}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={{ paddingHorizontal: 20, gap: 10 }}
-              renderItem={({ item }) => {
-                const active = isCategoriaAtiva(item.id);
-                return (
-                  <TouchableOpacity
-                    style={[styles.chip, active && styles.chipActive]}
-                    onPress={() => onSelectCategory(item.id)}
-                  >
-                    <Ionicons
-                      name={item.icon}
-                      size={15}
-                      color={active ? '#fff' : colors.blue}
-                    />
-                    <Text
-                      style={[styles.chipText, active && styles.chipTextActive]}
-                    >
-                      {item.label}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              }}
-            />
+        }
+        renderItem={({ item }) => (
+          <EstabelecimentoCard
+            estabelecimento={item}
+            onPress={() =>
+              navigation.navigate('EstablishmentDetail', { gym: item })
+            }
+          />
+        )}
+        onEndReached={() => {
+          if (podeExibirLista && estabelecimentos.length > 0) onLoadMore();
+        }}
+        onEndReachedThreshold={0.4}
+        ListEmptyComponent={
+          <View style={styles.stateBox}>
+            {!permissionDenied && isLoadingAnything ? (
+              <>
+                <ActivityIndicator color={colors.blue} />
+                <Text style={styles.stateText}>
+                  Buscando estabelecimentos próximos de você...
+                </Text>
+              </>
+            ) : (
+              <>
+                <Ionicons name={estado.icon} size={30} color={colors.blue} />
+                <Text style={styles.stateText}>{estado.text}</Text>
+                <TouchableOpacity
+                  style={styles.stateButton}
+                  onPress={estado.onPress}
+                  accessibilityRole="button"
+                >
+                  <Text style={styles.heroButtonText}>{estado.action}</Text>
+                </TouchableOpacity>
+              </>
+            )}
           </View>
-
-          <FlatList
-            data={estabelecimentos}
-            keyExtractor={(item) => item.id}
-            contentContainerStyle={{ padding: 20, paddingTop: 8, gap: 12 }}
-            ListHeaderComponent={
-              <Text style={styles.sectionTitle}>Próximos de você</Text>
-            }
-            refreshControl={
-              <RefreshControl
-                refreshing={refreshing}
-                onRefresh={onRefresh}
-                colors={[colors.blue]}
-                tintColor={colors.blue}
-              />
-            }
-            renderItem={({ item }) => (
-              <EstabelecimentoCard
-                estabelecimento={item}
-                onPress={() =>
-                  navigation.navigate('EstablishmentDetail', { gym: item })
-                }
+        }
+        ListFooterComponent={
+          <>
+            {loadingMore && (
+              <ActivityIndicator
+                style={styles.loadingMore}
+                color={colors.blue}
               />
             )}
-            // Infinite scroll: dispara a busca da próxima página quando o
-            // usuário chega perto do fim da lista.
-            onEndReached={onLoadMore}
-            onEndReachedThreshold={0.4}
-            ListFooterComponent={
-              <>
-                {loadingMore && (
-                  <View style={styles.loadingMoreBox}>
-                    <ActivityIndicator size="small" color={colors.blue} />
-                    <Text style={styles.loadingMoreText}>
-                      Carregando mais estabelecimentos...
-                    </Text>
-                  </View>
-                )}
-
-                {/* Banner de indicação: aparece sempre que a lista terminou de
-                    carregar (não só quando "acaba", já que é útil mesmo com
-                    poucos resultados) */}
-                {!loadingMore && (
-                  <TouchableOpacity
-                    style={styles.suggestBanner}
-                    activeOpacity={0.85}
-                    onPress={onOpenSuggestModal}
-                  >
-                    <View style={styles.suggestIcon}>
-                      <Ionicons
-                        name="add-circle-outline"
-                        size={18}
-                        color={colors.blue}
-                      />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.suggestTitle}>
-                        Não encontrou o estabelecimento que procura?
-                      </Text>
-                      <Text style={styles.suggestSubtitle}>
-                        Indique agora e avaliamos a parceria.
-                      </Text>
-                    </View>
-                    <Ionicons
-                      name="chevron-forward"
-                      size={18}
-                      color={colors.blue}
-                    />
-                  </TouchableOpacity>
-                )}
-
-                {/* Banner Premium só aparece quando não há mais páginas pra carregar */}
-                {/*{!hasMore && !loadingMore && (
-                  <TouchableOpacity style={styles.premiumBanner} activeOpacity={0.9}>
-                    <View style={styles.premiumIcon}>
-                      <Ionicons name="star" size={18} color="#fff" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.premiumTitle}>Seja Premium</Text>
-                      <Text style={styles.premiumSubtitle}>
-                        Tenha mais check-ins por dia e desbloqueie benefícios exclusivos.
-                      </Text>
-                    </View>
-                  </TouchableOpacity>
-                )}*/}
-              </>
-            }
-          />
-
-          {/*
-            View de mapa desativada por enquanto. Mantida comentada para
-            reaproveitar quando a funcionalidade for implementada.
-
-            <View style={styles.mapWrap}>
-              <View style={styles.mapArea}>
-                {estabelecimentos.map((g) => (
-                  <TouchableOpacity
-                    key={g.id}
-                    style={[styles.pin, { top: g.coord?.top ?? '50%', left: g.coord?.left ?? '50%' }]}
-                    onPress={() => onSelectEstabelecimento(g)}
-                  >
-                    <Ionicons
-                      name="location"
-                      size={30}
-                      color={g.id === selectedEstabelecimento?.id ? colors.blueDark : colors.blue}
-                    />
-                  </TouchableOpacity>
-                ))}
-                <Text style={styles.mapCityLabel}>Londrina</Text>
+            <TouchableOpacity
+              style={styles.suggestBanner}
+              onPress={onOpenSuggestModal}
+              accessibilityRole="button"
+              activeOpacity={0.85}
+            >
+              <View style={styles.suggestIcon}>
+                <Ionicons
+                  name="add-circle-outline"
+                  size={25}
+                  color={colors.blue}
+                />
               </View>
-
-              {selectedEstabelecimento && (
-                <TouchableOpacity
-                  style={styles.mapCard}
-                  activeOpacity={0.9}
-                  onPress={() => navigation.navigate('EstablishmentDetail', { gym: selectedEstabelecimento })}
-                >
-                  <Image source={{ uri: selectedEstabelecimento.image }} style={styles.mapCardImage} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.gymName}>{selectedEstabelecimento.name}</Text>
-                    <Text style={styles.gymMeta}>
-                      {selectedEstabelecimento.distance} • {selectedEstabelecimento.hours}
-                    </Text>
-                    <View style={styles.ratingRow}>
-                      <Ionicons name="star" size={13} color={colors.star} />
-                      <Text style={styles.ratingText}>
-                        {selectedEstabelecimento.rating} ({selectedEstabelecimento.reviews})
-                      </Text>
-                    </View>
-                  </View>
-                  <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
-                </TouchableOpacity>
-              )}
-            </View>
-          */}
-        </>
-      )}
-
+              <View style={styles.gymInfo}>
+                <Text style={styles.suggestTitle}>
+                  Sentiu falta de um lugar?
+                </Text>
+                <Text style={styles.suggestSubtitle}>
+                  Indique e ajude a ampliar nossa rede.
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={20} color={colors.blue} />
+            </TouchableOpacity>
+          </>
+        }
+      />
       <SuggestEstablishmentModal
         visible={suggestModalVisible}
         onClose={onCloseSuggestModal}
@@ -401,245 +369,227 @@ export default function Explore({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  header: {
+  list: { padding: 20, paddingBottom: 28, gap: 12 },
+  brandRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingTop: 12,
-    paddingBottom: 6,
+    justifyContent: 'space-between',
+    marginBottom: 24,
   },
-  headerTitle: { ...typography.h1 },
+  logo: { width: 182, height: 39 },
+  profileButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 16,
+    backgroundColor: '#E8EFFB',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  greetingRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: '#E2ECFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  initials: { color: colors.blueDark, fontWeight: '800', fontSize: 21 },
+  greetingCopy: { flex: 1 },
+  greeting: { color: colors.text, fontSize: 24, fontWeight: '800' },
+  subtitle: { color: colors.textMuted, fontSize: 14, marginTop: 4 },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 6,
+    marginTop: 22,
+    marginBottom: 18,
   },
-  locationText: { color: colors.blue, fontWeight: '700', fontSize: 13 },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow,
+  locationText: {
+    color: colors.blue,
+    fontWeight: '700',
+    fontSize: 13,
+    flexShrink: 1,
   },
-  searchRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingHorizontal: 20,
-    marginTop: 14,
-  },
+  searchRow: { flexDirection: 'row', gap: 10 },
   searchBox: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: radius.md,
+    gap: 10,
     paddingHorizontal: 14,
-    height: 46,
-    gap: 8,
+    backgroundColor: colors.white,
     borderWidth: 1,
     borderColor: colors.border,
+    borderRadius: 18,
+    minHeight: 52,
   },
-  searchInput: { flex: 1, fontSize: 13.5, color: colors.text },
-  filterButton: {
-    width: 46,
-    height: 46,
-    borderRadius: radius.md,
-    backgroundColor: colors.blue,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  toggleRow: {
-    flexDirection: 'row',
-    backgroundColor: '#EAEEF7',
-    borderRadius: radius.pill,
-    marginHorizontal: 20,
-    marginTop: 14,
-    padding: 4,
-  },
-  toggleBtn: {
+  searchInput: {
     flex: 1,
-    paddingVertical: 8,
-    alignItems: 'center',
-    borderRadius: radius.pill,
-  },
-  toggleBtnActive: { backgroundColor: colors.blue },
-  toggleText: { fontSize: 13, fontWeight: '600', color: colors.textMuted },
-  toggleTextActive: { color: '#fff' },
-  stateBox: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingHorizontal: 30,
-    paddingVertical: 30,
-  },
-  stateText: {
+    color: colors.text,
     fontSize: 13,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
+    paddingVertical: 14,
   },
-  stateButton: {
+  filterButton: {
+    width: 52,
+    minHeight: 52,
+    borderRadius: 18,
     backgroundColor: colors.blue,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    marginTop: 4,
-  },
-  stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-  chipsRow: { marginTop: 14 },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    height: 36,
-    borderRadius: radius.pill,
-    backgroundColor: colors.chipBg,
-  },
-  chipActive: { backgroundColor: colors.blue },
-  chipText: { fontSize: 13, fontWeight: '600', color: colors.blue },
-  chipTextActive: { color: '#fff' },
-  sectionTitle: { ...typography.h3, marginBottom: 4 },
-  loadingMoreBox: {
-    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 16,
   },
-  loadingMoreText: { fontSize: 12.5, color: colors.textMuted },
-  gymCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#fff',
-    borderRadius: radius.lg,
-    padding: 10,
-    gap: 12,
-    ...shadow,
-  },
-  gymImageWrap: { position: 'relative' },
-  gymImage: { width: 64, height: 64, borderRadius: radius.md },
-  checkinBadge: {
+  filterBadge: {
     position: 'absolute',
-    bottom: -4,
+    top: -5,
     right: -4,
-    width: 20,
-    height: 20,
+    backgroundColor: colors.blueDark,
     borderRadius: 10,
-    backgroundColor: colors.success,
+    minWidth: 20,
+    height: 20,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: '#fff',
+    borderColor: colors.bg,
   },
-  gymInfo: { flex: 1, gap: 2 },
-  gymNameRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  gymName: {
-    fontSize: 14.5,
-    fontWeight: '700',
+  filterBadgeText: { color: colors.white, fontSize: 10, fontWeight: '800' },
+  categories: { gap: 10, paddingVertical: 18 },
+  category: {
+    width: 86,
+    minHeight: 94,
+    borderRadius: 22,
+    borderWidth: 1.5,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 9,
+    paddingVertical: 12,
+  },
+  categoryText: { fontSize: 12, fontWeight: '700' },
+  categoryDot: {
+    position: 'absolute',
+    top: 7,
+    right: 9,
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+  },
+  hero: {
+    borderRadius: radius.xl,
+    padding: 22,
+    overflow: 'hidden',
+    marginBottom: 26,
+  },
+  heroDecoration: {
+    position: 'absolute',
+    right: -18,
+    bottom: 10,
+    transform: [{ rotate: '-30deg' }],
+  },
+  eyebrow: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: colors.blueDark,
+    letterSpacing: 1,
+    marginBottom: 12,
+  },
+  heroTitle: {
+    fontSize: 27,
+    lineHeight: 32,
+    fontWeight: '800',
     color: colors.text,
-    flexShrink: 1,
   },
-  checkinPill: {
-    backgroundColor: colors.successLight,
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
+  heroSubtitle: {
+    fontSize: 14,
+    lineHeight: 21,
+    color: '#52617A',
+    marginTop: 10,
+    maxWidth: '85%',
   },
-  checkinPillText: { fontSize: 10, fontWeight: '700', color: colors.success },
-  gymMeta: { fontSize: 12, color: colors.textMuted },
-  ratingRow: {
+  heroButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: colors.blue,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: 14,
+    marginTop: 18,
   },
-  ratingText: { fontSize: 12, color: colors.textMuted, fontWeight: '600' },
+  heroButtonText: { color: colors.white, fontSize: 13, fontWeight: '700' },
+  sectionTitle: {
+    color: colors.text,
+    fontSize: 21,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  gymCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    padding: 12,
+    backgroundColor: colors.white,
+    borderRadius: 22,
+    borderWidth: 1,
+    borderColor: colors.border,
+    ...shadow,
+  },
+  gymImage: { width: 72, height: 82, borderRadius: 15 },
+  gymInfo: { flex: 1, gap: 4 },
+  gymName: { color: colors.text, fontSize: 16, fontWeight: '700' },
+  gymMeta: { color: colors.textMuted, fontSize: 13 },
+  metaRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    gap: 4,
+  },
+  distance: { color: colors.textMuted, fontSize: 12, fontWeight: '600' },
+  hours: { color: colors.textMuted, fontSize: 11, lineHeight: 16 },
+  checkinText: { color: colors.success, fontSize: 11, fontWeight: '700' },
+  notPartnerPill: {
+    backgroundColor: '#FFF1CE',
+    paddingHorizontal: 7,
+    paddingVertical: 3,
+    borderRadius: radius.pill,
+  },
+  notPartnerText: { color: '#92400E', fontSize: 10, fontWeight: '700' },
   suggestBanner: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
-    backgroundColor: '#EEF1FC',
-    borderRadius: radius.lg,
-    padding: 14,
-    marginTop: 6,
+    backgroundColor: '#EAF0FD',
+    borderRadius: 22,
+    padding: 16,
+    marginTop: 8,
   },
   suggestIcon: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: '#fff',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
+    backgroundColor: colors.white,
   },
-  suggestTitle: { fontSize: 13, fontWeight: '700', color: colors.text },
-  suggestSubtitle: { fontSize: 11.5, color: colors.textMuted, marginTop: 1 },
-  premiumBanner: {
-    flexDirection: 'row',
+  suggestTitle: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  suggestSubtitle: { color: colors.textMuted, fontSize: 12, lineHeight: 18 },
+  stateBox: {
     alignItems: 'center',
     gap: 12,
+    padding: 24,
+    backgroundColor: colors.white,
+    borderRadius: 22,
+  },
+  stateText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  stateButton: {
     backgroundColor: colors.blue,
-    borderRadius: radius.lg,
-    padding: 16,
-    marginTop: 6,
+    paddingHorizontal: 18,
+    paddingVertical: 12,
+    borderRadius: 12,
   },
-  premiumIcon: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  premiumTitle: { color: '#fff', fontWeight: '800', fontSize: 14 },
-  premiumSubtitle: {
-    color: 'rgba(255,255,255,0.85)',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  mapWrap: { flex: 1, paddingHorizontal: 20, paddingTop: 6, paddingBottom: 16 },
-  mapArea: {
-    flex: 1,
-    backgroundColor: '#E4EAF6',
-    borderRadius: radius.lg,
-    overflow: 'hidden',
-    position: 'relative',
-  },
-  mapCityLabel: {
-    position: 'absolute',
-    top: '38%',
-    left: '32%',
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#B9C6E3',
-  },
-  pin: { position: 'absolute' },
-  mapCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: '#fff',
-    borderRadius: radius.lg,
-    padding: 10,
-    marginTop: 12,
-    ...shadow,
-  },
-  mapCardImage: { width: 56, height: 56, borderRadius: radius.md },
-  notPartnerPill: {
-    backgroundColor: '#FEF3C7',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: radius.pill,
-  },
-
-  notPartnerPillText: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#92400E',
-  },
+  loadingMore: { marginVertical: 18 },
 });

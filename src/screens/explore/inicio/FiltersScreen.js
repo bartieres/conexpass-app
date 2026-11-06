@@ -91,7 +91,7 @@ export default function FiltersScreen({ navigation, route }) {
       <ScrollView contentContainerStyle={styles.body}>
         <Text style={styles.sectionTitle}>Categorias</Text>
         <View style={styles.chipsWrap}>
-          {CATEGORIES.filter((c) => c.id !== 'todos').map((c) => {
+          {CATEGORIES.filter((c) => c.id !== 'TODOS').map((c) => {
             const active = selected.includes(c.id);
             return (
               <TouchableOpacity
