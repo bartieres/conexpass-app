@@ -20,7 +20,7 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
-const ONBOARDING_KEY = '@conexpass:onboarding_completed';
+const ONBOARDING_KEY = '@conexpass:onboarding_completed:v1';
 
 // O deep linking para detalhes de estabelecimentos será configurado
 // quando a estrutura de navegação de MainTabs for confirmada.
