@@ -15,8 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
-import { colors, shadow } from '../../theme/theme';
+import { colors } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
 
 function maskCPF(value) {
@@ -35,18 +34,11 @@ function isValidPassword(password) {
   return hasMinLength && hasLetter && hasNumber;
 }
 
-function RegistrationField({
-  label,
-  icon,
-  visible,
-  onToggleVisible,
-  ...inputProps
-}) {
+function RegistrationField({ label, visible, onToggleVisible, ...inputProps }) {
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.inputGroup}>
-        <Ionicons name={icon} size={20} color={colors.blue} />
         <TextInput
           style={styles.input}
           placeholderTextColor={colors.textLight}
@@ -161,14 +153,6 @@ export default function RegisterScreen({ navigation }) {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.topBar}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-            >
-              <Ionicons name="arrow-back" size={23} color={colors.text} />
-            </TouchableOpacity>
             <Image
               source={require('../../assets/logo-conexpass.png')}
               style={styles.logo}
@@ -176,35 +160,14 @@ export default function RegisterScreen({ navigation }) {
               accessibilityLabel="ConexPass"
             />
           </View>
-          <LinearGradient
-            colors={['#E5EFFF', '#F2F6FF', '#EAF7F0']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.hero}
-          >
-            <View style={styles.heroTag}>
-              <Ionicons name="sparkles-outline" size={15} color={colors.blue} />
-              <Text style={styles.heroTagText}>NOVAS POSSIBILIDADES</Text>
-            </View>
-            <Text style={styles.heroTitle}>
-              Seu próximo movimento{'\n'}começa aqui.
-            </Text>
-            <Text style={styles.heroText}>
-              Descubra estabelecimentos e experiências perto de você.
-            </Text>
-          </LinearGradient>
           <View style={styles.card}>
             <Text style={styles.title}>Criar conta</Text>
             <Text style={styles.subtitle}>Vamos começar com seus dados.</Text>
             <View style={styles.sectionHeading}>
-              <View style={styles.sectionIcon}>
-                <Ionicons name="person-outline" size={17} color={colors.blue} />
-              </View>
               <Text style={styles.sectionTitle}>Sobre você</Text>
             </View>
             <RegistrationField
               label="Nome completo"
-              icon="person-outline"
               placeholder="Como você se chama?"
               value={name}
               onChangeText={setName}
@@ -213,7 +176,6 @@ export default function RegisterScreen({ navigation }) {
             />
             <RegistrationField
               label="E-mail"
-              icon="mail-outline"
               placeholder="Seu melhor e-mail"
               value={email}
               onChangeText={setEmail}
@@ -224,7 +186,6 @@ export default function RegisterScreen({ navigation }) {
             />
             <RegistrationField
               label="CPF"
-              icon="card-outline"
               placeholder="000.000.000-00"
               keyboardType="numeric"
               value={documento}
@@ -233,18 +194,10 @@ export default function RegisterScreen({ navigation }) {
             />
             <View style={styles.divider} />
             <View style={styles.sectionHeading}>
-              <View style={[styles.sectionIcon, styles.greenIcon]}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={17}
-                  color="#237759"
-                />
-              </View>
               <Text style={styles.sectionTitle}>Seu acesso</Text>
             </View>
             <RegistrationField
               label="Senha"
-              icon="lock-closed-outline"
               placeholder="Crie sua senha"
               secureTextEntry={!showPassword}
               value={password}
@@ -275,7 +228,6 @@ export default function RegisterScreen({ navigation }) {
             </View>
             <RegistrationField
               label="Confirmar senha"
-              icon="lock-closed-outline"
               placeholder="Digite a senha novamente"
               secureTextEntry={!showConfirmPassword}
               value={confirmPassword}
@@ -340,11 +292,6 @@ export default function RegisterScreen({ navigation }) {
             </View>
             {!!errorMessage && (
               <View style={styles.errorBox} accessibilityRole="alert">
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={20}
-                  color="#B91C1C"
-                />
                 <Text style={styles.errorText}>{errorMessage}</Text>
               </View>
             )}
@@ -366,10 +313,7 @@ export default function RegisterScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <>
-                  <Text style={styles.primaryButtonText}>Cadastrar</Text>
-                  <Ionicons name="arrow-forward" size={19} color="#fff" />
-                </>
+                <Text style={styles.primaryButtonText}>Cadastrar</Text>
               )}
             </TouchableOpacity>
             <Text style={styles.exploreHint}>
@@ -384,7 +328,6 @@ export default function RegisterScreen({ navigation }) {
               accessibilityRole="button"
             >
               <Text style={styles.footerLink}>Entrar</Text>
-              <Ionicons name="arrow-forward" size={16} color={colors.blue} />
             </TouchableOpacity>
           </View>
         </ScrollView>
@@ -394,52 +337,21 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: '#F7F9FC' },
   container: { flexGrow: 1, padding: 20, paddingTop: 12, paddingBottom: 20 },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: 18,
-    marginBottom: 22,
-  },
-  backButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 15,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...shadow,
-  },
+  topBar: { alignItems: 'center', paddingTop: 16, marginBottom: 28 },
   logo: { width: 166, height: 36 },
-  hero: { borderRadius: 24, padding: 22, marginBottom: 20 },
-  heroTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 7,
-    marginBottom: 14,
-  },
-  heroTagText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: colors.blue,
-    letterSpacing: 0.8,
-  },
-  heroTitle: {
-    fontSize: 27,
-    lineHeight: 33,
-    fontWeight: '800',
-    color: colors.text,
-  },
-  heroText: { fontSize: 14, lineHeight: 21, color: '#5D6B80', marginTop: 10 },
   card: {
     backgroundColor: '#fff',
     borderRadius: 24,
     padding: 20,
     borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow,
+    borderColor: '#EDF0F6',
+    shadowColor: '#21365C',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.035,
+    shadowRadius: 16,
+    elevation: 1,
   },
   title: { fontSize: 23, fontWeight: '800', color: colors.text },
   subtitle: {
@@ -455,15 +367,6 @@ const styles = StyleSheet.create({
     gap: 9,
     marginBottom: 18,
   },
-  sectionIcon: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    backgroundColor: '#EAF1FF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  greenIcon: { backgroundColor: '#E5F5EC' },
   sectionTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
   divider: {
     height: 1,
@@ -482,7 +385,7 @@ const styles = StyleSheet.create({
     borderRadius: 15,
     paddingHorizontal: 13,
     minHeight: 52,
-    backgroundColor: '#FCFDFF',
+    backgroundColor: '#fff',
   },
   input: {
     flex: 1,
@@ -493,7 +396,7 @@ const styles = StyleSheet.create({
   },
   visibilityButton: { paddingVertical: 12, paddingLeft: 2 },
   passwordRules: {
-    backgroundColor: '#F0F7F4',
+    backgroundColor: '#F7F9FC',
     borderRadius: 14,
     padding: 13,
     gap: 8,

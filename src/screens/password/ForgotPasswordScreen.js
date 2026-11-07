@@ -11,10 +11,8 @@ import {
   Image,
   ScrollView,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import { colors, shadow } from '../../theme/theme';
+import { colors } from '../../theme/theme';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '../../context/AuthContext';
 
 function isValidEmail(value) {
@@ -74,14 +72,6 @@ export default function ForgotPasswordScreen({ navigation }) {
             accessibilityLabel="ConexPass"
           />
           <View style={styles.card}>
-            <LinearGradient
-              colors={['#E4EEFF', '#E8F6EF']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.iconBackdrop}
-            >
-              <Ionicons name="key-outline" size={32} color={colors.blue} />
-            </LinearGradient>
             <Text style={styles.title}>Esqueceu sua senha?</Text>
             <Text style={styles.subtitle}>
               Tudo bem! Informe seu e-mail cadastrado e enviaremos um link para
@@ -94,7 +84,6 @@ export default function ForgotPasswordScreen({ navigation }) {
                 !!errorMessage && styles.inputGroupError,
               ]}
             >
-              <Ionicons name="mail-outline" size={20} color={colors.blue} />
               <TextInput
                 style={styles.input}
                 placeholder="nome@email.com"
@@ -119,11 +108,6 @@ export default function ForgotPasswordScreen({ navigation }) {
             )}
             {!!errorMessage && (
               <View style={styles.errorBox} accessibilityRole="alert">
-                <Ionicons
-                  name="alert-circle-outline"
-                  size={18}
-                  color="#B91C1C"
-                />
                 <Text style={styles.errorText}>{errorMessage}</Text>
               </View>
             )}
@@ -145,10 +129,7 @@ export default function ForgotPasswordScreen({ navigation }) {
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <>
-                  <Text style={styles.primaryButtonText}>Enviar link</Text>
-                  <Ionicons name="arrow-forward" size={19} color="#fff" />
-                </>
+                <Text style={styles.primaryButtonText}>Enviar link</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -157,7 +138,6 @@ export default function ForgotPasswordScreen({ navigation }) {
             onPress={() => navigation.navigate('Login')}
             accessibilityRole="button"
           >
-            <Ionicons name="arrow-back" size={16} color={colors.blue} />
             <Text style={styles.loginText}>
               Lembrei minha senha, voltar ao login
             </Text>
@@ -169,7 +149,7 @@ export default function ForgotPasswordScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: '#F7F9FC' },
   container: {
     flexGrow: 1,
     padding: 24,
@@ -177,25 +157,21 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
     justifyContent: 'center',
   },
-  logo: { width: 190, height: 120, alignSelf: 'center', marginBottom: 24 },
+  logo: { width: 190, height: 120, alignSelf: 'center', marginBottom: 32 },
   card: {
     backgroundColor: '#fff',
-    borderRadius: 26,
-    padding: 22,
+    borderRadius: 24,
+    padding: 24,
     borderWidth: 1,
-    borderColor: colors.border,
-    ...shadow,
-  },
-  iconBackdrop: {
-    width: 66,
-    height: 66,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 20,
+    borderColor: '#EDF0F6',
+    shadowColor: '#21365C',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.035,
+    shadowRadius: 16,
+    elevation: 1,
   },
   title: {
-    fontSize: 25,
+    fontSize: 24,
     lineHeight: 31,
     fontWeight: '800',
     color: colors.text,
@@ -217,7 +193,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     paddingHorizontal: 14,
     minHeight: 54,
-    backgroundColor: '#FCFDFF',
+    backgroundColor: '#fff',
   },
   inputGroupError: { borderColor: '#E9A5A5' },
   input: {
@@ -252,16 +228,6 @@ const styles = StyleSheet.create({
   },
   errorText: { color: '#B91C1C', fontSize: 12, lineHeight: 19, flex: 1 },
   emailHint: { fontSize: 12, color: '#A35E14', lineHeight: 18, marginTop: 8 },
-  tipBox: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 9,
-    backgroundColor: '#FFF7E5',
-    borderRadius: 14,
-    padding: 13,
-    marginTop: 18,
-  },
-  tipText: { flex: 1, color: '#805F31', fontSize: 12, lineHeight: 19 },
   loginButton: {
     flexDirection: 'row',
     justifyContent: 'center',
