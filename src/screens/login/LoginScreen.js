@@ -14,7 +14,7 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
-import Logo from '../../assets/logo.png';
+import Logo from '../../assets/logo_conexpass.png';
 
 export default function LoginScreen({ navigation }) {
   const { login } = useAuth();
@@ -54,7 +54,6 @@ export default function LoginScreen({ navigation }) {
       >
         <View style={styles.logoWrap}>
           <Image source={Logo} style={{ height: 120, resizeMode: 'contain' }} />
-          <Text style={styles.tagline}>Treine onde e quando quiser</Text>
         </View>
 
         <View style={styles.card}>

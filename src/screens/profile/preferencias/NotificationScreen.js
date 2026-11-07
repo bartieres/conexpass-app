@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../components/ProfileIntro';
 import { useState, useEffect } from 'react';
 import {
   View,
@@ -10,7 +12,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../../theme/theme';
+import { colors, shadow } from '../../../theme/theme';
 import {
   getNotificationPreferences,
   updateNotificationPreferences,
@@ -24,6 +26,7 @@ import {
  */
 function NotificationItem({
   label,
+  icon,
   description,
   value,
   onValueChange,
@@ -32,6 +35,13 @@ function NotificationItem({
 }) {
   return (
     <View style={[styles.item, !isLast && styles.itemDivider]}>
+      <View style={styles.notificationIcon}>
+        <Ionicons
+          name={icon}
+          size={21}
+          color={disabled ? colors.textLight : colors.blue}
+        />
+      </View>
       <View style={{ flex: 1 }}>
         <Text style={[styles.itemLabel, disabled && styles.itemLabelDisabled]}>
           {label}
@@ -42,6 +52,7 @@ function NotificationItem({
       </View>
       <Switch
         value={value}
+        accessibilityLabel={label}
         onValueChange={onValueChange}
         disabled={disabled}
         trackColor={{ false: colors.border, true: colors.blue }}
@@ -76,7 +87,11 @@ export default function NotificationScreen({ navigation }) {
       try {
         // TODO: confirmar o formato exato retornado pelo endpoint de preferências
         const preferencias = await getNotificationPreferences();
-        setConexpassInfo(preferencias?.conexpassInfo ?? true);
+        setConexpassInfo(
+          typeof preferencias?.conexpassInfo === 'boolean'
+            ? preferencias.conexpassInfo
+            : true
+        );
       } catch (err) {
         setLoadError(
           err.friendlyMessage || 'Não foi possível carregar suas preferências.'
@@ -107,10 +122,12 @@ export default function NotificationScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -120,6 +137,12 @@ export default function NotificationScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
+        <ProfileIntro
+          icon="notifications-outline"
+          title="Novidades no seu ritmo"
+          description="Escolha quais comunicações do ConexPass deseja receber."
+          tone="purple"
+        />
         {loading && (
           <View style={styles.stateBox}>
             <ActivityIndicator size="small" color={colors.blue} />
@@ -139,13 +162,20 @@ export default function NotificationScreen({ navigation }) {
             <Text style={styles.sectionTitle}>Comunicações</Text>
             <View style={styles.sectionCard}>
               <NotificationItem
+                description={
+                  savingConexpassInfo
+                    ? 'Salvando preferência...'
+                    : 'Comunicações gerais do aplicativo'
+                }
                 label="Informações do ConexPass"
+                icon="information-circle-outline"
                 value={conexpassInfo}
                 onValueChange={handleToggleConexpassInfo}
                 disabled={savingConexpassInfo}
               />
               <NotificationItem
                 label="Atualizações do plano"
+                icon="layers-outline"
                 description="Em breve"
                 value={planUpdates}
                 disabled
@@ -153,6 +183,7 @@ export default function NotificationScreen({ navigation }) {
               />
               <NotificationItem
                 label="Check-in"
+                icon="qr-code-outline"
                 description="Em breve"
                 value={checkin}
                 disabled
@@ -160,6 +191,7 @@ export default function NotificationScreen({ navigation }) {
               />
               <NotificationItem
                 label="Ofertas e novidades"
+                icon="pricetags-outline"
                 description="Em breve"
                 value={offers}
                 disabled
@@ -169,31 +201,45 @@ export default function NotificationScreen({ navigation }) {
           </View>
         )}
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  notificationIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 13,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#EDF3FF',
+  },
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 16, paddingTop: 8 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  body: { paddingBottom: 32, padding: 16, paddingTop: 8 },
   section: { marginBottom: 20 },
   sectionTitle: {
     fontSize: 12.5,
@@ -205,8 +251,10 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: '#fff',
-    borderRadius: radius.md,
+    borderRadius: 22,
     overflow: 'hidden',
   },
   item: {

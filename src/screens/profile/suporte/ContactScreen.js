@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../components/ProfileIntro';
 import { useState } from 'react';
 import {
   View,
@@ -136,129 +138,174 @@ export default function ContactScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.safe}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Fale conosco</Text>
-        <View style={{ width: 38 }} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.body}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.safe}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <Text style={styles.heroTitle}>Precisa de ajuda?</Text>
-
-        <View style={styles.inputGroup}>
-          <Text style={styles.label}>Assunto</Text>
+        <View style={styles.header}>
           <TouchableOpacity
-            style={styles.selectBox}
-            onPress={() => setModalVisible(true)}
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={() => navigation.goBack()}
           >
-            <Text
-              style={[
-                styles.selectText,
-                !assuntoSelecionado && styles.selectPlaceholder,
-              ]}
-              numberOfLines={1}
-            >
-              {assuntoSelecionado
-                ? assuntoSelecionado.label
-                : 'Selecione o assunto'}
-            </Text>
-            <Ionicons name="chevron-down" size={18} color={colors.textLight} />
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
           </TouchableOpacity>
+          <Text style={styles.headerTitle}>Fale conosco</Text>
+          <View style={{ width: 38 }} />
         </View>
 
-        <View style={styles.inputGroup}>
-          <View style={styles.messageLabelRow}>
-            <Text style={styles.label}>Mensagem</Text>
-            <Text style={styles.counterText}>
-              {mensagem.length}/{MAX_MENSAGEM}
+        <ScrollView
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+        >
+          <ProfileIntro
+            icon="chatbubbles-outline"
+            title="Vamos conversar?"
+            description="Escolha o assunto e conte como podemos ajudar você."
+            tone="purple"
+          />
+
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Sua mensagem</Text>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Assunto</Text>
+              <TouchableOpacity
+                style={styles.selectBox}
+                onPress={() => setModalVisible(true)}
+              >
+                <Text
+                  style={[
+                    styles.selectText,
+                    !assuntoSelecionado && styles.selectPlaceholder,
+                  ]}
+                  numberOfLines={1}
+                >
+                  {assuntoSelecionado
+                    ? assuntoSelecionado.label
+                    : 'Selecione o assunto'}
+                </Text>
+                <Ionicons
+                  name="chevron-down"
+                  size={18}
+                  color={colors.textLight}
+                />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <View style={styles.messageLabelRow}>
+                <Text style={styles.label}>Mensagem</Text>
+                <Text style={styles.counterText}>
+                  {mensagem.length}/{MAX_MENSAGEM}
+                </Text>
+              </View>
+              <TextInput
+                style={styles.textArea}
+                value={mensagem}
+                onChangeText={setMensagem}
+                placeholder="Descreva o que aconteceu com o máximo de detalhes possível..."
+                placeholderTextColor={colors.textLight}
+                multiline
+                numberOfLines={6}
+                maxLength={MAX_MENSAGEM}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <Text style={styles.messageHint}>
+              Escreva pelo menos 10 caracteres para enviar.
             </Text>
           </View>
-          <TextInput
-            style={styles.textArea}
-            value={mensagem}
-            onChangeText={setMensagem}
-            placeholder="Descreva o que aconteceu com o máximo de detalhes possível..."
-            placeholderTextColor={colors.textLight}
-            multiline
-            numberOfLines={6}
-            maxLength={MAX_MENSAGEM}
-            textAlignVertical="top"
-          />
-        </View>
-
-        {!!errorMessage && (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={16} color="#DC2626" />
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          </View>
-        )}
-        {!!successMessage && (
-          <View style={styles.successBox}>
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={colors.success}
-            />
-            <Text style={styles.successText}>{successMessage}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
-          onPress={handleSend}
-          disabled={!canSend}
-        >
-          {sending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.sendButtonText}>Enviar mensagem</Text>
+          {!!errorMessage && (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
           )}
-        </TouchableOpacity>
-      </ScrollView>
+          {!!successMessage && (
+            <View style={styles.successBox}>
+              <Ionicons
+                name="checkmark-circle"
+                size={16}
+                color={colors.success}
+              />
+              <Text style={styles.successText}>{successMessage}</Text>
+            </View>
+          )}
 
-      <SubjectPickerModal
-        visible={modalVisible}
-        selectedId={assuntoId}
-        onSelect={handleSelectAssunto}
-        onClose={() => setModalVisible(false)}
-      />
-    </KeyboardAvoidingView>
+          <TouchableOpacity
+            style={[styles.sendButton, !canSend && styles.sendButtonDisabled]}
+            onPress={handleSend}
+            disabled={!canSend}
+          >
+            {sending ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.sendButtonText}>Enviar mensagem</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+
+        <SubjectPickerModal
+          visible={modalVisible}
+          selectedId={assuntoId}
+          onSelect={handleSelectAssunto}
+          onClose={() => setModalVisible(false)}
+        />
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 18,
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 18,
+  },
+  messageHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: -6,
+  },
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 20, paddingTop: 4 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  body: { paddingBottom: 32, padding: 20, paddingTop: 4 },
   heroTitle: {
     fontSize: 20,
     fontWeight: '800',
@@ -279,9 +326,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 50,
+    minHeight: 52,
   },
   selectText: { flex: 1, fontSize: 14, color: colors.text, marginRight: 8 },
   selectPlaceholder: { color: colors.textLight },
@@ -295,7 +342,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: 16,
     padding: 14,
     fontSize: 14,
     color: colors.text,
@@ -329,7 +376,7 @@ const styles = StyleSheet.create({
   sendButton: {
     backgroundColor: colors.blue,
     height: 52,
-    borderRadius: radius.md,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,

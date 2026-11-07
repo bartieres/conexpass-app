@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   View,
   Text,
+  Image,
   TextInput,
   TouchableOpacity,
   StyleSheet,
@@ -14,7 +15,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow, typography } from '../../theme/theme';
+import { LinearGradient } from 'expo-linear-gradient';
+import { colors, shadow } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
 
 function maskCPF(value) {
@@ -27,11 +29,47 @@ function maskCPF(value) {
 }
 
 function isValidPassword(password) {
-  // Mínimo 8 caracteres, pelo menos 1 letra e 1 número
   const hasMinLength = password.length >= 8;
   const hasLetter = /[a-zA-Z]/.test(password);
   const hasNumber = /[0-9]/.test(password);
   return hasMinLength && hasLetter && hasNumber;
+}
+
+function RegistrationField({
+  label,
+  icon,
+  visible,
+  onToggleVisible,
+  ...inputProps
+}) {
+  return (
+    <View style={styles.field}>
+      <Text style={styles.label}>{label}</Text>
+      <View style={styles.inputGroup}>
+        <Ionicons name={icon} size={20} color={colors.blue} />
+        <TextInput
+          style={styles.input}
+          placeholderTextColor={colors.textLight}
+          accessibilityLabel={label}
+          {...inputProps}
+        />
+        {onToggleVisible && (
+          <TouchableOpacity
+            style={styles.visibilityButton}
+            onPress={onToggleVisible}
+            accessibilityRole="button"
+            accessibilityLabel={`${visible ? 'Ocultar' : 'Mostrar'} ${label.toLowerCase()}`}
+          >
+            <Ionicons
+              name={visible ? 'eye-off-outline' : 'eye-outline'}
+              size={20}
+              color={colors.textMuted}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    </View>
+  );
 }
 
 export default function RegisterScreen({ navigation }) {
@@ -44,6 +82,8 @@ export default function RegisterScreen({ navigation }) {
   const [agreed, setAgreed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleRegister = async () => {
     if (
@@ -68,7 +108,7 @@ export default function RegisterScreen({ navigation }) {
     setErrorMessage('');
     setLoading(true);
     try {
-      var dataFormatted = {
+      const dataFormatted = {
         nome: name,
         email: email,
         documento: documento,
@@ -77,7 +117,7 @@ export default function RegisterScreen({ navigation }) {
 
       await register(dataFormatted);
       navigation.navigate('RegisterSuccess', { email });
-      // AuthContext atualiza isAuthenticated e o app troca para MainTabs sozinho
+      // A próxima etapa mantém a orientação de confirmação do e-mail.
     } catch (err) {
       setErrorMessage(
         err.friendlyMessage ||
@@ -100,133 +140,179 @@ export default function RegisterScreen({ navigation }) {
     }
   };
 
+  const passwordRules = [
+    { label: '8 caracteres ou mais', valid: password.length >= 8 },
+    { label: 'Pelo menos uma letra', valid: /[a-zA-Z]/.test(password) },
+    { label: 'Pelo menos um número', valid: /[0-9]/.test(password) },
+  ];
+
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: colors.bg }}
-      edges={['top', 'left', 'right']}
+      style={styles.safe}
+      edges={['top', 'left', 'right', 'bottom']}
     >
       <KeyboardAvoidingView
-        style={{ flex: 1, backgroundColor: colors.bg }}
+        style={styles.safe}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         <ScrollView
           contentContainerStyle={styles.container}
           keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
         >
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
+          <View style={styles.topBar}>
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+              accessibilityRole="button"
+              accessibilityLabel="Voltar"
+            >
+              <Ionicons name="arrow-back" size={23} color={colors.text} />
+            </TouchableOpacity>
+            <Image
+              source={require('../../assets/logo-conexpass.png')}
+              style={styles.logo}
+              resizeMode="contain"
+              accessibilityLabel="ConexPass"
+            />
+          </View>
+          <LinearGradient
+            colors={['#E5EFFF', '#F2F6FF', '#EAF7F0']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.hero}
           >
-            <Ionicons name="arrow-back" size={22} color={colors.text} />
-          </TouchableOpacity>
-
+            <View style={styles.heroTag}>
+              <Ionicons name="sparkles-outline" size={15} color={colors.blue} />
+              <Text style={styles.heroTagText}>NOVAS POSSIBILIDADES</Text>
+            </View>
+            <Text style={styles.heroTitle}>
+              Seu próximo movimento{'\n'}começa aqui.
+            </Text>
+            <Text style={styles.heroText}>
+              Descubra estabelecimentos e experiências perto de você.
+            </Text>
+          </LinearGradient>
           <View style={styles.card}>
             <Text style={styles.title}>Criar conta</Text>
-            <Text style={styles.subtitle}>
-              Preencha seus dados para criar sua conta
-            </Text>
-
-            <View style={styles.inputGroup}>
-              <Ionicons
-                name="person-outline"
-                size={18}
-                color={colors.textLight}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Nome completo"
-                placeholderTextColor={colors.textLight}
-                value={name}
-                onChangeText={setName}
-              />
+            <Text style={styles.subtitle}>Vamos começar com seus dados.</Text>
+            <View style={styles.sectionHeading}>
+              <View style={styles.sectionIcon}>
+                <Ionicons name="person-outline" size={17} color={colors.blue} />
+              </View>
+              <Text style={styles.sectionTitle}>Sobre você</Text>
             </View>
-
-            <View style={styles.inputGroup}>
-              <Ionicons
-                name="mail-outline"
-                size={18}
-                color={colors.textLight}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="E-mail"
-                placeholderTextColor={colors.textLight}
-                autoCapitalize="none"
-                keyboardType="email-address"
-                value={email}
-                onChangeText={setEmail}
-              />
+            <RegistrationField
+              label="Nome completo"
+              icon="person-outline"
+              placeholder="Como você se chama?"
+              value={name}
+              onChangeText={setName}
+              autoCapitalize="words"
+              autoComplete="name"
+            />
+            <RegistrationField
+              label="E-mail"
+              icon="mail-outline"
+              placeholder="Seu melhor e-mail"
+              value={email}
+              onChangeText={setEmail}
+              autoCapitalize="none"
+              autoCorrect={false}
+              keyboardType="email-address"
+              autoComplete="email"
+            />
+            <RegistrationField
+              label="CPF"
+              icon="card-outline"
+              placeholder="000.000.000-00"
+              keyboardType="numeric"
+              value={documento}
+              onChangeText={(v) => setDocumento(maskCPF(v))}
+              maxLength={14}
+            />
+            <View style={styles.divider} />
+            <View style={styles.sectionHeading}>
+              <View style={[styles.sectionIcon, styles.greenIcon]}>
+                <Ionicons
+                  name="lock-closed-outline"
+                  size={17}
+                  color="#237759"
+                />
+              </View>
+              <Text style={styles.sectionTitle}>Seu acesso</Text>
             </View>
-
-            <View style={styles.inputGroup}>
-              <Ionicons
-                name="card-outline"
-                size={18}
-                color={colors.textLight}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="CPF"
-                placeholderTextColor={colors.textLight}
-                keyboardType="numeric"
-                value={documento}
-                onChangeText={(v) => setDocumento(maskCPF(v))}
-                maxLength={14}
-              />
+            <RegistrationField
+              label="Senha"
+              icon="lock-closed-outline"
+              placeholder="Crie sua senha"
+              secureTextEntry={!showPassword}
+              value={password}
+              onChangeText={setPassword}
+              visible={showPassword}
+              onToggleVisible={() => setShowPassword((v) => !v)}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            <View style={styles.passwordRules}>
+              {passwordRules.map((rule) => (
+                <View key={rule.label} style={styles.ruleRow}>
+                  <Ionicons
+                    name={rule.valid ? 'checkmark-circle' : 'ellipse-outline'}
+                    size={15}
+                    color={rule.valid ? '#237759' : colors.textLight}
+                  />
+                  <Text
+                    style={[
+                      styles.ruleText,
+                      rule.valid && styles.ruleTextValid,
+                    ]}
+                  >
+                    {rule.label}
+                  </Text>
+                </View>
+              ))}
             </View>
-
-            <View style={styles.inputGroup}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={18}
-                color={colors.textLight}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Senha"
-                placeholderTextColor={colors.textLight}
-                secureTextEntry
-                value={password}
-                onChangeText={setPassword}
-              />
-            </View>
-            {password.length > 0 && !isValidPassword(password) && (
-              <Text style={styles.passwordHint}>
-                A senha precisa ter 8+ caracteres, com letras e números.
+            <RegistrationField
+              label="Confirmar senha"
+              icon="lock-closed-outline"
+              placeholder="Digite a senha novamente"
+              secureTextEntry={!showConfirmPassword}
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              visible={showConfirmPassword}
+              onToggleVisible={() => setShowConfirmPassword((v) => !v)}
+              autoCapitalize="none"
+              autoCorrect={false}
+            />
+            {confirmPassword.length > 0 && (
+              <Text
+                style={[
+                  styles.matchHint,
+                  password === confirmPassword
+                    ? styles.ruleTextValid
+                    : styles.mismatchHint,
+                ]}
+              >
+                {password === confirmPassword
+                  ? 'As senhas coincidem.'
+                  : 'As senhas ainda não coincidem.'}
               </Text>
             )}
-
-            <View style={styles.inputGroup}>
-              <Ionicons
-                name="lock-closed-outline"
-                size={18}
-                color={colors.textLight}
-                style={styles.inputIcon}
-              />
-              <TextInput
-                style={styles.input}
-                placeholder="Confirmar senha"
-                placeholderTextColor={colors.textLight}
-                secureTextEntry
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-              />
-            </View>
-
             <View style={styles.checkboxRow}>
               <TouchableOpacity
                 onPress={() => setAgreed((a) => !a)}
                 activeOpacity={0.8}
+                accessibilityRole="checkbox"
+                accessibilityLabel="Concordo com os Termos de Uso e a Política de Privacidade"
+                accessibilityState={{ checked: agreed }}
+                style={styles.checkboxTouch}
               >
                 <View
                   style={[styles.checkbox, agreed && styles.checkboxChecked]}
                 >
                   {agreed && (
-                    <Ionicons name="checkmark" size={13} color="#fff" />
+                    <Ionicons name="checkmark" size={15} color="#fff" />
                   )}
                 </View>
               </TouchableOpacity>
@@ -249,9 +335,19 @@ export default function RegisterScreen({ navigation }) {
                 >
                   Política de Privacidade
                 </Text>
+                .
               </Text>
             </View>
-
+            {!!errorMessage && (
+              <View style={styles.errorBox} accessibilityRole="alert">
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={20}
+                  color="#B91C1C"
+                />
+                <Text style={styles.errorText}>{errorMessage}</Text>
+              </View>
+            )}
             <TouchableOpacity
               style={[
                 styles.primaryButton,
@@ -261,27 +357,35 @@ export default function RegisterScreen({ navigation }) {
               disabled={!agreed || loading || !isValidPassword(password)}
               onPress={handleRegister}
               activeOpacity={0.85}
+              accessibilityRole="button"
+              accessibilityState={{
+                disabled: !agreed || loading || !isValidPassword(password),
+                busy: loading,
+              }}
             >
               {loading ? (
                 <ActivityIndicator color="#fff" />
               ) : (
-                <Text style={styles.primaryButtonText}>Cadastrar</Text>
+                <>
+                  <Text style={styles.primaryButtonText}>Cadastrar</Text>
+                  <Ionicons name="arrow-forward" size={19} color="#fff" />
+                </>
               )}
             </TouchableOpacity>
-
-            {!!errorMessage && (
-              <View style={styles.errorBox}>
-                <Ionicons name="alert-circle" size={16} color="#DC2626" />
-                <Text style={styles.errorText}>{errorMessage}</Text>
-              </View>
-            )}
-
-            <View style={styles.footerRow}>
-              <Text style={styles.footerText}>Já tem uma conta? </Text>
-              <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                <Text style={styles.footerLink}>Entrar</Text>
-              </TouchableOpacity>
-            </View>
+            <Text style={styles.exploreHint}>
+              Você pode explorar antes de escolher um plano.
+            </Text>
+          </View>
+          <View style={styles.footerRow}>
+            <Text style={styles.footerText}>Já tem uma conta?</Text>
+            <TouchableOpacity
+              style={styles.loginButton}
+              onPress={() => navigation.navigate('Login')}
+              accessibilityRole="button"
+            >
+              <Text style={styles.footerLink}>Entrar</Text>
+              <Ionicons name="arrow-forward" size={16} color={colors.blue} />
+            </TouchableOpacity>
           </View>
         </ScrollView>
       </KeyboardAvoidingView>
@@ -290,92 +394,191 @@ export default function RegisterScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  container: { flexGrow: 1, padding: 24, paddingTop: 16 },
+  safe: { flex: 1, backgroundColor: colors.bg },
+  container: { flexGrow: 1, padding: 20, paddingTop: 12, paddingBottom: 20 },
+  topBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 18,
+    marginBottom: 22,
+  },
   backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
     ...shadow,
   },
+  logo: { width: 166, height: 36 },
+  hero: { borderRadius: 24, padding: 22, marginBottom: 20 },
+  heroTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 7,
+    marginBottom: 14,
+  },
+  heroTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: colors.blue,
+    letterSpacing: 0.8,
+  },
+  heroTitle: {
+    fontSize: 27,
+    lineHeight: 33,
+    fontWeight: '800',
+    color: colors.text,
+  },
+  heroText: { fontSize: 14, lineHeight: 21, color: '#5D6B80', marginTop: 10 },
   card: {
-    backgroundColor: colors.card,
-    borderRadius: radius.xl,
-    padding: 22,
+    backgroundColor: '#fff',
+    borderRadius: 24,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadow,
   },
-  title: { ...typography.h2, marginBottom: 2 },
-  subtitle: { ...typography.muted, marginBottom: 20 },
+  title: { fontSize: 23, fontWeight: '800', color: colors.text },
+  subtitle: {
+    fontSize: 14,
+    color: colors.textMuted,
+    lineHeight: 21,
+    marginTop: 6,
+    marginBottom: 24,
+  },
+  sectionHeading: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 9,
+    marginBottom: 18,
+  },
+  sectionIcon: {
+    width: 30,
+    height: 30,
+    borderRadius: 10,
+    backgroundColor: '#EAF1FF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  greenIcon: { backgroundColor: '#E5F5EC' },
+  sectionTitle: { color: colors.text, fontSize: 15, fontWeight: '700' },
+  divider: {
+    height: 1,
+    backgroundColor: colors.border,
+    marginTop: 2,
+    marginBottom: 20,
+  },
+  field: { marginBottom: 16 },
+  label: { fontSize: 12, fontWeight: '700', color: '#52617A', marginBottom: 7 },
   inputGroup: {
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 10,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingHorizontal: 12,
-    height: 50,
-    marginBottom: 14,
-    backgroundColor: '#fff',
+    borderRadius: 15,
+    paddingHorizontal: 13,
+    minHeight: 52,
+    backgroundColor: '#FCFDFF',
   },
-  inputIcon: { marginRight: 8 },
-  input: { flex: 1, fontSize: 14, color: colors.text },
+  input: {
+    flex: 1,
+    fontSize: 14,
+    color: colors.text,
+    paddingVertical: 14,
+    minWidth: 0,
+  },
+  visibilityButton: { paddingVertical: 12, paddingLeft: 2 },
+  passwordRules: {
+    backgroundColor: '#F0F7F4',
+    borderRadius: 14,
+    padding: 13,
+    gap: 8,
+    marginTop: -3,
+    marginBottom: 18,
+  },
+  ruleRow: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  ruleText: {
+    fontSize: 12,
+    lineHeight: 17,
+    color: colors.textMuted,
+    flexShrink: 1,
+  },
+  ruleTextValid: { color: '#237759', fontWeight: '600' },
+  matchHint: { fontSize: 12, lineHeight: 18, marginTop: -7, marginBottom: 14 },
+  mismatchHint: { color: '#A35E14' },
   checkboxRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    gap: 10,
-    marginBottom: 20,
+    gap: 6,
     marginTop: 4,
+    marginBottom: 18,
   },
+  checkboxTouch: { padding: 4 },
   checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: 5,
+    width: 22,
+    height: 22,
+    borderRadius: 7,
     borderWidth: 1.5,
-    borderColor: colors.border,
+    borderColor: '#C5D2E8',
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 1,
   },
   checkboxChecked: { backgroundColor: colors.blue, borderColor: colors.blue },
   checkboxText: {
     flex: 1,
-    fontSize: 12.5,
+    fontSize: 12,
+    lineHeight: 20,
     color: colors.textMuted,
-    lineHeight: 18,
+    paddingTop: 3,
   },
   linkText: { color: colors.blue, fontWeight: '600' },
   primaryButton: {
     backgroundColor: colors.blue,
-    borderRadius: radius.md,
-    height: 50,
+    borderRadius: 16,
+    minHeight: 54,
+    flexDirection: 'row',
+    gap: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 18,
+    padding: 14,
   },
   primaryButtonDisabled: { opacity: 0.5 },
   primaryButtonText: { color: '#fff', fontWeight: '700', fontSize: 15 },
+  exploreHint: {
+    fontSize: 11,
+    lineHeight: 17,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: 14,
+  },
   errorBox: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 9,
+    backgroundColor: '#FFF0F0',
+    borderRadius: 14,
+    padding: 13,
+    marginBottom: 16,
+  },
+  errorText: { color: '#B91C1C', fontSize: 12, lineHeight: 19, flex: 1 },
+  footerRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 4,
+    paddingTop: 14,
+  },
+  footerText: { color: colors.textMuted, fontSize: 13 },
+  loginButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: '#FEF2F2',
-    borderRadius: radius.md,
-    padding: 10,
-    marginTop: -8,
-    marginBottom: 16,
+    padding: 12,
   },
-  passwordHint: {
-    fontSize: 11.5,
-    color: colors.textLight,
-    marginTop: -8,
-    marginBottom: 14,
-    marginLeft: 4,
-  },
-  errorText: { color: '#DC2626', fontSize: 12.5, flex: 1 },
-  footerRow: { flexDirection: 'row', justifyContent: 'center' },
-  footerText: { color: colors.textMuted, fontSize: 13 },
   footerLink: { color: colors.blue, fontSize: 13, fontWeight: '700' },
 });

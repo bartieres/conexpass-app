@@ -68,6 +68,7 @@ function EstabelecimentoCard({ estabelecimento, onPress }) {
 export default function Explore({
   navigation,
   nomeUsuario,
+  exibirBannerPlanos = false,
   search,
   onChangeSearch,
   onSubmitSearch,
@@ -221,29 +222,33 @@ export default function Explore({
           );
         }}
       />
-      <LinearGradient
-        colors={['#E8F1FF', '#DCE8FC', '#ECF8F4']}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 1 }}
-        style={styles.hero}
-      >
-        <View style={styles.heroDecoration}>
-          <Ionicons name="barbell-outline" size={100} color="#C1D6F5" />
-        </View>
-        <Text style={styles.eyebrow}>MAIS MOVIMENTO, MAIS POSSIBILIDADES</Text>
-        <Text style={styles.heroTitle}>Encontre seu{'\n'}próximo treino</Text>
-        <Text style={styles.heroSubtitle}>
-          Academias, estúdios e novas experiências na sua região.
-        </Text>
-        <TouchableOpacity
-          style={styles.heroButton}
-          onPress={() => navigation.navigate('Plano')}
-          accessibilityRole="button"
+      {exibirBannerPlanos && (
+        <LinearGradient
+          colors={['#E8F1FF', '#DCE8FC', '#ECF8F4']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.hero}
         >
-          <Text style={styles.heroButtonText}>Conhecer planos</Text>
-          <Ionicons name="arrow-forward" size={18} color={colors.white} />
-        </TouchableOpacity>
-      </LinearGradient>
+          <View style={styles.heroDecoration}>
+            <Ionicons name="barbell-outline" size={100} color="#C1D6F5" />
+          </View>
+          <Text style={styles.eyebrow}>
+            MAIS MOVIMENTO, MAIS POSSIBILIDADES
+          </Text>
+          <Text style={styles.heroTitle}>Encontre seu{'\n'}próximo treino</Text>
+          <Text style={styles.heroSubtitle}>
+            Academias, estúdios e novas experiências na sua região.
+          </Text>
+          <TouchableOpacity
+            style={styles.heroButton}
+            onPress={() => navigation.navigate('Plano')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.heroButtonText}>Conhecer planos</Text>
+            <Ionicons name="arrow-forward" size={18} color={colors.white} />
+          </TouchableOpacity>
+        </LinearGradient>
+      )}
       <Text style={styles.sectionTitle}>Próximos de você</Text>
     </View>
   );

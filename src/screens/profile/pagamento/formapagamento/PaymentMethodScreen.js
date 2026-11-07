@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../../components/ProfileIntro';
 import React, { useState, useCallback } from 'react';
 
 import {
@@ -13,12 +15,12 @@ import {
 import { useFocusEffect } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 
-import { colors, radius, shadow } from '../../../theme/theme';
+import { colors, radius, shadow } from '../../../../theme/theme';
 import {
   findAllByUsuario,
   updatePrincipal,
   deleteFormaPagamento,
-} from '../../../services/formaPagamentoService';
+} from '../../../../services/formaPagamentoService';
 
 const BANDEIRA_ICON = {
   MASTERCARD: 'card',
@@ -118,7 +120,7 @@ export default function PaymentMethodScreen({ navigation }) {
     const codigoBandeira = item.cartao?.bandeira?.codigo;
 
     return (
-      <View style={styles.cardBox}>
+      <View style={[styles.cardBox, item.principal && styles.cardBoxPrincipal]}>
         <View style={styles.cardIconWrap}>
           <Ionicons
             name={BANDEIRA_ICON[codigoBandeira] || 'card'}
@@ -164,10 +166,12 @@ export default function PaymentMethodScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -179,6 +183,12 @@ export default function PaymentMethodScreen({ navigation }) {
       </View>
 
       <View style={styles.body}>
+        <ProfileIntro
+          icon="wallet-outline"
+          title="Seus cartões, organizados"
+          description="Adicione cartões e escolha qual será usado nas próximas cobranças."
+          tone="blue"
+        />
         {loading && (
           <View style={styles.stateBox}>
             <ActivityIndicator size="small" color={colors.blue} />
@@ -246,11 +256,12 @@ export default function PaymentMethodScreen({ navigation }) {
           </>
         )}
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  cardBoxPrincipal: { borderColor: '#B9CDF6', backgroundColor: '#F2F6FF' },
   safe: {
     flex: 1,
     backgroundColor: colors.bg,
@@ -261,14 +272,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
 
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -276,9 +287,11 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
   },
 
   body: {
@@ -330,11 +343,13 @@ const styles = StyleSheet.create({
   },
 
   cardBox: {
+    borderWidth: 1,
+    borderColor: colors.border,
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: '#fff',
-    borderRadius: radius.lg,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     marginBottom: 12,
     ...shadow,
   },
@@ -367,7 +382,7 @@ const styles = StyleSheet.create({
   },
 
   defaultBadge: {
-    backgroundColor: colors.chipBg,
+    backgroundColor: '#DFF3E6',
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -376,7 +391,7 @@ const styles = StyleSheet.create({
   defaultBadgeText: {
     fontSize: 10.5,
     fontWeight: '700',
-    color: colors.blue,
+    color: '#237759',
   },
 
   cardExpiry: {
@@ -390,23 +405,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 18,
     marginTop: 12,
+    flexWrap: 'wrap',
   },
 
   actionText: {
+    paddingVertical: 8,
     color: colors.blue,
     fontWeight: '700',
     fontSize: 12.5,
   },
 
   deleteText: {
+    paddingVertical: 8,
     color: '#DC2626',
     fontWeight: '600',
     fontSize: 12.5,
   },
 
   addButton: {
-    height: 48,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: 16,
     backgroundColor: colors.chipBg,
     flexDirection: 'row',
     alignItems: 'center',

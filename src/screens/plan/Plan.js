@@ -10,246 +10,374 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import { colors, radius, shadow, typography } from '../../theme/theme';
-import { dateToDateMasked } from '../../utils/date';
+import {
+  permiteAcao,
+  podeAlterarAtual,
+  podeAgendarProximo,
+  formatarDataPlano,
+  formatarValorPlano,
+} from '../../utils/assinaturasPlano';
 
-function formatarMoeda(valor) {
-  if (valor == null) return '';
-  return `R$ ${Number(valor).toFixed(2).replace('.', ',')}`;
-}
-
-function MenuRow({ icon, title, subtitle, onPress, disabled = false }) {
+function ActionButton({
+  title,
+  icon,
+  onPress,
+  disabled,
+  danger,
+  primary,
+  busy,
+}) {
   return (
     <TouchableOpacity
-      style={[styles.menuRow, disabled && styles.menuRowDisabled]}
-      disabled={disabled}
       accessibilityRole="button"
-      accessibilityState={{ disabled }}
-      onPress={disabled ? undefined : onPress}
-      activeOpacity={0.7}
+      accessibilityState={{ disabled: Boolean(disabled), busy: Boolean(busy) }}
+      disabled={disabled}
+      onPress={onPress}
+      style={[
+        styles.button,
+        danger && styles.dangerButton,
+        primary && styles.primaryButton,
+        disabled && styles.disabled,
+      ]}
     >
-      <View style={styles.menuIconWrap}>
-        <Ionicons name={icon} size={19} color={colors.blue} />
-      </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.menuTitle}>{title}</Text>
-        <Text style={styles.menuSubtitle}>{subtitle}</Text>
-      </View>
-      <Ionicons name="chevron-forward" size={18} color={colors.textLight} />
+      {busy ? (
+        <ActivityIndicator color={danger ? '#B91C1C' : colors.blue} />
+      ) : (
+        <Ionicons
+          name={icon}
+          size={20}
+          color={primary ? '#fff' : danger ? '#B91C1C' : colors.blue}
+        />
+      )}
+      <Text
+        style={[
+          styles.buttonText,
+          danger && styles.dangerText,
+          primary && styles.primaryText,
+        ]}
+      >
+        {title}
+      </Text>
     </TouchableOpacity>
   );
 }
 
-// Estado dedicado para quem ainda não tem nenhuma assinatura contratada
-// (usuário novo, ou que cancelou e ainda não recontratou). Fica no mesmo
-// retângulo branco do resumo, mas convida a escolher um plano em vez de
-// mostrar dados que não existem.
-function SemAssinaturaCard({ onEscolherPlano }) {
+function InfoRow({ icon, children }) {
   return (
-    <View style={styles.resumoCard}>
-      <View style={styles.semAssinaturaIconWrap}>
-        <Ionicons name="sparkles-outline" size={26} color={colors.blue} />
+    <View style={styles.infoRow}>
+      <Ionicons name={icon} size={19} color={colors.blue} />
+      <Text style={styles.infoText}>{children}</Text>
+    </View>
+  );
+}
+
+function PlanHeader({ assinatura, badge, pending }) {
+  return (
+    <View style={styles.planHeader}>
+      <View style={styles.brandIcon}>
+        <Ionicons name="fitness-outline" size={27} color={colors.blue} />
       </View>
-      <Text style={styles.semAssinaturaTitle}>
-        Você ainda não tem uma assinatura
-      </Text>
-      <Text style={styles.semAssinaturaSubtitle}>
-        Escolha um plano para começar a fazer check-ins nos estabelecimentos
-        parceiros.
-      </Text>
-      <TouchableOpacity
-        style={styles.escolherPlanoButton}
-        onPress={onEscolherPlano}
-      >
-        <Text style={styles.escolherPlanoButtonText}>Escolher plano</Text>
-        <Ionicons name="chevron-forward" size={16} color="#fff" />
-      </TouchableOpacity>
+      <View style={styles.planCopy}>
+        <Text style={styles.planName}>ConexPass {assinatura.plano.nome}</Text>
+        <Text style={styles.planPrice}>
+          {formatarValorPlano(assinatura.valor)}
+          <Text style={styles.planSuffix}> /mês</Text>
+        </Text>
+        <View
+          style={[
+            styles.badge,
+            pending
+              ? styles.pendingBadge
+              : assinatura.podeUtilizar
+                ? styles.activeBadge
+                : styles.scheduledBadge,
+          ]}
+        >
+          <Text
+            style={[
+              styles.badgeText,
+              pending
+                ? styles.pendingText
+                : assinatura.podeUtilizar
+                  ? styles.activeText
+                  : styles.scheduledText,
+            ]}
+          >
+            {badge}
+          </Text>
+        </View>
+      </View>
     </View>
   );
 }
 
 export default function Plan({
   navigation,
-  plano,
-  temAssinatura,
+  planoAtual,
+  proximoPlano,
+  pagamentosPendentes,
+  semAssinatura,
   loading,
+  operacao,
   error,
   onRetry,
   onAlterarPlano,
   onEscolherPlano,
-  onCancelarPlano,
+  onAgendarProximo,
+  onCancelarRenovacao,
+  onAlterarProximo,
+  onCancelarProximo,
 }) {
-  const aguardandoConfirmacao =
-    plano?.situacao?.codigo === 'AGUARDANDO_CONFIRMACAO';
-
+  const ocupado = Boolean(operacao) || Boolean(error);
+  const renovacaoCancelada = planoAtual?.renovacaoAutomatica === false;
+  const permiteAlterar = podeAlterarAtual(
+    planoAtual,
+    proximoPlano,
+    pagamentosPendentes
+  );
+  const permiteAgendar = podeAgendarProximo(
+    planoAtual,
+    proximoPlano,
+    pagamentosPendentes
+  );
   return (
-    <SafeAreaView style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
+        {navigation.canGoBack?.() && (
+          <TouchableOpacity
+            onPress={() => navigation.goBack()}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+        )}
         <Text style={styles.headerTitle}>Planos</Text>
       </View>
-
       <ScrollView contentContainerStyle={styles.body}>
         {loading && (
           <View style={styles.stateBox}>
-            <ActivityIndicator size="small" color={colors.blue} />
+            <ActivityIndicator color={colors.blue} />
+            <Text style={styles.stateText}>Carregando seus planos...</Text>
           </View>
         )}
-
-        {!loading && !!error && (
-          <View style={styles.stateBox}>
-            <Ionicons name="alert-circle-outline" size={28} color="#DC2626" />
+        {!!error && (
+          <View style={styles.errorBox}>
+            <Ionicons name="alert-circle-outline" size={24} color="#B91C1C" />
             <Text style={styles.stateText}>{error}</Text>
-            <TouchableOpacity style={styles.stateButton} onPress={onRetry}>
-              <Text style={styles.stateButtonText}>Tentar novamente</Text>
-            </TouchableOpacity>
+            <ActionButton
+              title="Tentar novamente"
+              icon="refresh-outline"
+              disabled={Boolean(operacao)}
+              onPress={onRetry}
+            />
           </View>
         )}
-
-        {/* Usuário sem nenhuma assinatura ainda — tela funcional, com CTA */}
-        {!loading && !error && !temAssinatura && (
-          <SemAssinaturaCard onEscolherPlano={onEscolherPlano} />
-        )}
-
-        {!loading && !error && temAssinatura && plano && (
+        {!loading && (
           <>
-            <View style={styles.resumoCard}>
-              <View style={styles.resumoTopRow}>
-                <Text style={styles.resumoTitle}>
-                  {aguardandoConfirmacao
-                    ? 'Plano solicitado'
-                    : 'Seu plano atual'}
-                </Text>
-                <View
-                  style={[
-                    styles.activeBadge,
-                    !plano.ativo && styles.inactiveBadge,
-                    aguardandoConfirmacao && styles.pendingBadge,
-                  ]}
-                >
-                  <View
-                    style={[
-                      styles.activeDot,
-                      !plano.ativo && styles.inactiveDot,
-                      aguardandoConfirmacao && styles.pendingDot,
-                    ]}
-                  />
-                  <Text
-                    style={[
-                      styles.activeBadgeText,
-                      !plano.ativo && styles.inactiveBadgeText,
-                      aguardandoConfirmacao && styles.pendingBadgeText,
-                    ]}
-                  >
-                    {aguardandoConfirmacao
-                      ? 'Aguardando confirmação'
-                      : plano.ativo
-                        ? 'Ativo'
-                        : 'Inativo'}
-                  </Text>
-                </View>
-              </View>
-
-              <Text style={styles.planName}>{plano.nome}</Text>
-              <Text style={styles.planPrice}>
-                {formatarMoeda(plano.valor)}
-                <Text style={styles.planPriceSuffix}>/mês</Text>
-              </Text>
-
-              <View style={styles.planInfoRow}>
-                <Ionicons
-                  name="calendar-outline"
-                  size={15}
-                  color={colors.blue}
-                />
-                <Text style={styles.planInfoText}>
-                  Contratação: {dateToDateMasked(plano.dataContratacao)}
-                </Text>
-              </View>
-
-              <View style={styles.planInfoRow}>
-                <Ionicons
-                  name="calendar-outline"
-                  size={15}
-                  color={colors.blue}
-                />
-                <Text style={styles.planInfoText}>
-                  Próxima cobrança:{' '}
-                  {dateToDateMasked(plano.proximaCobranca?.data)} —{' '}
-                  {formatarMoeda(plano.proximaCobranca?.valor)}
-                </Text>
-              </View>
-
-              {aguardandoConfirmacao && (
-                <View style={styles.pendingInfo}>
-                  <Text style={styles.pendingInfoText}>
-                    Sua solicitação foi recebida. A assinatura será ativada após
-                    a confirmação do pagamento.
-                  </Text>
-                  <TouchableOpacity
-                    onPress={onRetry}
-                    accessibilityRole="button"
-                    style={styles.pendingRefresh}
-                  >
-                    <Ionicons
-                      name="refresh-outline"
-                      size={16}
-                      color="#92400E"
-                    />
-                    <Text style={styles.pendingRefreshText}>
-                      Atualizar situação
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-              )}
-
-              <View style={styles.planDivider} />
-
-              {(plano.beneficios || []).map((beneficio) => (
-                <View key={beneficio} style={styles.planInfoRow}>
+            {semAssinatura && !error && (
+              <View style={[styles.card, styles.emptyCard]}>
+                <View style={styles.emptyIcon}>
                   <Ionicons
-                    name="checkmark-circle-outline"
-                    size={15}
+                    name="calendar-outline"
+                    size={40}
                     color={colors.blue}
                   />
-                  <Text style={styles.planInfoText}>{beneficio}</Text>
                 </View>
-              ))}
-            </View>
-
-            <View style={styles.menuCard}>
-              <MenuRow
-                icon="options-outline"
-                title="Alterar plano"
-                subtitle="Visualize outros planos e faça sua escolha"
-                onPress={onAlterarPlano}
-                disabled={aguardandoConfirmacao}
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[
-                styles.dangerCard,
-                aguardandoConfirmacao && styles.menuRowDisabled,
-              ]}
-              disabled={aguardandoConfirmacao}
-              accessibilityRole="button"
-              accessibilityState={{ disabled: aguardandoConfirmacao }}
-              onPress={aguardandoConfirmacao ? undefined : onCancelarPlano}
-              activeOpacity={0.8}
-            >
-              <View style={styles.dangerLeft}>
-                <Ionicons name="warning-outline" size={22} color="#DC2626" />
-                <View>
-                  <Text style={styles.dangerTitle}>Gerenciar assinatura</Text>
-                  <Text style={styles.dangerSubtitle}>
-                    Precisa cancelar sua assinatura?
+                <Text style={styles.emptyTitle}>
+                  Você não possui um plano ConexPass ativo
+                </Text>
+                <Text style={styles.emptySubtitle}>
+                  Escolha um plano para começar a utilizar os estabelecimentos
+                  participantes.
+                </Text>
+                <ActionButton
+                  title="Conhecer planos"
+                  icon="arrow-forward"
+                  primary
+                  onPress={onEscolherPlano}
+                  disabled={ocupado}
+                />
+              </View>
+            )}
+            {planoAtual && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Seu plano atual</Text>
+                <PlanHeader
+                  assinatura={planoAtual}
+                  badge={
+                    planoAtual.podeUtilizar
+                      ? 'Em uso'
+                      : planoAtual.situacao.descricao ||
+                        planoAtual.situacao.codigo
+                  }
+                />
+                <View style={styles.divider} />
+                <InfoRow icon="calendar-outline">
+                  Contratação: {formatarDataPlano(planoAtual.dataContratacao)}
+                </InfoRow>
+                {!!planoAtual.dataInicioVigencia && (
+                  <InfoRow icon="time-outline">
+                    Início da vigência:{' '}
+                    {formatarDataPlano(planoAtual.dataInicioVigencia, true)}
+                  </InfoRow>
+                )}
+                {!!planoAtual.fimVigencia && (
+                  <InfoRow icon="calendar-outline">
+                    Vigente até{' '}
+                    {formatarDataPlano(planoAtual.fimVigencia, true)}
+                  </InfoRow>
+                )}
+                {!renovacaoCancelada && !!planoAtual.dataProximaCobranca && (
+                  <InfoRow icon="card-outline">
+                    Próxima cobrança:{' '}
+                    {formatarDataPlano(planoAtual.dataProximaCobranca)}
+                  </InfoRow>
+                )}
+                {renovacaoCancelada && (
+                  <View style={styles.warningBox}>
+                    <Ionicons
+                      name="information-circle-outline"
+                      size={24}
+                      color="#92400E"
+                    />
+                    <View style={styles.planCopy}>
+                      <Text style={styles.warningTitle}>
+                        Renovação cancelada
+                      </Text>
+                      <Text style={styles.warningText}>
+                        Não haverá cobrança automática deste plano.
+                        {planoAtual.podeUtilizar && planoAtual.fimVigencia
+                          ? ` Seu plano continua disponível até ${formatarDataPlano(planoAtual.fimVigencia, true)}.`
+                          : ''}
+                      </Text>
+                    </View>
+                  </View>
+                )}
+                {!!planoAtual.plano.beneficios?.length && (
+                  <>
+                    <View style={styles.divider} />
+                    <Text style={styles.benefitsTitle}>
+                      Benefícios do plano
+                    </Text>
+                    {planoAtual.plano.beneficios.map((beneficio, index) => (
+                      <View
+                        key={`${index}-${beneficio}`}
+                        style={styles.infoRow}
+                      >
+                        <Ionicons
+                          name="checkmark-circle"
+                          size={20}
+                          color={colors.success}
+                        />
+                        <Text style={styles.infoText}>{beneficio}</Text>
+                      </View>
+                    ))}
+                  </>
+                )}
+                {!renovacaoCancelada && (
+                  <ActionButton
+                    title="Alterar plano"
+                    icon="create-outline"
+                    onPress={onAlterarPlano}
+                    disabled={ocupado || !permiteAlterar}
+                  />
+                )}
+                {permiteAcao(planoAtual, 'CANCELAR_RENOVACAO') && (
+                  <ActionButton
+                    title="Cancelar renovação"
+                    icon="close-outline"
+                    danger
+                    onPress={onCancelarRenovacao}
+                    disabled={ocupado || pagamentosPendentes.length > 0}
+                    busy={operacao === 'CANCELAR_RENOVACAO'}
+                  />
+                )}
+                {permiteAgendar && (
+                  <ActionButton
+                    title="Escolher próximo plano"
+                    icon="calendar-outline"
+                    primary
+                    onPress={onAgendarProximo}
+                    disabled={ocupado}
+                  />
+                )}
+              </View>
+            )}
+            {proximoPlano && (
+              <View style={styles.card}>
+                <Text style={styles.sectionTitle}>Próximo plano</Text>
+                <PlanHeader assinatura={proximoPlano} badge="Agendado" />
+                <View style={styles.divider} />
+                <InfoRow icon="calendar-outline">
+                  Início da vigência:{' '}
+                  {formatarDataPlano(proximoPlano.dataInicioVigencia, true)}
+                </InfoRow>
+                <View style={styles.scheduleInfo}>
+                  <Text style={styles.scheduleText}>
+                    Cobrança programada para{' '}
+                    {formatarDataPlano(
+                      proximoPlano.dataProximaCobranca ||
+                        proximoPlano.dataInicioVigencia
+                    )}
+                    . O acesso será liberado após a confirmação do pagamento.
                   </Text>
                 </View>
+                {permiteAcao(proximoPlano, 'ALTERAR_PROXIMO') && (
+                  <ActionButton
+                    title="Alterar próximo plano"
+                    icon="create-outline"
+                    onPress={onAlterarProximo}
+                    disabled={ocupado}
+                  />
+                )}
+                {permiteAcao(proximoPlano, 'CANCELAR_PROXIMO') && (
+                  <ActionButton
+                    title="Cancelar próximo plano"
+                    icon="close-outline"
+                    danger
+                    onPress={onCancelarProximo}
+                    disabled={ocupado}
+                    busy={operacao === 'CANCELAR_PROXIMO'}
+                  />
+                )}
               </View>
-              <View style={styles.dangerRight}>
-                <Text style={styles.dangerLink}>Cancelar plano</Text>
-                <Ionicons name="chevron-forward" size={16} color="#DC2626" />
+            )}
+            {pagamentosPendentes.map((assinatura) => (
+              <View style={styles.card} key={assinatura.id}>
+                <Text style={styles.sectionTitle}>Situação da contratação</Text>
+                <PlanHeader
+                  assinatura={assinatura}
+                  badge={
+                    [
+                      'AGUARDANDO_CONFIRMACAO',
+                      'PROCESSING_PAYMENT',
+                      'PENDING_PAYMENT',
+                      'PROCESSANDO',
+                      'PENDENTE',
+                    ].includes(assinatura.situacao.codigo)
+                      ? 'Aguardando pagamento'
+                      : assinatura.situacao.descricao ||
+                        assinatura.situacao.codigo
+                  }
+                  pending
+                />
+                <View style={styles.warningBox}>
+                  <Ionicons name="time-outline" size={23} color="#92400E" />
+                  <Text style={[styles.infoText, styles.warningText]}>
+                    Acesso liberado após confirmação do pagamento. Confira a
+                    situação antes de uma nova contratação.
+                  </Text>
+                </View>
+                <ActionButton
+                  title="Atualizar situação"
+                  icon="refresh-outline"
+                  onPress={onRetry}
+                  disabled={Boolean(operacao)}
+                  busy={operacao === 'ATUALIZAR'}
+                />
               </View>
-            </TouchableOpacity>
+            ))}
           </>
         )}
       </ScrollView>
@@ -259,174 +387,167 @@ export default function Plan({
 
 const styles = StyleSheet.create({
   safe: { flex: 1, backgroundColor: colors.bg },
-  header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 6 },
-  headerTitle: { ...typography.h1 },
-  body: { padding: 20, paddingTop: 4, gap: 14 },
-
-  stateBox: {
+  header: {
+    paddingHorizontal: 22,
+    paddingTop: 14,
+    paddingBottom: 18,
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingVertical: 40,
+    gap: 16,
   },
-  stateText: {
-    fontSize: 13,
-    color: colors.textMuted,
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  stateButton: {
-    backgroundColor: colors.blue,
-    paddingHorizontal: 18,
-    paddingVertical: 10,
-    borderRadius: radius.md,
-    marginTop: 4,
-  },
-  stateButtonText: { color: '#fff', fontWeight: '700', fontSize: 13 },
-
-  // Mesmo padrão de "retângulo branco com sombra" usado no resumo de Check-ins
-  resumoCard: {
-    backgroundColor: '#fff',
-    borderRadius: radius.lg,
-    padding: 18,
-    marginBottom: 4,
+  headerTitle: { ...typography.h1 },
+  body: { padding: 20, gap: 20, paddingBottom: 32 },
+  card: {
+    backgroundColor: colors.white,
+    borderRadius: radius.xl,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: colors.border,
     ...shadow,
   },
-  resumoTopRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginBottom: 14,
-  },
-  resumoTitle: { ...typography.h3 },
-
-  activeBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    backgroundColor: colors.successLight,
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: radius.pill,
-  },
-  activeDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: colors.success,
-  },
-  activeBadgeText: { fontSize: 11.5, fontWeight: '700', color: colors.success },
-  pendingBadge: { backgroundColor: '#FEF3C7' },
-  pendingDot: { backgroundColor: '#D97706' },
-  pendingBadgeText: { color: '#92400E' },
-  pendingInfo: {
-    backgroundColor: '#FFFBEB',
-    borderRadius: radius.md,
-    padding: 12,
-    marginTop: 12,
-    gap: 10,
-  },
-  pendingInfoText: { color: '#92400E', fontSize: 13, lineHeight: 19 },
-  pendingRefresh: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    alignSelf: 'flex-start',
-    paddingVertical: 6,
-  },
-  pendingRefreshText: { color: '#92400E', fontSize: 13, fontWeight: '700' },
-  inactiveBadge: { backgroundColor: '#FEE2E2' },
-  inactiveDot: { backgroundColor: '#DC2626' },
-  inactiveBadgeText: { color: '#DC2626' },
-
-  planName: { fontSize: 21, fontWeight: '800', color: colors.text },
-  planPrice: {
-    fontSize: 24,
+  sectionTitle: {
+    fontSize: 22,
     fontWeight: '800',
     color: colors.text,
-    marginTop: 4,
+    marginBottom: 20,
+  },
+  planHeader: { flexDirection: 'row', gap: 14, alignItems: 'flex-start' },
+  brandIcon: {
+    width: 54,
+    height: 54,
+    borderRadius: 18,
+    backgroundColor: '#E7EFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planCopy: { flex: 1 },
+  planName: { fontSize: 20, fontWeight: '800', color: colors.text },
+  planPrice: {
+    fontSize: 20,
+    color: '#52617A',
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  planSuffix: { fontSize: 14 },
+  badge: {
+    alignSelf: 'flex-start',
+    borderRadius: radius.pill,
+    paddingHorizontal: 12,
+    paddingVertical: 5,
+    marginTop: 10,
+  },
+  badgeText: { fontSize: 12, fontWeight: '800' },
+  activeBadge: { backgroundColor: '#DFF4DE' },
+  activeText: { color: '#206A28' },
+  scheduledBadge: { backgroundColor: '#E1ECFF' },
+  scheduledText: { color: colors.blueDark },
+  pendingBadge: { backgroundColor: '#FFF1CE' },
+  pendingText: { color: '#92400E' },
+  divider: { height: 1, backgroundColor: colors.border, marginVertical: 18 },
+  infoRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: 10,
+    marginBottom: 12,
+  },
+  infoText: { flex: 1, fontSize: 13, lineHeight: 20, color: colors.text },
+  benefitsTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.text,
     marginBottom: 14,
   },
-  planPriceSuffix: { fontSize: 14, fontWeight: '600', color: colors.textMuted },
-  planInfoRow: {
+  warningBox: {
     flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    alignItems: 'flex-start',
+    gap: 10,
+    padding: 14,
+    borderRadius: 16,
+    backgroundColor: '#FFF4D2',
+    marginTop: 10,
     marginBottom: 6,
   },
-  planInfoText: { fontSize: 13, color: colors.text },
-  planDivider: {
-    height: 1,
-    backgroundColor: colors.border,
-    marginVertical: 10,
+  warningTitle: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: '#92400E',
+    marginBottom: 4,
   },
-
-  // Estado "sem assinatura"
-  semAssinaturaIconWrap: {
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: colors.chipBg,
+  warningText: { color: '#825518', fontSize: 13, lineHeight: 20 },
+  scheduleInfo: {
+    backgroundColor: '#EDF3FF',
+    padding: 14,
+    borderRadius: 16,
+    marginVertical: 6,
+  },
+  scheduleText: { color: colors.blueDark, fontSize: 13, lineHeight: 20 },
+  button: {
+    flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    alignSelf: 'center',
-    marginBottom: 14,
+    gap: 8,
+    borderWidth: 1.5,
+    borderColor: colors.blue,
+    borderRadius: 16,
+    padding: 14,
+    minHeight: 50,
+    marginTop: 14,
   },
-  semAssinaturaTitle: {
-    fontSize: 16,
+  buttonText: {
+    color: colors.blue,
+    fontSize: 14,
+    fontWeight: '700',
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  dangerButton: { borderColor: '#EF6464', backgroundColor: '#FFF4F4' },
+  dangerText: { color: '#B91C1C' },
+  primaryButton: { backgroundColor: colors.blue },
+  primaryText: { color: '#fff' },
+  disabled: { opacity: 0.45 },
+  emptyCard: { paddingVertical: 32 },
+  emptyIcon: {
+    width: 86,
+    height: 86,
+    borderRadius: 26,
+    alignSelf: 'center',
+    backgroundColor: '#E7EFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 22,
+  },
+  emptyTitle: {
+    fontSize: 24,
+    lineHeight: 31,
     fontWeight: '800',
     color: colors.text,
     textAlign: 'center',
   },
-  semAssinaturaSubtitle: {
-    fontSize: 13,
+  emptySubtitle: {
+    fontSize: 15,
+    lineHeight: 23,
     color: colors.textMuted,
     textAlign: 'center',
-    lineHeight: 18,
-    marginTop: 6,
-    marginBottom: 18,
+    marginTop: 14,
+    marginBottom: 14,
   },
-  escolherPlanoButton: {
+  stateBox: { alignItems: 'center', gap: 12, padding: 28 },
+  stateText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
+    textAlign: 'center',
+  },
+  errorBox: {
+    backgroundColor: '#FFF0F0',
+    borderRadius: 18,
+    padding: 20,
+    gap: 10,
+  },
+  operationRow: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
-    backgroundColor: colors.blue,
-    height: 50,
-    borderRadius: radius.md,
-  },
-  escolherPlanoButtonText: { color: '#fff', fontWeight: '700', fontSize: 14.5 },
-
-  menuRowDisabled: { opacity: 0.45 },
-  menuCard: { backgroundColor: '#fff', borderRadius: radius.md, ...shadow },
-  menuRow: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 },
-  menuIconWrap: {
-    width: 38,
-    height: 38,
-    borderRadius: 12,
-    backgroundColor: colors.chipBg,
     alignItems: 'center',
-    justifyContent: 'center',
+    gap: 10,
   },
-  menuTitle: { fontSize: 14.5, fontWeight: '700', color: colors.text },
-  menuSubtitle: { fontSize: 12, color: colors.textMuted, marginTop: 1 },
-
-  dangerCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FECACA',
-    borderRadius: radius.md,
-    padding: 14,
-    marginTop: 4,
-  },
-  dangerLeft: { flexDirection: 'row', alignItems: 'center', gap: 10, flex: 1 },
-  dangerTitle: { fontSize: 13.5, fontWeight: '700', color: '#DC2626' },
-  dangerSubtitle: { fontSize: 11.5, color: '#991B1B', marginTop: 1 },
-  dangerRight: { flexDirection: 'row', alignItems: 'center', gap: 2 },
-  dangerLink: { fontSize: 12.5, fontWeight: '700', color: '#DC2626' },
 });

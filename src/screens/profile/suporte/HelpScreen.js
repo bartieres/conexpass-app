@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../components/ProfileIntro';
 import { useState, useMemo } from 'react';
 import {
   View,
@@ -9,7 +11,7 @@ import {
   LayoutAnimation,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../../theme/theme';
+import { colors, shadow } from '../../../theme/theme';
 
 /**
  * Conteúdo das dúvidas — 100% local, sem chamada ao backend. Pra adicionar
@@ -307,10 +309,12 @@ export default function HelpCenterScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -323,7 +327,12 @@ export default function HelpCenterScreen({ navigation }) {
         contentContainerStyle={styles.body}
         keyboardShouldPersistTaps="handled"
       >
-        <Text style={styles.heroTitle}>Como podemos ajudar?</Text>
+        <ProfileIntro
+          icon="help-buoy-outline"
+          title="Como podemos ajudar?"
+          description="Encontre respostas para suas dúvidas sobre o ConexPass."
+          tone="purple"
+        />
 
         <View style={styles.searchBox}>
           <Ionicons name="search" size={18} color={colors.textLight} />
@@ -375,32 +384,72 @@ export default function HelpCenterScreen({ navigation }) {
             ))}
           </View>
         )}
+        <TouchableOpacity
+          style={styles.contactBanner}
+          onPress={() => navigation.navigate('Contact')}
+          accessibilityRole="button"
+        >
+          <Ionicons
+            name="chatbubble-ellipses-outline"
+            size={24}
+            color={colors.blue}
+          />
+          <View style={{ flex: 1 }}>
+            <Text style={styles.contactTitle}>Ainda precisa de ajuda?</Text>
+            <Text style={styles.contactText}>
+              Converse com a equipe ConexPass.
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.blue} />
+        </TouchableOpacity>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  contactBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    backgroundColor: '#E9F0FF',
+    padding: 18,
+    borderRadius: 20,
+    marginTop: 24,
+  },
+  contactTitle: { color: colors.text, fontSize: 14, fontWeight: '700' },
+  contactText: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 20, paddingTop: 4 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  body: { paddingBottom: 32, padding: 20, paddingTop: 4 },
   heroTitle: {
     fontSize: 20,
     fontWeight: '800',
@@ -412,9 +461,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     backgroundColor: '#fff',
-    borderRadius: radius.md,
+    borderRadius: 16,
     paddingHorizontal: 14,
-    height: 48,
+    minHeight: 52,
     borderWidth: 1,
     borderColor: colors.border,
     marginBottom: 24,
@@ -431,12 +480,14 @@ const styles = StyleSheet.create({
   },
   faqList: { gap: 10 },
   faqItem: {
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: '#fff',
-    borderRadius: radius.md,
+    borderRadius: 22,
     paddingHorizontal: 14,
     ...shadow,
   },
-  faqItemExpanded: {},
+  faqItemExpanded: { backgroundColor: '#F4F0FC', borderColor: '#D6C9EE' },
   faqQuestionRow: {
     flexDirection: 'row',
     alignItems: 'center',

@@ -1,3 +1,8 @@
+import { useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getMinhasAssinaturas } from '../../services/assinaturaService';
+import { derivarPainel, formatarDataPlano } from '../../utils/assinaturasPlano';
 import {
   View,
   Text,
@@ -9,11 +14,11 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius } from '../../theme/theme';
+import { colors, radius, shadow } from '../../theme/theme';
 import { useAuth } from '../../context/AuthContext';
-import Constants from 'expo-constants';
+import appConfig from '../../../app.json';
 
-const appVersion = Constants.expoConfig?.version;
+const appVersion = appConfig.expo.version;
 
 // Seções do menu, agrupadas como uma tela de configurações. Cada item pode
 // navegar para uma tela (screen) ou disparar uma ação especial (action).
@@ -46,11 +51,11 @@ function buildMenuSections({ onLogout, onDeleteAccount }) {
       ],
     },
     {
-      title: 'Assinatura',
+      title: 'Pagamentos',
       items: [
         {
           icon: 'card-outline',
-          label: 'Forma de Pagamento',
+          label: 'Forma de pagamento',
           screen: 'PaymentMethod',
         },
         {
@@ -91,7 +96,7 @@ function buildMenuSections({ onLogout, onDeleteAccount }) {
       ],
     },
     {
-      title: 'Conta',
+      title: 'Sessão',
       items: [
         //uir conta', danger: true, action: onDeleteAccount },
         {
@@ -116,12 +121,30 @@ function getInitials(name = '') {
 
 export default function ProfileScreen({ navigation }) {
   const { user, logout } = useAuth();
-  // Nome e e-mail vêm direto do usuário autenticado (AuthContext).
-  // O plano ainda usa o mock como fallback até o backend retornar esse dado
-  // no payload do usuário — troque assim que /users/me trouxer o plano.
   const name = user?.nome || 'Usuário';
   const email = user?.email || '';
-  const plan = user?.plano?.nome || '';
+  const [assinatura, setAssinatura] = useState(null);
+
+  useFocusEffect(
+    useCallback(() => {
+      let ativo = true;
+      getMinhasAssinaturas()
+        .then(({ response }) => {
+          const { planoAtual } = derivarPainel(response);
+          if (ativo)
+            setAssinatura(
+              planoAtual?.podeUtilizar === true ? planoAtual : null
+            );
+        })
+        .catch(() => {
+          // A falha de consulta não deve exibir um plano desatualizado como ativo.
+          if (ativo) setAssinatura(null);
+        });
+      return () => {
+        ativo = false;
+      };
+    }, [])
+  );
 
   const handleDeleteAccount = () => {
     Alert.alert(
@@ -147,22 +170,69 @@ export default function ProfileScreen({ navigation }) {
   });
 
   return (
-    <SafeAreaView style={styles.safe}>
-      <View style={styles.header}>
-        <View style={styles.avatarPlaceholder}>
-          <Text style={styles.avatarInitials}>{getInitials(name)}</Text>
-        </View>
-        <View>
-          <Text style={styles.name}>{name}</Text>
-          <Text style={styles.email}>{email}</Text>
-          <View style={styles.planBadge}>
-            <Ionicons name="star" size={11} color="#fff" />
-            <Text style={styles.planBadgeText}>{plan}</Text>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <View style={styles.headerDecoration} pointerEvents="none" />
+      <ScrollView contentContainerStyle={styles.body}>
+        <Text style={styles.pageTitle}>Perfil</Text>
+        <View style={styles.header}>
+          <LinearGradient
+            colors={[colors.blueLight, colors.blue, colors.blueDark]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.avatarPlaceholder}
+          >
+            <Text style={styles.avatarInitials}>{getInitials(name)}</Text>
+          </LinearGradient>
+          <View style={styles.userInfo}>
+            <Text style={styles.name}>{name}</Text>
+            {!!email && <Text style={styles.email}>{email}</Text>}
           </View>
         </View>
-      </View>
+        {assinatura && (
+          <TouchableOpacity
+            style={styles.planCard}
+            onPress={() => navigation.navigate('Plano')}
+            accessibilityRole="button"
+            accessibilityLabel={`Gerenciar plano ConexPass ${assinatura.plano.nome}`}
+            activeOpacity={0.85}
+          >
+            <LinearGradient
+              colors={['#FFFFFF', '#F4F8FF', '#E5EEFF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.planCardContent}
+            >
+              <View style={styles.planIcon}>
+                <Ionicons name="ribbon-outline" size={29} color={colors.blue} />
+              </View>
+              <View style={styles.planInfo}>
+                <View style={styles.planTitleRow}>
+                  <Text style={styles.planName}>
+                    ConexPass {assinatura.plano.nome}
+                  </Text>
+                  <View style={styles.planBadge}>
+                    <Text style={styles.planBadgeText}>
+                      {assinatura.renovacaoAutomatica === false
+                        ? 'Em uso'
+                        : 'Ativo'}
+                    </Text>
+                  </View>
+                </View>
+                <Text style={styles.planDescription}>
+                  {assinatura.renovacaoAutomatica === false
+                    ? `Renovação cancelada.${assinatura.fimVigencia ? ` Disponível até ${formatarDataPlano(assinatura.fimVigencia, true)}.` : ''}`
+                    : 'Seu plano de acesso aos estabelecimentos parceiros.'}
+                </Text>
+              </View>
+              <Ionicons
+                name="chevron-forward"
+                size={22}
+                color={colors.textMuted}
+              />
+            </LinearGradient>
+          </TouchableOpacity>
+        )}
 
-      <ScrollView contentContainerStyle={styles.body}>
         {menuSections.map((section) => (
           <View
             key={section.title + section.items[0].label}
@@ -195,6 +265,7 @@ export default function ProfileScreen({ navigation }) {
                     style={[styles.menuItem, !isLast && styles.menuItemDivider]}
                     onPress={handlePress}
                     activeOpacity={0.7}
+                    accessibilityRole="button"
                   >
                     <View style={styles.menuLeft}>
                       <View
@@ -252,98 +323,132 @@ export default function ProfileScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.bg },
+  safe: { flex: 1, backgroundColor: '#F4F7FF' },
+  headerDecoration: {
+    position: 'absolute',
+    top: -195,
+    left: -65,
+    width: 360,
+    height: 360,
+    borderRadius: 180,
+    backgroundColor: '#E5EEFF',
+  },
+  body: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 32 },
+  pageTitle: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 24,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 14,
-    backgroundColor: colors.blue,
-    padding: 20,
-    paddingTop: 24,
-    paddingBottom: 24,
-    borderBottomLeftRadius: 24,
-    borderBottomRightRadius: 24,
+    gap: 16,
+    paddingHorizontal: 4,
+    marginBottom: 28,
   },
   avatarPlaceholder: {
-    width: 62,
-    height: 62,
-    borderRadius: 31,
+    width: 78,
+    height: 78,
+    borderRadius: 39,
     borderWidth: 2,
     borderColor: '#fff',
-    backgroundColor: 'rgba(255,255,255,0.2)',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarInitials: { color: '#fff', fontSize: 20, fontWeight: '800' },
-  name: { fontSize: 17, fontWeight: '800', color: '#fff' },
-  email: { fontSize: 12.5, color: 'rgba(255,255,255,0.85)', marginTop: 2 },
-  planBadge: {
+  avatarInitials: { color: '#fff', fontSize: 27, fontWeight: '800' },
+  userInfo: { flex: 1, gap: 5 },
+  name: { fontSize: 25, fontWeight: '800', color: colors.text },
+  email: { fontSize: 14, lineHeight: 21, color: colors.textMuted },
+  planCard: {
+    borderRadius: 22,
+    backgroundColor: '#fff',
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: '#E2EAFE',
+    ...shadow,
+  },
+  planCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: radius.pill,
-    marginTop: 6,
+    gap: 12,
+    padding: 16,
+    borderRadius: 22,
+    overflow: 'hidden',
   },
-  planBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  body: { padding: 16, paddingBottom: 32 },
+  planIcon: {
+    width: 54,
+    height: 58,
+    borderRadius: 17,
+    backgroundColor: '#E0EBFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  planInfo: { flex: 1 },
+  planTitleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 7,
+  },
+  planName: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+  },
+  planBadge: {
+    backgroundColor: '#DCF4CC',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: radius.pill,
+  },
+  planBadgeText: { color: '#236B24', fontSize: 11, fontWeight: '800' },
+  planDescription: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 7,
+  },
   section: { marginBottom: 20 },
   sectionTitle: {
-    fontSize: 12.5,
+    fontSize: 12,
     fontWeight: '700',
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 0.4,
-    marginBottom: 8,
-    marginLeft: 4,
+    marginBottom: 9,
+    marginLeft: 10,
   },
-  sectionCard: {
-    backgroundColor: '#fff',
-    borderRadius: radius.md,
-    overflow: 'hidden',
-  },
+  sectionCard: { backgroundColor: '#fff', borderRadius: 22, ...shadow },
   menuItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
   },
-  menuItemDivider: {
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
-  },
-  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  menuItemDivider: { borderBottomWidth: 1, borderBottomColor: colors.border },
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 14, flex: 1 },
   menuIconWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: colors.chipBg,
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#EDF3FF',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuIconWrapDanger: { backgroundColor: '#FEE2E2' },
-  menuLabel: { fontSize: 14, color: colors.text, fontWeight: '500' },
-  menuLabelDanger: { color: '#EF4444', fontWeight: '700' },
-  appVersion: {
-    alignItems: 'center',
-    marginTop: -4,
-    paddingTop: 4,
-    paddingBottom: 8,
+  menuIconWrapDanger: { backgroundColor: '#FFE8EB' },
+  menuLabel: {
+    fontSize: 15,
+    lineHeight: 21,
+    color: colors.text,
+    fontWeight: '500',
+    flexShrink: 1,
   },
-
-  appName: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: colors.textMuted,
-  },
-
-  versionText: {
-    fontSize: 11,
-    color: colors.textLight,
-    marginTop: 2,
-  },
+  menuLabelDanger: { color: '#E52938', fontWeight: '700' },
+  appVersion: { alignItems: 'center', paddingTop: 4, paddingBottom: 8 },
+  appName: { fontSize: 12, fontWeight: '700', color: colors.textMuted },
+  versionText: { fontSize: 11, color: colors.textLight, marginTop: 2 },
 });

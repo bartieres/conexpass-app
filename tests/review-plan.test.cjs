@@ -53,7 +53,16 @@ test('somente ATIVO confirma; agendamento não anuncia ativação imediata', () 
   }
 });
 
-function setup({ semId = false } = {}) {
+function setup({
+  semId = false,
+  modo,
+  agendada = false,
+  validar = false,
+  lista = [],
+} = {}) {
+  let efeito;
+  let posts = 0;
+  let puts = 0;
   let cursor = 0;
   const states = [];
   const refs = [];
@@ -80,7 +89,9 @@ function setup({ semId = false } = {}) {
       return (refs[i] ||= { current: value });
     },
     useCallback: (fn) => fn,
-    useEffect: () => {},
+    useEffect: (fn) => {
+      efeito = fn;
+    },
   };
   const code = babel.transformFileSync('src/screens/plan/ReviewPlanScreen.js', {
     babelrc: false,
@@ -103,15 +114,42 @@ function setup({ semId = false } = {}) {
       if (name.includes('theme/theme'))
         return { colors: {}, radius: {}, shadow: {} };
       if (name === './assinaturaResultado') return { obterEstadoAssinatura };
+      if (name.includes('assinaturasPlano'))
+        return { formatarDataPlano: (value) => value || '' };
       if (name.includes('formaPagamentoService')) return {};
       if (name.includes('assinaturaService'))
         return {
+          getMinhasAssinaturas: async () => ({ response: lista }),
+          agendarProximoPlano: async (id) => {
+            assert.equal(id, 7);
+            posts++;
+            return {
+              response: {
+                id: 42,
+                situacao: { codigo: 'AGENDADO' },
+                dataInicioVigencia: '2026-12-01T10:00:00',
+              },
+            };
+          },
+          alterarProximoPlano: async (id) => {
+            assert.equal(id, 7);
+            puts++;
+            return {
+              response: {
+                id: 42,
+                situacao: { codigo: 'AGENDADO' },
+                dataInicioVigencia: '2026-12-01T10:00:00',
+              },
+            };
+          },
           alterarPlano: async () => {
             patches++;
             return {
               response: {
                 ...(semId ? {} : { id: 42 }),
-                situacao: { codigo: 'AGUARDANDO_CONFIRMACAO' },
+                situacao: {
+                  codigo: agendada ? 'AGENDADO' : 'AGUARDANDO_CONFIRMACAO',
+                },
               },
             };
           },
@@ -130,17 +168,25 @@ function setup({ semId = false } = {}) {
     refCursor = 0;
     return mod.exports.default({
       route: {
-        params: { planoSelecionado: { id: 7, valor: 99, nome: 'Plano' } },
+        params: {
+          modo,
+          planoAgendadoId: 42,
+          dataInicioVigencia: '2026-12-01T10:00:00',
+          planoSelecionado: { id: 7, valor: 99, nome: 'Plano' },
+        },
       },
       navigation: {},
     });
   };
   render();
-  states[0] = { ultimosDigitos: '1234' };
-  states[1] = false;
+  states[3] = { ultimosDigitos: '1234' };
+  states[4] = false;
+  if (!validar) states[1] = false;
   return {
     render,
+    validar: () => efeito(),
     stats: () => ({ patches, gets }),
+    scheduleStats: () => ({ posts, puts }),
     setStatus: (value) => {
       status = value;
     },
@@ -191,4 +237,71 @@ test('resposta sem ID mantém pendência e não oferece nova contratação', asy
   assert.match(text(tree), /Não foi possível identificar/);
   assert.equal(button(tree, 'Atualizar situação').props.disabled, true);
   assert.deepEqual(env.stats(), { patches: 1, gets: 0 });
+});
+
+test('AGENDAR_PROXIMO usa POST e ALTERAR_PROXIMO usa PUT, sem PATCH ou consulta de pagamento', async () => {
+  for (const modo of ['AGENDAR_PROXIMO', 'ALTERAR_PROXIMO']) {
+    const env = setup({ modo });
+    await button(env.render(), 'Confirmar agendamento').props.onPress();
+    assert.deepEqual(env.stats(), { patches: 0, gets: 0 });
+    assert.deepEqual(env.scheduleStats(), {
+      posts: modo === 'AGENDAR_PROXIMO' ? 1 : 0,
+      puts: modo === 'ALTERAR_PROXIMO' ? 1 : 0,
+    });
+    assert.match(text(env.render()), /Próximo plano agendado!/);
+    assert.equal(button(env.render(), 'Atualizar situação'), undefined);
+  }
+});
+
+test('PATCH que devolve AGENDADO não anuncia assinatura ativa nem consulta pagamento', async () => {
+  const env = setup({ agendada: true });
+  await button(env.render(), 'Confirmar assinatura').props.onPress();
+  assert.deepEqual(env.stats(), { patches: 1, gets: 0 });
+  assert.match(text(env.render()), /Próximo plano agendado!/);
+});
+
+test('revisão valida data calculada e permissão pela lista, bloqueando agendamento que entrou em cobrança', async () => {
+  const atual = {
+    id: 101,
+    tipoRegistro: 'ATUAL',
+    podeUtilizar: true,
+    renovacaoAutomatica: false,
+    fimVigencia: '2026-12-01T10:00:00',
+    acoesPermitidas: ['CONSULTAR'],
+  };
+  const env = setup({ modo: 'AGENDAR_PROXIMO', validar: true, lista: [atual] });
+  assert.equal(
+    button(env.render(), 'Confirmar agendamento').props.disabled,
+    true
+  );
+  env.validar();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(
+    button(env.render(), 'Confirmar agendamento').props.disabled,
+    false
+  );
+  assert.equal(
+    nodes(env.render()).find((n) => n.props?.label === 'Entra em vigor').props
+      .value,
+    '2026-12-01T10:00:00'
+  );
+  const bloqueado = setup({
+    modo: 'ALTERAR_PROXIMO',
+    validar: true,
+    lista: [
+      {
+        id: 42,
+        tipoRegistro: 'PROXIMO',
+        situacao: { codigo: 'AGUARDANDO_CONFIRMACAO' },
+        acoesPermitidas: ['CONSULTAR'],
+      },
+    ],
+  });
+  bloqueado.validar();
+  await new Promise((r) => setImmediate(r));
+  assert.equal(
+    button(bloqueado.render(), 'Confirmar agendamento').props.disabled,
+    true
+  );
+  assert.match(text(bloqueado.render()), /O agendamento mudou/);
 });

@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../components/ProfileIntro';
 import { useState, useMemo } from 'react';
 import {
   View,
@@ -69,9 +71,13 @@ function PasswordField({
           placeholder={placeholder}
           secureTextEntry={!visible}
           autoCapitalize="none"
+          autoCorrect={false}
+          accessibilityLabel={label}
         />
         <TouchableOpacity
           onPress={onToggleVisible}
+          accessibilityRole="button"
+          accessibilityLabel={`${visible ? 'Ocultar' : 'Mostrar'} ${label.toLowerCase()}`}
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <Ionicons
@@ -159,108 +165,150 @@ export default function ChangePasswordScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.safe}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Alterar senha</Text>
-        <View style={{ width: 38 }} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.body}
-        keyboardShouldPersistTaps="handled"
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.safe}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <PasswordField
-          label="Senha atual"
-          value={currentPassword}
-          onChangeText={setCurrentPassword}
-          visible={showCurrent}
-          onToggleVisible={() => setShowCurrent((v) => !v)}
-          placeholder="Digite sua senha atual"
-        />
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={() => navigation.goBack()}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Alterar senha</Text>
+          <View style={{ width: 38 }} />
+        </View>
 
-        <PasswordField
-          label="Nova senha"
-          value={newPassword}
-          onChangeText={setNewPassword}
-          visible={showNew}
-          onToggleVisible={() => setShowNew((v) => !v)}
-          placeholder="Digite a nova senha"
-        />
-
-        <PasswordField
-          label="Confirmar nova senha"
-          value={confirmPassword}
-          onChangeText={setConfirmPassword}
-          visible={showConfirm}
-          onToggleVisible={() => setShowConfirm((v) => !v)}
-          placeholder="Digite a nova senha novamente"
-        />
-
-        <RuleChecklist rules={rules} />
-
-        {!!errorMessage && (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={16} color="#DC2626" />
-            <Text style={styles.errorText}>{errorMessage}</Text>
-          </View>
-        )}
-        {!!successMessage && (
-          <View style={styles.successBox}>
-            <Ionicons
-              name="checkmark-circle"
-              size={16}
-              color={colors.success}
-            />
-            <Text style={styles.successText}>{successMessage}</Text>
-          </View>
-        )}
-
-        <TouchableOpacity
-          style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
-          onPress={handleSave}
-          disabled={!canSave}
+        <ScrollView
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
         >
-          {saving ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.saveButtonText}>Salvar nova senha</Text>
+          <ProfileIntro
+            icon="key-outline"
+            title="Uma senha só sua"
+            description="Escolha uma nova senha e acompanhe os requisitos abaixo."
+          />
+          <View style={styles.formCard}>
+            <Text style={styles.formTitle}>Atualize sua senha</Text>
+            <PasswordField
+              label="Senha atual"
+              value={currentPassword}
+              onChangeText={setCurrentPassword}
+              visible={showCurrent}
+              onToggleVisible={() => setShowCurrent((v) => !v)}
+              placeholder="Digite sua senha atual"
+            />
+
+            <PasswordField
+              label="Nova senha"
+              value={newPassword}
+              onChangeText={setNewPassword}
+              visible={showNew}
+              onToggleVisible={() => setShowNew((v) => !v)}
+              placeholder="Digite a nova senha"
+            />
+
+            <PasswordField
+              label="Confirmar nova senha"
+              value={confirmPassword}
+              onChangeText={setConfirmPassword}
+              visible={showConfirm}
+              onToggleVisible={() => setShowConfirm((v) => !v)}
+              placeholder="Digite a nova senha novamente"
+            />
+
+            <Text style={styles.rulesProgress}>
+              {rules.filter((rule) => rule.valid).length} de {rules.length}{' '}
+              requisitos atendidos
+            </Text>
+            <RuleChecklist rules={rules} />
+          </View>
+
+          {!!errorMessage && (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+              <Text style={styles.errorText}>{errorMessage}</Text>
+            </View>
           )}
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+          {!!successMessage && (
+            <View style={styles.successBox}>
+              <Ionicons
+                name="checkmark-circle"
+                size={16}
+                color={colors.success}
+              />
+              <Text style={styles.successText}>{successMessage}</Text>
+            </View>
+          )}
+
+          <TouchableOpacity
+            style={[styles.saveButton, !canSave && styles.saveButtonDisabled]}
+            onPress={handleSave}
+            disabled={!canSave}
+          >
+            {saving ? (
+              <ActivityIndicator color="#fff" />
+            ) : (
+              <Text style={styles.saveButtonText}>Salvar nova senha</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  formCard: {
+    backgroundColor: '#fff',
+    borderRadius: 22,
+    padding: 18,
+    borderWidth: 1,
+    borderColor: colors.border,
+    marginBottom: 18,
+  },
+  formTitle: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: colors.text,
+    marginBottom: 18,
+  },
+  rulesProgress: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: colors.blue,
+    marginBottom: 10,
+  },
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 20, paddingTop: 4 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  body: { paddingBottom: 32, padding: 20, paddingTop: 4 },
   inputGroup: { marginBottom: 16 },
   label: {
     fontSize: 12.5,
@@ -274,16 +322,16 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: radius.md,
+    borderRadius: 16,
     paddingHorizontal: 12,
-    height: 50,
+    minHeight: 52,
     gap: 8,
   },
   inputIcon: { marginRight: 0 },
   input: { flex: 1, fontSize: 14, color: colors.text },
   rulesBox: {
-    backgroundColor: '#fff',
-    borderRadius: radius.md,
+    backgroundColor: '#F0F6FF',
+    borderRadius: 16,
     padding: 14,
     gap: 8,
     marginBottom: 16,
@@ -319,7 +367,7 @@ const styles = StyleSheet.create({
   saveButton: {
     backgroundColor: colors.blue,
     height: 52,
-    borderRadius: radius.md,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 4,

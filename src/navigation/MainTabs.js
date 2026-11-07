@@ -20,8 +20,8 @@ import CheckInPendingScreen from '../screens/explore/checkin/CheckInPendingScree
 import PlanScreen from '../screens/plan/PlanScreen';
 import ChangePlanScreen from '../screens/plan/ChangePlanScreen';
 import ReviewPlanScreen from '../screens/plan/ReviewPlanScreen';
-import PaymentDetailScreen from '../screens/plan/PaymentDetailScreen';
-import PaymentScreen from '../screens/plan/PaymentScreen';
+import PaymentDetail from '../screens/profile/pagamento/pagamento/PaymentDetail';
+import PaymentScreen from '../screens/profile/pagamento/pagamento/PaymentScreen';
 
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import PersonalDataScreen from '../screens/profile/conta/PersonalDataScreen';
@@ -31,8 +31,8 @@ import NotificationScreen from '../screens/profile/preferencias/NotificationScre
 import LocationScreen from '../screens/profile/preferencias/LocationScreen';
 import HelpScreen from '../screens/profile/suporte/HelpScreen';
 import ContactScreen from '../screens/profile/suporte/ContactScreen';
-import PaymentMethodScreen from '../screens/profile/assinatura/PaymentMethodScreen';
-import RegisterCardScreen from '../screens/profile/assinatura/RegisterCardScreen';
+import PaymentMethodScreen from '../screens/profile/pagamento/formapagamento/PaymentMethodScreen';
+import RegisterCardScreen from '../screens/profile/pagamento/formapagamento/RegisterCardScreen';
 
 const Tab = createBottomTabNavigator();
 
@@ -131,7 +131,7 @@ function PlanStack() {
 
       <PlanStackNav.Screen
         name="PaymentDetail"
-        component={PaymentDetailScreen}
+        component={PaymentDetail}
       />
 
       <PlanStackNav.Screen
@@ -210,6 +210,11 @@ function ProfileStack() {
       <ProfileStackNav.Screen
         name="Payment"
         component={PaymentScreen}
+      />
+
+      <ProfileStackNav.Screen
+        name="PaymentDetail"
+        component={PaymentDetail}
       />
     </ProfileStackNav.Navigator>
   );

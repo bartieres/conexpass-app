@@ -4,6 +4,8 @@ import { findAllByCondition } from '../../../services/estabelecimentoService';
 import { save as sugerirEstabelecimento } from '../../../services/estabelecimentoLeadService';
 import Explore from './Explore';
 import { useAuth } from '../../../context/AuthContext';
+import { useFocusEffect } from '@react-navigation/native';
+import { getMinhasAssinaturas } from '../../../services/assinaturaService';
 
 const RAIO_INICIAL_KM = 10;
 const TAMANHO_PAGINA = 10;
@@ -35,6 +37,36 @@ function formatarHora(hora) {
  */
 export default function ExploreScreen({ navigation, route }) {
   const { user } = useAuth();
+  const [temPlano, setTemPlano] = useState(() => Boolean(user?.plano));
+  const [planoConsultado, setPlanoConsultado] = useState(false);
+
+  // O login traz o plano ativo; a consulta ao ganhar foco cobre contratações
+  // feitas nesta sessão e solicitações que ainda aguardam confirmação.
+  useFocusEffect(
+    useCallback(() => {
+      let ativo = true;
+      getMinhasAssinaturas()
+        .then(({ response }) => {
+          if (ativo) {
+            setTemPlano(
+              response.some(
+                (assinatura) =>
+                  assinatura.podeUtilizar ||
+                  ['PROXIMO', 'PENDENTE'].includes(assinatura.tipoRegistro)
+              )
+            );
+            setPlanoConsultado(true);
+          }
+        })
+        .catch(() => {
+          // Em falhas transitórias, preserva a informação já conhecida.
+          if (ativo) setPlanoConsultado(true);
+        });
+      return () => {
+        ativo = false;
+      };
+    }, [])
+  );
   const [search, setSearch] = useState('');
 
   // Filtros completos. "categorias" é sempre um array — tanto os chips
@@ -302,6 +334,7 @@ export default function ExploreScreen({ navigation, route }) {
     <Explore
       navigation={navigation}
       nomeUsuario={user?.nome}
+      exibirBannerPlanos={planoConsultado && !temPlano}
       search={search}
       onChangeSearch={setSearch}
       onSubmitSearch={handleSubmitSearch}

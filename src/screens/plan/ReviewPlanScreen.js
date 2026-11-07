@@ -7,16 +7,21 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
 
 import { colors, radius, shadow } from '../../theme/theme';
 import { obterEstadoAssinatura } from './assinaturaResultado';
+import { formatarDataPlano } from '../../utils/assinaturasPlano';
 
 import {
   alterarPlano,
   consultarPagamento,
+  agendarProximoPlano,
+  alterarProximoPlano,
+  getMinhasAssinaturas,
 } from '../../services/assinaturaService';
 
 import { findCreditCardPrincipalByUsuario } from '../../services/formaPagamentoService';
@@ -166,6 +171,14 @@ function SummaryRow({ label, value, highlight, divider }) {
 
 export default function ReviewPlanScreen({ route, navigation }) {
   const planoAtual = route?.params?.planoAtual;
+  const modo =
+    route?.params?.modo || (planoAtual ? 'ALTERAR_ATUAL' : 'ESCOLHER');
+  const agendamento = ['AGENDAR_PROXIMO', 'ALTERAR_PROXIMO'].includes(modo);
+  const [inicioAgendado, setInicioAgendado] = useState(
+    route?.params?.dataInicioVigencia || null
+  );
+  const [validandoAgendamento, setValidandoAgendamento] = useState(agendamento);
+  const [agendamentoError, setAgendamentoError] = useState('');
 
   const planoSelecionado = route?.params?.planoSelecionado;
 
@@ -243,10 +256,60 @@ export default function ReviewPlanScreen({ route, navigation }) {
   }, []);
 
   useEffect(() => {
-    // Carrega a forma de pagamento ao montar a tela.
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    buscarFormaPagamento();
-  }, [buscarFormaPagamento]);
+    if (!agendamento) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      buscarFormaPagamento();
+      return;
+    }
+    let ativo = true;
+    getMinhasAssinaturas()
+      .then(({ response }) => {
+        const atual = response.find(
+          (a) => a.tipoRegistro === 'ATUAL' && a.podeUtilizar
+        );
+        const proximo = response.find(
+          (a) =>
+            a.tipoRegistro === 'PROXIMO' && a.situacao.codigo === 'AGENDADO'
+        );
+        const pendente = response.some(
+          (a) =>
+            a.tipoRegistro === 'PENDENTE' ||
+            (a.tipoRegistro === 'PROXIMO' && a.situacao.codigo !== 'AGENDADO')
+        );
+        const permitido =
+          modo === 'ALTERAR_PROXIMO'
+            ? proximo?.id === route?.params?.planoAgendadoId &&
+              proximo.acoesPermitidas.includes('ALTERAR_PROXIMO')
+            : atual?.renovacaoAutomatica === false &&
+              atual?.acoesPermitidas.includes('CONSULTAR') &&
+              !proximo;
+        const inicio =
+          modo === 'ALTERAR_PROXIMO'
+            ? proximo?.dataInicioVigencia
+            : atual?.fimVigencia;
+        if (!permitido || pendente || !inicio)
+          throw new Error(
+            'O agendamento mudou. Volte para Planos e atualize a situação.'
+          );
+        if (ativo) setInicioAgendado(inicio);
+      })
+      .catch((err) => {
+        if (ativo)
+          setAgendamentoError(
+            err.friendlyMessage ||
+              err.message ||
+              'Não foi possível validar o agendamento. Volte para Planos e tente novamente.'
+          );
+      })
+      .finally(() => {
+        if (ativo) setValidandoAgendamento(false);
+      });
+    return () => {
+      ativo = false;
+    };
+    // O carregamento sincroniza a revisão com os dados do servidor.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [agendamento, modo, route?.params?.planoAgendadoId, buscarFormaPagamento]);
 
   const diferenca =
     planoAtual && planoSelecionado
@@ -274,7 +337,12 @@ export default function ReviewPlanScreen({ route, navigation }) {
       return;
     }
 
-    if (!formaPagamento) {
+    if (
+      agendamento &&
+      (validandoAgendamento || agendamentoError || !inicioAgendado)
+    )
+      return;
+    if (!agendamento && (!formaPagamento || loadingPayment || paymentError)) {
       setConfirmError('Cadastre uma forma de pagamento para continuar.');
 
       return;
@@ -286,21 +354,31 @@ export default function ReviewPlanScreen({ route, navigation }) {
 
     try {
       const payload = {
-        planoAtual: planoAtual,
-
-        planoNovo: {
-          id: planoSelecionado.id,
-          valor: planoSelecionado.valor,
-          nivel: planoSelecionado.nivel,
-        },
+        ...(planoAtual ? { planoAtual: { id: planoAtual.id } } : {}),
+        planoNovo: { id: planoSelecionado.id },
       };
-
-      const { response } = await alterarPlano(payload);
+      const { response } =
+        modo === 'AGENDAR_PROXIMO'
+          ? await agendarProximoPlano(planoSelecionado.id)
+          : modo === 'ALTERAR_PROXIMO'
+            ? await alterarProximoPlano(planoSelecionado.id)
+            : await alterarPlano(payload);
       // O PATCH registra a solicitação; a situação da assinatura vem da API.
       const assinatura = response || {};
       setResultado(assinatura);
-      await atualizarSituacao(assinatura);
+      if (assinatura.situacao?.codigo !== 'AGENDADO')
+        await atualizarSituacao(assinatura);
     } catch (err) {
+      if ((err?.response?.status ?? err?.status) === 409) {
+        // Retorna à gestão para recarregar as permissões após início da cobrança.
+        await getMinhasAssinaturas().catch(() => {});
+        navigation.popToTop();
+        Alert.alert(
+          'Situação da assinatura mudou',
+          'A cobrança pode ter iniciado. Confira a situação atualizada em Planos antes de continuar.'
+        );
+        return;
+      }
       setConfirmError(
         err?.friendlyMessage ||
           'Não foi possível concluir a alteração. Tente novamente.'
@@ -373,7 +451,11 @@ export default function ReviewPlanScreen({ route, navigation }) {
 
             <View style={styles.successPlanContent}>
               <Text style={styles.successPlanLabel}>
-                {estado.confirmada ? 'Plano contratado' : 'Plano solicitado'}
+                {estado.agendada
+                  ? 'Próximo plano'
+                  : estado.confirmada
+                    ? 'Plano contratado'
+                    : 'Plano solicitado'}
               </Text>
 
               <Text style={styles.successPlanName}>
@@ -385,7 +467,7 @@ export default function ReviewPlanScreen({ route, navigation }) {
               </Text>
 
               <Text style={styles.successPlanPrice}>
-                {formatarMoeda(planoSelecionado.valor)}
+                {formatarMoeda(resultado.valor ?? planoSelecionado.valor)}
 
                 <Text style={styles.successPlanSuffix}> /mês</Text>
               </Text>
@@ -418,7 +500,14 @@ export default function ReviewPlanScreen({ route, navigation }) {
           {!!confirmError && (
             <Text style={styles.resultError}>{confirmError}</Text>
           )}
-          {!estado.confirmada && (
+          {estado.agendada && (
+            <Text style={styles.successDescription}>
+              Cobrança programada para{' '}
+              {formatarDataPlano(resultado.dataInicioVigencia)}. O acesso será
+              liberado após a confirmação do pagamento.
+            </Text>
+          )}
+          {!estado.confirmada && !estado.agendada && (
             <TouchableOpacity
               style={[styles.successButton, styles.refreshStatusButton]}
               onPress={() => atualizarSituacao(resultado)}
@@ -536,14 +625,19 @@ export default function ReviewPlanScreen({ route, navigation }) {
             <SummaryRow
               label="Entra em vigor"
               value={
-                planoAtual && isDowngrade
-                  ? 'Próximo ciclo'
-                  : 'Após confirmação do pagamento'
+                agendamento
+                  ? formatarDataPlano(inicioAgendado, true)
+                  : planoAtual && isDowngrade
+                    ? 'Próximo ciclo'
+                    : 'Após confirmação do pagamento'
               }
               divider
             />
 
-            {!!planoAtual?.proximaCobranca?.data && (
+            {agendamento && (
+              <SummaryRow label="Cobrança hoje" value="R$ 0,00" divider />
+            )}
+            {!agendamento && !!planoAtual?.proximaCobranca?.data && (
               <SummaryRow
                 label="Próxima cobrança"
                 value={formatarData(planoAtual.proximaCobranca.data)}
@@ -554,41 +648,49 @@ export default function ReviewPlanScreen({ route, navigation }) {
 
         {/* FORMA DE PAGAMENTO */}
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Forma de pagamento</Text>
+        {!agendamento && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Forma de pagamento</Text>
 
-          {loadingPayment && (
-            <View style={styles.paymentLoading}>
-              <ActivityIndicator size="small" color={colors.blue} />
+            {loadingPayment && (
+              <View style={styles.paymentLoading}>
+                <ActivityIndicator size="small" color={colors.blue} />
 
-              <Text style={styles.paymentLoadingText}>
-                Carregando forma de pagamento...
-              </Text>
-            </View>
-          )}
-
-          {!loadingPayment && !!paymentError && (
-            <View style={styles.paymentErrorCard}>
-              <Ionicons name="alert-circle-outline" size={22} color="#DC2626" />
-
-              <View style={styles.paymentErrorContent}>
-                <Text style={styles.paymentErrorText}>{paymentError}</Text>
-
-                <TouchableOpacity onPress={buscarFormaPagamento}>
-                  <Text style={styles.paymentRetryText}>Tentar novamente</Text>
-                </TouchableOpacity>
+                <Text style={styles.paymentLoadingText}>
+                  Carregando forma de pagamento...
+                </Text>
               </View>
-            </View>
-          )}
+            )}
 
-          {!loadingPayment && !paymentError && (
-            <PaymentMethodCard
-              formaPagamento={formaPagamento}
-              onAdd={handleCadastrarCartao}
-              onChange={handleAlterarFormaPagamento}
-            />
-          )}
-        </View>
+            {!loadingPayment && !!paymentError && (
+              <View style={styles.paymentErrorCard}>
+                <Ionicons
+                  name="alert-circle-outline"
+                  size={22}
+                  color="#DC2626"
+                />
+
+                <View style={styles.paymentErrorContent}>
+                  <Text style={styles.paymentErrorText}>{paymentError}</Text>
+
+                  <TouchableOpacity onPress={buscarFormaPagamento}>
+                    <Text style={styles.paymentRetryText}>
+                      Tentar novamente
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {!loadingPayment && !paymentError && (
+              <PaymentMethodCard
+                formaPagamento={formaPagamento}
+                onAdd={handleCadastrarCartao}
+                onChange={handleAlterarFormaPagamento}
+              />
+            )}
+          </View>
+        )}
 
         {/* TOTAL */}
 
@@ -597,7 +699,9 @@ export default function ReviewPlanScreen({ route, navigation }) {
             <Text style={styles.totalLabel}>Total da assinatura</Text>
 
             <Text style={styles.totalDescription}>
-              Cobrança recorrente mensal
+              {agendamento
+                ? 'Cobrança futura • nenhum pagamento hoje'
+                : 'Cobrança recorrente mensal'}
             </Text>
           </View>
 
@@ -610,6 +714,12 @@ export default function ReviewPlanScreen({ route, navigation }) {
           </View>
         </View>
 
+        {agendamento && validandoAgendamento && (
+          <ActivityIndicator color={colors.blue} />
+        )}
+        {!!agendamentoError && (
+          <Text style={styles.resultError}>{agendamentoError}</Text>
+        )}
         {!!confirmError && (
           <View style={styles.errorBox}>
             <Ionicons name="alert-circle" size={17} color="#DC2626" />
@@ -621,11 +731,19 @@ export default function ReviewPlanScreen({ route, navigation }) {
         <TouchableOpacity
           style={[
             styles.confirmButton,
-            (!formaPagamento || loadingPayment || confirming) &&
+            (confirming ||
+              (agendamento
+                ? validandoAgendamento || !!agendamentoError || !inicioAgendado
+                : !formaPagamento || loadingPayment || !!paymentError)) &&
               styles.confirmButtonDisabled,
           ]}
           onPress={handleConfirmar}
-          disabled={!formaPagamento || loadingPayment || confirming}
+          disabled={
+            confirming ||
+            (agendamento
+              ? validandoAgendamento || !!agendamentoError || !inicioAgendado
+              : !formaPagamento || loadingPayment || !!paymentError)
+          }
           activeOpacity={0.85}
         >
           {confirming ? (
@@ -633,7 +751,11 @@ export default function ReviewPlanScreen({ route, navigation }) {
           ) : (
             <>
               <Text style={styles.confirmButtonText}>
-                {planoAtual ? 'Confirmar alteração' : 'Confirmar assinatura'}
+                {agendamento
+                  ? 'Confirmar agendamento'
+                  : planoAtual
+                    ? 'Confirmar alteração'
+                    : 'Confirmar assinatura'}
               </Text>
 
               <Ionicons name="arrow-forward" size={18} color="#fff" />
@@ -641,13 +763,13 @@ export default function ReviewPlanScreen({ route, navigation }) {
           )}
         </TouchableOpacity>
 
-        {!formaPagamento && !loadingPayment && (
+        {!agendamento && !formaPagamento && !loadingPayment && (
           <Text style={styles.bottomHint}>
             Cadastre uma forma de pagamento para continuar.
           </Text>
         )}
 
-        {isUpgrade && (
+        {!agendamento && planoAtual && isUpgrade && (
           <View style={styles.infoBox}>
             <Ionicons
               name="information-circle-outline"
@@ -656,13 +778,13 @@ export default function ReviewPlanScreen({ route, navigation }) {
             />
 
             <Text style={styles.infoText}>
-              O novo valor da assinatura será aplicado conforme as regras do
-              próximo ciclo.
+              O upgrade é aplicado após a confirmação do pagamento, conforme as
+              condições informadas pelo servidor.
             </Text>
           </View>
         )}
 
-        {isDowngrade && (
+        {!agendamento && isDowngrade && (
           <View style={styles.infoBox}>
             <Ionicons
               name="information-circle-outline"

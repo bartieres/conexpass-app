@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../components/ProfileIntro';
 import {
   View,
   Text,
@@ -6,14 +8,16 @@ import {
   ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../../theme/theme';
+import { colors, shadow } from '../../../theme/theme';
 
 export default function SecurityScreen({ navigation }) {
   return (
-    <View style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -23,6 +27,12 @@ export default function SecurityScreen({ navigation }) {
       </View>
 
       <ScrollView contentContainerStyle={styles.body}>
+        <ProfileIntro
+          icon="shield-checkmark-outline"
+          title="Cuide do seu acesso"
+          description="Gerencie sua senha e as opções de segurança da sua conta."
+          tone="blue"
+        />
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Acesso</Text>
           <View style={styles.sectionCard}>
@@ -35,7 +45,7 @@ export default function SecurityScreen({ navigation }) {
                 <View style={styles.menuIconWrap}>
                   <Ionicons name="key-outline" size={19} color={colors.blue} />
                 </View>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={styles.menuLabel}>Senha</Text>
                   <Text style={styles.menuSubLabel}>Alterar senha</Text>
                 </View>
@@ -71,7 +81,7 @@ export default function SecurityScreen({ navigation }) {
                     color={colors.textLight}
                   />
                 </View>
-                <View>
+                <View style={{ flex: 1 }}>
                   <Text style={[styles.menuLabel, styles.menuLabelDisabled]}>
                     Dispositivos conectados
                   </Text>
@@ -87,7 +97,7 @@ export default function SecurityScreen({ navigation }) {
           </View>
         </View>
       </ScrollView>
-    </View>
+    </SafeAreaView>
   );
 }
 
@@ -98,20 +108,26 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 16, paddingTop: 8 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  body: { paddingBottom: 32, padding: 16, paddingTop: 8 },
   section: { marginBottom: 20 },
   sectionTitle: {
     fontSize: 12.5,
@@ -123,8 +139,10 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   sectionCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: '#fff',
-    borderRadius: radius.md,
+    borderRadius: 22,
     overflow: 'hidden',
   },
   menuItem: {
@@ -135,7 +153,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
   },
   menuItemDisabled: { opacity: 0.55 },
-  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  menuLeft: { flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 },
   menuIconWrap: {
     width: 34,
     height: 34,

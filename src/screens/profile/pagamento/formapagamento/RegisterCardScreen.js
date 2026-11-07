@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../../components/ProfileIntro';
 import { useState } from 'react';
 
 import {
@@ -14,9 +16,9 @@ import {
 } from 'react-native';
 
 import { Ionicons } from '@expo/vector-icons';
-import { colors, radius, shadow } from '../../../theme/theme';
+import { colors, radius, shadow } from '../../../../theme/theme';
 
-import { save } from '../../../services/formaPagamentoService';
+import { save } from '../../../../services/formaPagamentoService';
 
 const BANDEIRA_ICON = {
   VISA: 'card',
@@ -222,185 +224,184 @@ export default function RegisterCardScreen({ navigation }) {
   };
 
   return (
-    <KeyboardAvoidingView
-      style={styles.safe}
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-          disabled={loading}
-        >
-          <Ionicons name="arrow-back" size={22} color={colors.text} />
-        </TouchableOpacity>
-
-        <Text style={styles.headerTitle}>Cadastrar cartão</Text>
-
-        <View style={{ width: 38 }} />
-      </View>
-
-      <ScrollView
-        contentContainerStyle={styles.body}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
+      <KeyboardAvoidingView
+        style={styles.safe}
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
-        <View style={styles.infoBox}>
-          <View style={styles.infoIcon}>
-            <Ionicons name="card-outline" size={24} color={colors.blue} />
-          </View>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            onPress={() => navigation.goBack()}
+            disabled={loading}
+          >
+            <Ionicons name="arrow-back" size={22} color={colors.text} />
+          </TouchableOpacity>
 
-          <View style={{ flex: 1 }}>
-            <Text style={styles.infoTitle}>Cartão de crédito</Text>
+          <Text style={styles.headerTitle}>Cadastrar cartão</Text>
 
-            <Text style={styles.infoText}>
-              Cadastre um cartão para utilizar nas cobranças da sua assinatura.
-            </Text>
-          </View>
+          <View style={{ width: 38 }} />
         </View>
 
-        <Text style={styles.sectionTitle}>Dados do cartão</Text>
-
-        <View style={styles.form}>
-          <View style={styles.field}>
-            <Text style={styles.label}>Número do cartão</Text>
-
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name={BANDEIRA_ICON[bandeira] || 'card-outline'}
-                size={20}
-                color={bandeira ? colors.blue : colors.textMuted}
-              />
-
-              <TextInput
-                style={styles.input}
-                value={numero}
-                onChangeText={handleNumeroChange}
-                placeholder="0000 0000 0000 0000"
-                placeholderTextColor={colors.textLight}
-                keyboardType="number-pad"
-                maxLength={23}
-              />
-            </View>
-
-            {!!bandeira && (
-              <Text style={styles.cardBrand}>{nomeBandeira(bandeira)}</Text>
-            )}
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Nome no cartão</Text>
-
-            <View style={styles.inputWrapper}>
-              <Ionicons
-                name="person-outline"
-                size={20}
-                color={colors.textMuted}
-              />
-
-              <TextInput
-                style={styles.input}
-                value={nome}
-                onChangeText={setNome}
-                placeholder="Nome impresso no cartão"
-                placeholderTextColor={colors.textLight}
-                autoCapitalize="characters"
-              />
-            </View>
-          </View>
-
-          <View style={styles.row}>
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={styles.label}>Validade</Text>
-
-              <View style={styles.inputWrapper}>
-                <Ionicons
-                  name="calendar-outline"
-                  size={20}
-                  color={colors.textMuted}
-                />
-
-                <TextInput
-                  style={styles.input}
-                  value={validade}
-                  onChangeText={(value) => setValidade(formatarValidade(value))}
-                  placeholder="MM/AA"
-                  placeholderTextColor={colors.textLight}
-                  keyboardType="number-pad"
-                  maxLength={5}
-                />
-              </View>
-            </View>
-
-            <View style={[styles.field, { flex: 1 }]}>
-              <Text style={styles.label}>CVV</Text>
-
-              <View style={styles.inputWrapper}>
-                <Ionicons
-                  name="lock-closed-outline"
-                  size={20}
-                  color={colors.textMuted}
-                />
-
-                <TextInput
-                  style={styles.input}
-                  value={cvv}
-                  onChangeText={(value) =>
-                    setCvv(value.replace(/\D/g, '').slice(0, 4))
-                  }
-                  placeholder="123"
-                  placeholderTextColor={colors.textLight}
-                  keyboardType="number-pad"
-                  secureTextEntry
-                  maxLength={4}
-                />
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {!!error && (
-          <View style={styles.errorBox}>
-            <Ionicons name="alert-circle" size={16} color="#DC2626" />
-
-            <Text style={styles.errorText}>{error}</Text>
-          </View>
-        )}
-
-        <View style={styles.securityBox}>
-          <Ionicons
-            name="shield-checkmark-outline"
-            size={20}
-            color={colors.blue}
+        <ScrollView
+          contentContainerStyle={styles.body}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <ProfileIntro
+            icon="card-outline"
+            title="Prepare seu próximo passo"
+            description="Cadastre um cartão para utilizar nas cobranças da sua assinatura."
+            tone="blue"
           />
 
-          <Text style={styles.securityText}>
-            Seus dados de pagamento são processados de forma segura pelo nosso
-            provedor de pagamentos.
-          </Text>
-        </View>
+          <Text style={styles.sectionTitle}>Dados do cartão</Text>
 
-        <TouchableOpacity
-          style={[styles.saveButton, loading && styles.saveButtonDisabled]}
-          onPress={handleSalvar}
-          disabled={loading}
-        >
-          {loading ? (
-            <ActivityIndicator size="small" color="#fff" />
-          ) : (
-            <>
-              <Ionicons
-                name="checkmark-circle-outline"
-                size={20}
-                color="#fff"
-              />
+          <View style={styles.form}>
+            <View style={styles.field}>
+              <Text style={styles.label}>Número do cartão</Text>
 
-              <Text style={styles.saveButtonText}>Salvar cartão</Text>
-            </>
+              <View style={styles.inputWrapper}>
+                <Ionicons
+                  name={BANDEIRA_ICON[bandeira] || 'card-outline'}
+                  size={20}
+                  color={bandeira ? colors.blue : colors.textMuted}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={numero}
+                  onChangeText={handleNumeroChange}
+                  placeholder="0000 0000 0000 0000"
+                  placeholderTextColor={colors.textLight}
+                  keyboardType="number-pad"
+                  maxLength={23}
+                />
+              </View>
+
+              {!!bandeira && (
+                <Text style={styles.cardBrand}>{nomeBandeira(bandeira)}</Text>
+              )}
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Nome no cartão</Text>
+
+              <View style={styles.inputWrapper}>
+                <Ionicons
+                  name="person-outline"
+                  size={20}
+                  color={colors.textMuted}
+                />
+
+                <TextInput
+                  style={styles.input}
+                  value={nome}
+                  onChangeText={setNome}
+                  placeholder="Nome impresso no cartão"
+                  placeholderTextColor={colors.textLight}
+                  autoCapitalize="characters"
+                />
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={[styles.field, { flex: 1 }]}>
+                <Text style={styles.label}>Validade</Text>
+
+                <View style={styles.inputWrapper}>
+                  <Ionicons
+                    name="calendar-outline"
+                    size={20}
+                    color={colors.textMuted}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    value={validade}
+                    onChangeText={(value) =>
+                      setValidade(formatarValidade(value))
+                    }
+                    placeholder="MM/AA"
+                    placeholderTextColor={colors.textLight}
+                    keyboardType="number-pad"
+                    maxLength={5}
+                  />
+                </View>
+              </View>
+
+              <View style={[styles.field, { flex: 1 }]}>
+                <Text style={styles.label}>CVV</Text>
+
+                <View style={styles.inputWrapper}>
+                  <Ionicons
+                    name="lock-closed-outline"
+                    size={20}
+                    color={colors.textMuted}
+                  />
+
+                  <TextInput
+                    style={styles.input}
+                    value={cvv}
+                    onChangeText={(value) =>
+                      setCvv(value.replace(/\D/g, '').slice(0, 4))
+                    }
+                    placeholder="123"
+                    placeholderTextColor={colors.textLight}
+                    keyboardType="number-pad"
+                    secureTextEntry
+                    maxLength={4}
+                  />
+                </View>
+              </View>
+            </View>
+          </View>
+
+          {!!error && (
+            <View style={styles.errorBox}>
+              <Ionicons name="alert-circle" size={16} color="#DC2626" />
+
+              <Text style={styles.errorText}>{error}</Text>
+            </View>
           )}
-        </TouchableOpacity>
-      </ScrollView>
-    </KeyboardAvoidingView>
+
+          <View style={styles.securityBox}>
+            <Ionicons
+              name="shield-checkmark-outline"
+              size={20}
+              color={colors.blue}
+            />
+
+            <Text style={styles.securityText}>
+              Seus dados de pagamento são processados de forma segura pelo nosso
+              provedor de pagamentos.
+            </Text>
+          </View>
+
+          <TouchableOpacity
+            style={[styles.saveButton, loading && styles.saveButtonDisabled]}
+            onPress={handleSalvar}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <Ionicons
+                  name="checkmark-circle-outline"
+                  size={20}
+                  color="#fff"
+                />
+
+                <Text style={styles.saveButtonText}>Salvar cartão</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
@@ -415,14 +416,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
 
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
@@ -430,9 +431,11 @@ const styles = StyleSheet.create({
   },
 
   headerTitle: {
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: '800',
     color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
   },
 
   body: {
@@ -485,8 +488,10 @@ const styles = StyleSheet.create({
   },
 
   form: {
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: '#fff',
-    borderRadius: radius.lg,
+    borderRadius: 22,
     padding: 18,
     ...shadow,
   },
@@ -508,10 +513,10 @@ const styles = StyleSheet.create({
   },
 
   inputWrapper: {
-    height: 50,
+    minHeight: 52,
     borderWidth: 1,
     borderColor: '#E5E7EB',
-    borderRadius: radius.md,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 14,
@@ -521,7 +526,8 @@ const styles = StyleSheet.create({
 
   input: {
     flex: 1,
-    height: '100%',
+    minHeight: 44,
+    paddingVertical: 10,
     fontSize: 14,
     color: colors.text,
   },
@@ -566,8 +572,8 @@ const styles = StyleSheet.create({
   },
 
   saveButton: {
-    height: 50,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: 16,
     backgroundColor: colors.blue,
     marginTop: 24,
     flexDirection: 'row',

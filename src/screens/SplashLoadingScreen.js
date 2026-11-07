@@ -7,7 +7,7 @@ import {
   Pressable,
 } from 'react-native';
 import { colors } from '../theme/theme';
-import Logo from '../assets/logo.png';
+import Logo from '../assets/logo_conexpass.png';
 
 export default function SplashLoadingScreen({ error, onRetry }) {
   return (

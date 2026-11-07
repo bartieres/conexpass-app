@@ -4,6 +4,18 @@ export function obterEstadoAssinatura(assinatura) {
   const pagamento = assinatura?.pagamento?.situacao?.codigo;
   const confirmada = situacao === 'ATIVO';
 
+  if (situacao === 'AGENDADO') {
+    return {
+      confirmada: false,
+      agendada: true,
+      icon: 'calendar-outline',
+      color: '#2B6CE0',
+      titulo: 'Próximo plano agendado!',
+      mensagem:
+        'Nenhuma cobrança foi realizada agora. A cobrança ocorrerá na data programada e o acesso dependerá da confirmação do pagamento.',
+    };
+  }
+
   if (confirmada) {
     return {
       confirmada: true,

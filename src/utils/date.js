@@ -1,10 +1,11 @@
-import { format } from 'date-fns';
+import { format, parseISO, isValid } from 'date-fns';
 
 import constants from '../shared/constants';
 
 const parseDate = (date) => {
   if (!date) return null;
-  return new Date(date.replace(' ', 'T'));
+  const parsed = parseISO(date.replace(' ', 'T'));
+  return isValid(parsed) ? parsed : null;
 };
 
 export const dateToDateMasked = (date) => {

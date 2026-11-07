@@ -1,3 +1,5 @@
+import { SafeAreaView } from 'react-native-safe-area-context';
+import ProfileIntro from '../components/ProfileIntro';
 import { useState, useCallback } from 'react';
 import {
   View,
@@ -6,11 +8,12 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Linking,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
 import { useFocusEffect } from '@react-navigation/native';
-import { colors, radius, shadow } from '../../../theme/theme';
+import { colors, shadow } from '../../../theme/theme';
 
 /**
  * Status possíveis:
@@ -63,10 +66,12 @@ export default function LocationScreen({ navigation }) {
   };
 
   return (
-    <View style={styles.safe}>
+    <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
         <TouchableOpacity
           style={styles.backButton}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
           onPress={() => navigation.goBack()}
         >
           <Ionicons name="arrow-back" size={22} color={colors.text} />
@@ -75,11 +80,13 @@ export default function LocationScreen({ navigation }) {
         <View style={{ width: 38 }} />
       </View>
 
-      <View style={styles.body}>
-        <Text style={styles.description}>
-          Sua localização é utilizada para encontrar estabelecimentos próximos a
-          você.
-        </Text>
+      <ScrollView contentContainerStyle={styles.body}>
+        <ProfileIntro
+          icon="navigate-outline"
+          title="Descubra o que está perto"
+          description="Gerencie a localização para encontrar estabelecimentos na sua região."
+          tone="green"
+        />
 
         {status === 'checking' && (
           <View style={styles.stateBox}>
@@ -89,12 +96,19 @@ export default function LocationScreen({ navigation }) {
 
         {status === 'granted' && (
           <View style={styles.card}>
+            <View style={styles.permissionIcon}>
+              <Ionicons name="location" size={30} color="#237759" />
+            </View>
             <Text style={styles.cardLabel}>Permissão de localização</Text>
             <View style={styles.statusRow}>
               <View style={styles.statusDot} />
               <Text style={styles.statusText}>Permitida</Text>
             </View>
 
+            <Text style={styles.permissionNote}>
+              Você pode gerenciar essa permissão nas configurações do seu
+              dispositivo.
+            </Text>
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={handleGerenciar}
@@ -134,32 +148,53 @@ export default function LocationScreen({ navigation }) {
             </TouchableOpacity>
           </View>
         )}
-      </View>
-    </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
+  permissionIcon: {
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: '#E3F5EB',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 18,
+  },
+  permissionNote: {
+    color: colors.textMuted,
+    fontSize: 13,
+    lineHeight: 20,
+    marginBottom: 18,
+  },
   safe: { flex: 1, backgroundColor: colors.bg },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 54,
+    paddingTop: 12,
     paddingBottom: 14,
   },
   backButton: {
-    width: 38,
-    height: 38,
-    borderRadius: 19,
+    width: 42,
+    height: 42,
+    borderRadius: 15,
     backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
     ...shadow,
   },
-  headerTitle: { fontSize: 16, fontWeight: '800', color: colors.text },
-  body: { padding: 20, paddingTop: 4 },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: colors.text,
+    flexShrink: 1,
+    textAlign: 'center',
+  },
+  body: { paddingBottom: 32, padding: 20, paddingTop: 4 },
   description: {
     fontSize: 13.5,
     color: colors.textMuted,
@@ -168,8 +203,10 @@ const styles = StyleSheet.create({
   },
   stateBox: { alignItems: 'center', paddingVertical: 30 },
   card: {
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: '#fff',
-    borderRadius: radius.lg,
+    borderRadius: 22,
     padding: 18,
     ...shadow,
   },
@@ -193,16 +230,18 @@ const styles = StyleSheet.create({
   },
   statusText: { fontSize: 14.5, fontWeight: '700', color: colors.text },
   secondaryButton: {
-    backgroundColor: colors.chipBg,
-    height: 46,
-    borderRadius: radius.md,
+    backgroundColor: '#E3F5EB',
+    minHeight: 50,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   secondaryButtonText: { color: colors.blue, fontWeight: '700', fontSize: 14 },
   deniedCard: {
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: '#fff',
-    borderRadius: radius.lg,
+    borderRadius: 22,
     padding: 24,
     alignItems: 'center',
     gap: 10,
@@ -222,8 +261,8 @@ const styles = StyleSheet.create({
   },
   primaryButton: {
     backgroundColor: colors.blue,
-    height: 50,
-    borderRadius: radius.md,
+    minHeight: 52,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: 10,
