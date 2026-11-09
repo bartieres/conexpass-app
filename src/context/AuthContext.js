@@ -67,9 +67,15 @@ export function AuthProvider({ children }) {
     let previousState = AppState.currentState;
     const subscription = AppState.addEventListener('change', (state) => {
       if (state === 'active' && previousState !== 'active') {
-        authService.ensureSession().catch(() => {
-          // Falhas transitórias não apagam a sessão; a próxima chamada pode tentar novamente.
-        });
+        const version = getSessionVersion();
+        authService
+          .ensureSession()
+          .then((restoredUser) => {
+            if (version === getSessionVersion()) setUser(restoredUser);
+          })
+          .catch(() => {
+            // Falhas transitórias preservam o usuário já carregado.
+          });
       }
       previousState = state;
     });

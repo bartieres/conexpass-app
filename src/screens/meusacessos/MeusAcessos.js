@@ -195,7 +195,8 @@ function FiltroDropdown({ icon, opcoes, valorId, onSelect }) {
 // Aba Ativos
 // --------------------------------------------------------------------
 function AtivoCard({ item, onPress }) {
-  const meta = ORIGEM_META[item.origem?.codigo] || ORIGEM_META.PLANO_ESTABELECIMENTO;
+  const meta =
+    ORIGEM_META[item.origem?.codigo] || ORIGEM_META.PLANO_ESTABELECIMENTO;
 
   const usados =
     item.total != null && item.disponiveis != null
@@ -251,7 +252,9 @@ function AtivoCard({ item, onPress }) {
 
       <View style={styles.ativoInfoRow}>
         <View style={styles.ativoInfoItem}>
-          <View style={[styles.ativoInfoIconWrap, { backgroundColor: meta.bg }]}>
+          <View
+            style={[styles.ativoInfoIconWrap, { backgroundColor: meta.bg }]}
+          >
             <Ionicons
               name={item.ilimitado ? 'infinite-outline' : 'barbell-outline'}
               size={16}
@@ -273,7 +276,11 @@ function AtivoCard({ item, onPress }) {
 
         {!!dataExibida && (
           <View style={styles.ativoInfoItem}>
-            <Ionicons name="calendar-outline" size={15} color={colors.textMuted} />
+            <Ionicons
+              name="calendar-outline"
+              size={15}
+              color={colors.textMuted}
+            />
             <View>
               <Text style={styles.ativoInfoLabel}>{rotuloData}</Text>
               <Text style={styles.ativoInfoValue}>
@@ -309,6 +316,8 @@ function AtivoCard({ item, onPress }) {
 }
 
 function AtivosTab({
+  navigation,
+  onChangeTab,
   ativos,
   loadingAtivos,
   ativosError,
@@ -339,7 +348,10 @@ function AtivosTab({
 
   return (
     <ScrollView
-      contentContainerStyle={styles.tabContent}
+      contentContainerStyle={[
+        styles.tabContent,
+        !ativos?.length && styles.ativosEmptyContent,
+      ]}
       refreshControl={
         <RefreshControl
           refreshing={!!refreshingAtivos}
@@ -350,11 +362,44 @@ function AtivosTab({
       }
     >
       {!ativos?.length ? (
-        <View style={styles.emptyWrap}>
-          <Ionicons name="pricetags-outline" size={32} color={colors.textLight} />
-          <Text style={styles.emptyText}>
-            Você ainda não tem nenhum acesso ativo.
+        <View style={styles.ativosEmpty}>
+          <View style={styles.ativosEmptyIcon}>
+            <Ionicons name="compass-outline" size={38} color={colors.blue} />
+          </View>
+          <Text style={styles.ativosEmptyTitle}>
+            Seu próximo acesso começa por aqui
           </Text>
+          <Text style={styles.ativosEmptyDescription}>
+            Explore estabelecimentos e encontre uma oferta que combine com a sua
+            rotina.
+          </Text>
+          <Text style={styles.ativosEmptyExplanation}>
+            Os planos, pacotes e acessos avulsos contratados nos
+            estabelecimentos aparecerão aqui quando estiverem liberados para
+            uso.
+          </Text>
+          <TouchableOpacity
+            style={styles.ativosExploreButton}
+            onPress={() =>
+              navigation.navigate('Explorar', { screen: 'ExplorarMain' })
+            }
+            activeOpacity={0.85}
+            accessibilityRole="button"
+          >
+            <Text style={styles.ativosExploreText}>
+              Explorar estabelecimentos
+            </Text>
+          </TouchableOpacity>
+          <Text style={styles.ativosPendingHint}>
+            Já contratou uma oferta e está aguardando a liberação?
+          </Text>
+          <TouchableOpacity
+            style={styles.ativosPendingLink}
+            onPress={() => onChangeTab('pendentes')}
+            accessibilityRole="button"
+          >
+            <Text style={styles.ativosPendingText}>Conferir pendentes</Text>
+          </TouchableOpacity>
         </View>
       ) : (
         ativos.map((item) => (
@@ -385,11 +430,14 @@ function situacaoPendente(item) {
     AGUARDANDO_ATIVACAO: 'Aguardando ativação',
   };
 
-  return item.situacao?.descricao ?? descricoes[codigo] ?? 'Contratação em andamento';
+  return (
+    item.situacao?.descricao ?? descricoes[codigo] ?? 'Contratação em andamento'
+  );
 }
 
 function PendenteCard({ item }) {
-  const meta = ORIGEM_META[item.origem?.codigo] || ORIGEM_META.PLANO_ESTABELECIMENTO;
+  const meta =
+    ORIGEM_META[item.origem?.codigo] || ORIGEM_META.PLANO_ESTABELECIMENTO;
   const situacao = situacaoPendente(item);
 
   return (
@@ -421,7 +469,11 @@ function PendenteCard({ item }) {
 
       {!!item.contratadoEm && (
         <View style={styles.contratadoRow}>
-          <Ionicons name="calendar-outline" size={14} color={colors.textMuted} />
+          <Ionicons
+            name="calendar-outline"
+            size={14}
+            color={colors.textMuted}
+          />
           <Text style={styles.contratadoLabel}>Contratado em:</Text>
           <Text style={styles.contratadoValue}>
             {formatarRelativo(item.contratadoEm)}
@@ -430,7 +482,11 @@ function PendenteCard({ item }) {
       )}
 
       <View style={styles.infoBox}>
-        <Ionicons name="information-circle-outline" size={16} color={colors.blue} />
+        <Ionicons
+          name="information-circle-outline"
+          size={16}
+          color={colors.blue}
+        />
         <Text style={styles.infoText}>
           Esta contratação ainda não está liberada para utilização. A
           disponibilidade será atualizada após a confirmação do pagamento e
@@ -521,7 +577,11 @@ function HistoricoRow({ item }) {
         </Text>
         <Text style={styles.historicoSubtitulo}>{meta.descricao}</Text>
         <View style={styles.historicoDataRow}>
-          <Ionicons name="calendar-outline" size={12} color={colors.textLight} />
+          <Ionicons
+            name="calendar-outline"
+            size={12}
+            color={colors.textLight}
+          />
           <Text style={styles.historicoData}>
             {dateTimeToDateMasked(item.dataSolicitacao)}
           </Text>
@@ -590,7 +650,10 @@ function HistoricoTab({
             <View style={styles.stateBox}>
               <Ionicons name="alert-circle-outline" size={26} color="#DC2626" />
               <Text style={styles.stateText}>{historicoError}</Text>
-              <TouchableOpacity style={styles.stateButton} onPress={onRetryHistorico}>
+              <TouchableOpacity
+                style={styles.stateButton}
+                onPress={onRetryHistorico}
+              >
                 <Text style={styles.stateButtonText}>Tentar novamente</Text>
               </TouchableOpacity>
             </View>
@@ -602,12 +665,18 @@ function HistoricoTab({
           <Text style={styles.sectionHeader}>{section.title}</Text>
         ) : null
       }
-      renderItem={({ item }) => (carregado ? <HistoricoRow item={item} /> : null)}
+      renderItem={({ item }) =>
+        carregado ? <HistoricoRow item={item} /> : null
+      }
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       ListEmptyComponent={
         carregado ? (
           <View style={styles.emptyWrap}>
-            <Ionicons name="receipt-outline" size={32} color={colors.textLight} />
+            <Ionicons
+              name="receipt-outline"
+              size={32}
+              color={colors.textLight}
+            />
             <Text style={styles.emptyText}>
               Nenhum check-in registrado nesse período.
             </Text>
@@ -661,6 +730,73 @@ export default function MeusAcessos(props) {
 }
 
 const styles = StyleSheet.create({
+  ativosEmptyContent: { justifyContent: 'center' },
+  ativosEmpty: {
+    alignItems: 'center',
+    paddingVertical: 28,
+    paddingHorizontal: 8,
+  },
+  ativosEmptyIcon: {
+    width: 78,
+    height: 78,
+    borderRadius: 25,
+    backgroundColor: '#E7EFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 22,
+  },
+  ativosEmptyTitle: {
+    color: colors.text,
+    fontSize: 23,
+    lineHeight: 30,
+    fontWeight: '800',
+    textAlign: 'center',
+    maxWidth: 320,
+  },
+  ativosEmptyDescription: {
+    color: colors.textMuted,
+    fontSize: 15,
+    lineHeight: 23,
+    textAlign: 'center',
+    marginTop: 12,
+    maxWidth: 340,
+  },
+  ativosEmptyExplanation: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginTop: 14,
+    maxWidth: 340,
+  },
+  ativosExploreButton: {
+    backgroundColor: colors.blue,
+    borderRadius: 15,
+    minHeight: 52,
+    paddingHorizontal: 18,
+    paddingVertical: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    maxWidth: 340,
+    marginTop: 24,
+  },
+  ativosExploreText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  ativosPendingHint: {
+    color: colors.textMuted,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginTop: 22,
+    maxWidth: 300,
+  },
+  ativosPendingLink: { paddingHorizontal: 16, paddingVertical: 12 },
+  ativosPendingText: { color: colors.blue, fontSize: 13, fontWeight: '600' },
   safe: { flex: 1, backgroundColor: colors.bg },
   header: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 14 },
   headerTitle: { ...typography.h1 },
@@ -778,7 +914,11 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 6,
   },
-  progressFill: { height: '100%', borderRadius: 4, backgroundColor: colors.blue },
+  progressFill: {
+    height: '100%',
+    borderRadius: 4,
+    backgroundColor: colors.blue,
+  },
   progressLegendRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -834,7 +974,12 @@ const styles = StyleSheet.create({
     padding: 12,
     marginTop: 12,
   },
-  infoText: { flex: 1, fontSize: 11.5, color: colors.textMuted, lineHeight: 16 },
+  infoText: {
+    flex: 1,
+    fontSize: 11.5,
+    color: colors.textMuted,
+    lineHeight: 16,
+  },
 
   // Histórico
   filtrosRow: {

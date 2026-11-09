@@ -12,35 +12,29 @@ import Slider from '@react-native-community/slider';
 import { colors, radius } from '../../../theme/theme';
 import { CATEGORIES } from '../../../data/mock';
 
-// Chaves enviadas ao backend para cada opção de ordenação exibida na tela.
-// 'preco' fica pronto mas o back ainda pode não suportar - ver comentário abaixo.
 const SORT_OPTIONS = [
   { label: 'Mais próximos', value: 'distancia' },
   { label: 'Melhor avaliados', value: 'avaliacao' },
-  { label: 'Menor preço', value: 'preco' }, // TODO: confirmar suporte no backend
+  { label: 'Menor preço', value: 'preco' },
+];
+
+const CHECKBOX_FILTERS = [
+  { key: 'parceiro', label: 'Parceiro' },
+  { key: 'abreHoje', label: 'Abre hoje' },
+  { key: 'aberto', label: 'Aberto agora' },
 ];
 
 const RAIO_MIN_KM = 1;
 const RAIO_MAX_KM = 50;
 
-/**
- * FiltersScreen
- *
- * Não tem estado de negócio próprio: recebe os filtros atuais via
- * route.params.initialFiltros e, ao aplicar, NAVEGA DE VOLTA pra tela
- * "Explorar" levando os novos filtros como parâmetro (apenas dados, nunca
- * uma função — funções em route.params não são serializáveis e quebram o
- * React Navigation, gerando o aviso "Non-serializable values were found in
- * the navigation state").
- *
- * route.params esperado:
- * {
- *   initialFiltros: { categorias: string[], raioKm: number, estrelasMin: number, ordenarPor: string },
- * }
- */
 export default function FiltersScreen({ navigation, route }) {
   const initialFiltros = route?.params?.initialFiltros ?? {};
 
+  const [opcoes, setOpcoes] = useState({
+    parceiro: initialFiltros.parceiro === true,
+    aberto: initialFiltros.aberto === true,
+    abreHoje: initialFiltros.abreHoje === true,
+  });
   const [selected, setSelected] = useState(initialFiltros.categorias ?? []);
   const [distance, setDistance] = useState(initialFiltros.raioKm ?? 5);
   const [minRating, setMinRating] = useState(initialFiltros.estrelasMin ?? 0);
@@ -55,6 +49,7 @@ export default function FiltersScreen({ navigation, route }) {
   };
 
   const handleClear = () => {
+    setOpcoes({ parceiro: false, aberto: false, abreHoje: false });
     setSelected([]);
     setDistance(10);
     setMinRating(0);
@@ -63,14 +58,13 @@ export default function FiltersScreen({ navigation, route }) {
 
   const handleApply = () => {
     const filtros = {
+      ...opcoes,
       categorias: selected,
       raioKm: distance,
       estrelasMin: minRating,
       ordenarPor: sort,
     };
 
-    // Navega de volta pra tela "Explorar" já existente na stack, levando os
-    // filtros como parâmetro simples — nunca uma função.
     navigation.navigate('ExplorarMain', { filtrosAplicados: filtros });
   };
 
@@ -125,6 +119,32 @@ export default function FiltersScreen({ navigation, route }) {
           thumbTintColor={colors.blue}
         />
 
+        <View style={styles.checkboxSection}>
+          <Text style={styles.sectionTitle}>Estabelecimentos</Text>
+          {CHECKBOX_FILTERS.map(({ key, label }) => (
+            <TouchableOpacity
+              key={key}
+              style={styles.checkboxRow}
+              onPress={() =>
+                setOpcoes((atuais) => ({ ...atuais, [key]: !atuais[key] }))
+              }
+              accessibilityRole="checkbox"
+              accessibilityLabel={label}
+              accessibilityState={{ checked: opcoes[key] }}
+              activeOpacity={0.7}
+            >
+              <View
+                style={[styles.checkbox, opcoes[key] && styles.checkboxChecked]}
+              >
+                {opcoes[key] && (
+                  <Ionicons name="checkmark" size={16} color="#fff" />
+                )}
+              </View>
+              <Text style={styles.checkboxLabel}>{label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
         {/* Filtro de Avaliação mínima */}
         {/*<Text style={[styles.sectionTitle, { marginTop: 20 }]}>Avaliação mínima</Text>
         <View style={styles.starsRow}>
@@ -171,6 +191,25 @@ export default function FiltersScreen({ navigation, route }) {
 }
 
 const styles = StyleSheet.create({
+  checkboxSection: { marginTop: 24 },
+  checkboxRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    minHeight: 48,
+    paddingVertical: 10,
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderWidth: 1.5,
+    borderColor: '#B9C5D8',
+    borderRadius: 7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  checkboxChecked: { backgroundColor: colors.blue, borderColor: colors.blue },
+  checkboxLabel: { fontSize: 14, color: colors.text, fontWeight: '500' },
   safe: { flex: 1, backgroundColor: '#fff' },
   header: {
     flexDirection: 'row',

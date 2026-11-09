@@ -112,7 +112,6 @@ function PlanHeader({ assinatura, badge, pending }) {
 }
 
 export default function Plan({
-  navigation,
   planoAtual,
   proximoPlano,
   pagamentosPendentes,
@@ -143,15 +142,6 @@ export default function Plan({
   return (
     <SafeAreaView style={styles.safe} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
-        {navigation.canGoBack?.() && (
-          <TouchableOpacity
-            onPress={() => navigation.goBack()}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-          >
-            <Ionicons name="arrow-back" size={24} color={colors.text} />
-          </TouchableOpacity>
-        )}
         <Text style={styles.headerTitle}>Planos</Text>
       </View>
       <ScrollView contentContainerStyle={styles.body}>

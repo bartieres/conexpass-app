@@ -3,8 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const axios = require('axios');
 
-function setup() {
-  const store = new Map();
+function setup(store = new Map()) {
   const calls = [];
   let handler;
   let clock = Date.now();
@@ -75,8 +74,22 @@ function setup() {
   });
   handler = async (config) => {
     if (config.url === '/auth/login')
-      return { data: { token: token(), user: { id: 1 } } };
+      return {
+        data: {
+          token: token(),
+          user: { id: 1, nome: 'Maria Teste', email: 'maria@example.com' },
+        },
+      };
     if (config.url === '/auth/refresh') return { data: token('2') };
+    if (config.url === '/users/me/session')
+      return {
+        data: {
+          response: {
+            user: { id: 1, nome: 'Maria Teste', email: 'maria@example.com' },
+            establishment: null,
+          },
+        },
+      };
     return { data: { id: 1 } };
   };
   return {
@@ -120,9 +133,24 @@ test('restaura sem access persistido e preserva refresh em rede/500; retry futur
     assert.equal(env.store.get('conexpass_refresh_token'), 'refresh-old');
   }
   env.setHandler(async (c) => ({
-    data: c.url === '/auth/refresh' ? env.token('restored') : { id: 7 },
+    data:
+      c.url === '/auth/refresh'
+        ? env.token('restored')
+        : {
+            response: {
+              user: {
+                id: 7,
+                nome: 'Maria Restaurada',
+                email: 'maria@example.com',
+              },
+            },
+          },
   }));
-  assert.deepEqual(await env.authService.restoreSession(), { id: 7 });
+  assert.deepEqual(await env.authService.restoreSession(), {
+    id: 7,
+    nome: 'Maria Restaurada',
+    email: 'maria@example.com',
+  });
   assert.equal(env.getAccessToken(), 'access-restored');
 });
 
@@ -250,4 +278,68 @@ test('sem refresh salvo solicita login e remove access legado', async () => {
   assert.equal(await env.authService.restoreSession(), null);
   assert.equal(env.calls.length, 0);
   assert.equal(env.store.size, 0);
+});
+
+test('reabrir com memória vazia renova sessão e restaura nome/e-mail do endpoint de sessão', async () => {
+  const storage = new Map();
+  const primeiro = setup(storage);
+  await primeiro.authService.login('maria@example.com', 'secret');
+  const reaberto = setup(storage);
+  assert.equal(reaberto.getAccessToken(), null);
+  const user = await reaberto.authService.restoreSession();
+  assert.equal(user.nome, 'Maria Teste');
+  assert.equal(user.email, 'maria@example.com');
+  assert.equal(user.response, undefined);
+  assert.equal(reaberto.calls.filter((c) => c.url === '/users').length, 0);
+  const consulta = reaberto.calls.find((c) => c.url === '/users/me/session');
+  assert.equal(consulta.headers.Authorization, 'Bearer access-2');
+  assert.equal(consulta.headers['X-Client-Type'], 'APP');
+  assert.deepEqual(JSON.parse(storage.get('conexpass_user')), user);
+});
+
+test('envelope inválido não é aceito como usuário autenticado e permite tentar restaurar novamente', async () => {
+  const env = setup();
+  env.store.set('conexpass_refresh_token', 'refresh-old');
+  env.setHandler((c) => ({
+    data:
+      c.url === '/auth/refresh'
+        ? env.token('novo')
+        : { response: { content: [] } },
+  }));
+  await assert.rejects(env.authService.restoreSession(), /dados da sua sessão/);
+  assert.equal(env.store.get('conexpass_refresh_token'), 'refresh-novo');
+  assert.equal(env.store.has('conexpass_user'), false);
+  env.setHandler((c) => ({
+    data:
+      c.url === '/auth/refresh'
+        ? env.token('retry')
+        : {
+            response: {
+              user: { nome: 'Nome recuperado', email: 'user@example.com' },
+            },
+          },
+  }));
+  assert.equal(
+    (await env.authService.restoreSession()).nome,
+    'Nome recuperado'
+  );
+});
+
+test('retomar sessão atualiza também os dados persistidos do usuário', async () => {
+  const env = setup();
+  await env.authService.login('maria@example.com', 'secret');
+  env.setHandler(() => ({
+    data: {
+      response: {
+        user: {
+          nome: 'Maria Atualizada',
+          email: 'novo@example.com',
+          telefone: '43999999999',
+        },
+      },
+    },
+  }));
+  const user = await env.authService.ensureSession();
+  assert.equal(user.nome, 'Maria Atualizada');
+  assert.deepEqual(await env.authService.getStoredUser(), user);
 });

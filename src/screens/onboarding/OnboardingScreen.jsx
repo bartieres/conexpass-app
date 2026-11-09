@@ -1,10 +1,9 @@
-
 import { useCallback, useRef, useState } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { completeOnboarding } from '../../services/onboardingService';
 
 import Onboarding from './Onboarding';
 
-export const ONBOARDING_KEY = '@conexpass:onboarding_completed';
+export { ONBOARDING_KEY } from '../../services/onboardingService';
 
 export default function OnboardingScreen({ onFinish }) {
   const [index, setIndex] = useState(0);
@@ -19,18 +18,12 @@ export default function OnboardingScreen({ onFinish }) {
     setSaving(true);
 
     try {
-      await AsyncStorage.setItem(
-        ONBOARDING_KEY,
-        'true'
-      );
+      await completeOnboarding();
 
       // O App.js decide se deve abrir Login ou MainTabs.
       onFinish();
     } catch (error) {
-      console.warn(
-        'Falha ao salvar conclusão do onboarding:',
-        error
-      );
+      console.warn('Falha ao salvar conclusão do onboarding:', error);
 
       savingRef.current = false;
       setSaving(false);

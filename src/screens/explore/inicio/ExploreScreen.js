@@ -76,6 +76,11 @@ export default function ExploreScreen({ navigation, route }) {
   const [raioKm, setRaioKm] = useState(RAIO_INICIAL_KM);
   const [estrelasMin, setEstrelasMin] = useState(0);
   const [ordenarPor, setOrdenarPor] = useState('distancia');
+  const [filtrosExtras, setFiltrosExtras] = useState({
+    parceiro: false,
+    aberto: false,
+    abreHoje: false,
+  });
 
   // Localização do usuário
   const {
@@ -111,11 +116,13 @@ export default function ExploreScreen({ navigation, route }) {
       raioOverride,
       estrelasMinOverride,
       ordenarPorOverride,
+      filtrosExtrasOverride,
     } = {}) => {
       if (!coords) return;
 
       if (!reset && (loadingMore || !hasMore)) return;
 
+      const opcoes = filtrosExtrasOverride ?? filtrosExtras;
       const termo = termoOverride ?? search;
       const categoriasAtuais = categoriasOverride ?? categorias;
       const categoriasFiltradas = categoriasAtuais.includes('TODOS')
@@ -136,6 +143,9 @@ export default function ExploreScreen({ navigation, route }) {
       try {
         const filtros = {
           ...coords,
+          parceiro: opcoes.parceiro || undefined,
+          aberto: opcoes.aberto || undefined,
+          abreHoje: opcoes.abreHoje || undefined,
           termo: termo || undefined,
           raioKm: raio * 1000,
           tipos:
@@ -219,6 +229,7 @@ export default function ExploreScreen({ navigation, route }) {
       raioKm,
       estrelasMin,
       ordenarPor,
+      filtrosExtras,
       loadingMore,
       hasMore,
     ]
@@ -238,6 +249,12 @@ export default function ExploreScreen({ navigation, route }) {
     const filtrosAplicados = route?.params?.filtrosAplicados;
     if (!filtrosAplicados) return;
 
+    const novasOpcoes = {
+      parceiro: filtrosAplicados.parceiro === true,
+      aberto: filtrosAplicados.aberto === true,
+      abreHoje: filtrosAplicados.abreHoje === true,
+    };
+    setFiltrosExtras(novasOpcoes);
     setCategorias(filtrosAplicados.categorias ?? []);
     setRaioKm(filtrosAplicados.raioKm ?? RAIO_INICIAL_KM);
     setEstrelasMin(filtrosAplicados.estrelasMin ?? 0);
@@ -245,6 +262,7 @@ export default function ExploreScreen({ navigation, route }) {
 
     buscarEstabelecimentos({
       reset: true,
+      filtrosExtrasOverride: novasOpcoes,
       categoriasOverride: filtrosAplicados.categorias ?? [],
       raioOverride: filtrosAplicados.raioKm ?? RAIO_INICIAL_KM,
       estrelasMinOverride: filtrosAplicados.estrelasMin ?? 0,
@@ -297,9 +315,15 @@ export default function ExploreScreen({ navigation, route }) {
   // route.params (ver useEffect acima), não via callback.
   const handleOpenFilters = useCallback(() => {
     navigation.navigate('Filters', {
-      initialFiltros: { categorias, raioKm, estrelasMin, ordenarPor },
+      initialFiltros: {
+        categorias,
+        raioKm,
+        estrelasMin,
+        ordenarPor,
+        ...filtrosExtras,
+      },
     });
-  }, [navigation, categorias, raioKm, estrelasMin, ordenarPor]);
+  }, [navigation, categorias, raioKm, estrelasMin, ordenarPor, filtrosExtras]);
 
   // Modal "Não encontrou o estabelecimento que procura?"
   const handleOpenSuggestModal = useCallback(() => {
@@ -341,6 +365,7 @@ export default function ExploreScreen({ navigation, route }) {
       categoriasSelecionadas={categorias}
       onSelectCategory={handleSelectCategory}
       raioKm={raioKm}
+      filtrosExtras={filtrosExtras}
       onOpenFilters={handleOpenFilters}
       permissionDenied={permissionDenied}
       isLoadingAnything={isLoadingAnything}

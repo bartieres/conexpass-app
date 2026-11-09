@@ -75,6 +75,7 @@ export default function Explore({
   categoriasSelecionadas,
   onSelectCategory,
   raioKm,
+  filtrosExtras = {},
   onOpenFilters,
   permissionDenied,
   isLoadingAnything,
@@ -107,7 +108,8 @@ export default function Explore({
     !permissionDenied && !isLoadingAnything && !estabelecimentosError;
   const filtrosAtivos =
     categoriasSelecionadas.filter((id) => id !== 'TODOS').length +
-    (raioKm !== 10 ? 1 : 0);
+    (raioKm !== 10 ? 1 : 0) +
+    Object.values(filtrosExtras).filter(Boolean).length;
 
   const header = (
     <View>

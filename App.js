@@ -1,10 +1,9 @@
-
 import React, { useEffect, useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { isOnboardingCompleted } from './src/services/onboardingService';
 
 import LoginScreen from './src/screens/login/LoginScreen';
 import RegisterScreen from './src/screens/create-user/RegisterScreen';
@@ -20,8 +19,6 @@ import { AuthProvider, useAuth } from './src/context/AuthContext';
 
 const Stack = createNativeStackNavigator();
 
-const ONBOARDING_KEY = '@conexpass:onboarding_completed:v1';
-
 // O deep linking para detalhes de estabelecimentos será configurado
 // quando a estrutura de navegação de MainTabs for confirmada.
 
@@ -35,10 +32,10 @@ function RootNavigator() {
 
     async function verificarOnboarding() {
       try {
-        const concluido = await AsyncStorage.getItem(ONBOARDING_KEY);
+        const concluido = await isOnboardingCompleted();
 
         if (ativo) {
-          setOnboardingConcluido(concluido === 'true');
+          setOnboardingConcluido(concluido);
         }
       } catch (error) {
         console.error('Erro ao verificar onboarding:', error);
@@ -71,31 +68,19 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {!onboardingConcluido ? (
+      {!isAuthenticated && !onboardingConcluido ? (
         <Stack.Screen name="Onboarding">
           {(props) => (
-            <OnboardingScreen
-              {...props}
-              onFinish={finalizarOnboarding}
-            />
+            <OnboardingScreen {...props} onFinish={finalizarOnboarding} />
           )}
         </Stack.Screen>
       ) : isAuthenticated ? (
-        <Stack.Screen
-          name="MainTabs"
-          component={MainTabs}
-        />
+        <Stack.Screen name="MainTabs" component={MainTabs} />
       ) : (
         <>
-          <Stack.Screen
-            name="Login"
-            component={LoginScreen}
-          />
+          <Stack.Screen name="Login" component={LoginScreen} />
 
-          <Stack.Screen
-            name="Register"
-            component={RegisterScreen}
-          />
+          <Stack.Screen name="Register" component={RegisterScreen} />
 
           <Stack.Screen
             name="RegisterSuccess"

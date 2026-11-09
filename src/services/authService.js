@@ -57,6 +57,22 @@ async function persistSession(token, generation, user) {
   });
 }
 
+function validarUsuario(user) {
+  if (
+    !user ||
+    Array.isArray(user) ||
+    typeof user.nome !== 'string' ||
+    !user.nome.trim() ||
+    typeof user.email !== 'string' ||
+    !user.email.trim()
+  ) {
+    throw new Error(
+      'Não foi possível carregar os dados da sua sessão. Tente novamente.'
+    );
+  }
+  return user;
+}
+
 export const authService = {
   // POST /auth/login  { identifier, password } -> { token, user }
   async login(identifier, password) {
@@ -75,8 +91,9 @@ export const authService = {
         },
       }
     );
-    await persistSession(data.token, generation, data.user);
-    return data.user;
+    const user = validarUsuario(data.user);
+    await persistSession(data.token, generation, user);
+    return user;
   },
 
   // Uma única renovação por vez: o backend rotaciona o refresh token.
@@ -154,12 +171,12 @@ export const authService = {
     return data;
   },
 
-  // GET /users/me -> valida o token salvo e retorna o usuário atualizado
+  // GET /users/me/session -> mesmo UserResponse usado no login, dentro de response.user.
   async getMe() {
-    const { data } = await api.get('/users', {
+    const { data } = await api.get('/users/me/session', {
       headers: { 'X-Client-Type': 'APP' },
     });
-    return data;
+    return validarUsuario(data?.response?.user);
   },
 
   async logout() {
@@ -203,6 +220,13 @@ export const authService = {
       return null;
     }
     await authService.refreshToken();
+    const user = await authService.ensureSession();
+    assertCurrentSession(generation);
+    return user;
+  },
+
+  async ensureSession() {
+    const generation = sessionGeneration;
     const user = await authService.getMe();
     assertCurrentSession(generation);
     await updateStorage(async () => {
@@ -210,11 +234,6 @@ export const authService = {
       await SecureStore.setItemAsync(USER_KEY, JSON.stringify(user));
     });
     return user;
-  },
-
-  async ensureSession() {
-    // O interceptor renova apenas se o access estiver próximo de expirar.
-    return authService.getMe();
   },
 
   async getStoredUser() {
